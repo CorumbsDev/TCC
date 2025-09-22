@@ -1,0 +1,129 @@
+[gd_scene load_steps=10 format=3 uid="uid://cu6ylxb78cmai"]
+
+[ext_resource type="Texture2D" uid="uid://bamkswrf6dhg8" path="res://Inventory/Sprites/Grid.png" id="1_4tcsu"]
+[ext_resource type="Script" uid="uid://cjlmrgbew7bm5" path="res://Inventory/inventory_menu.gd" id="1_jrgxf"]
+[ext_resource type="PackedScene" uid="uid://t1uppoxy3ryk" path="res://Inventory/Items/item_1x1.tscn" id="3_kxkxh"]
+[ext_resource type="PackedScene" uid="uid://bcum63fcusrxe" path="res://Inventory/Items/item_1x2.tscn" id="4_3y6rh"]
+[ext_resource type="PackedScene" uid="uid://0u2d5m3msv7c" path="res://Inventory/Items/item_1x4.tscn" id="5_opoxo"]
+[ext_resource type="PackedScene" uid="uid://c48xbdqih0b2q" path="res://Inventory/Items/item_2x1.tscn" id="6_o6t8v"]
+[ext_resource type="PackedScene" uid="uid://pbs7hm6syrqo" path="res://Inventory/Items/item_2x2.tscn" id="7_4yk02"]
+[ext_resource type="PackedScene" uid="uid://cnvs43eamdlae" path="res://Inventory/Items/item_2x3.tscn" id="8_qkryk"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_26jtl"]
+size = Vector2(256, 256)
+
+[node name="InventoryMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_jrgxf")
+
+[node name="InventoryPanel" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 256.0
+offset_bottom = 256.0
+color = Color(0.0705882, 0.0705882, 0.0705882, 1)
+
+[node name="InventoryGrids" type="Sprite2D" parent="."]
+texture_filter = 5
+texture_repeat = 2
+texture = ExtResource("1_4tcsu")
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 256, 256)
+
+[node name="Inventory" type="Area2D" parent="InventoryGrids"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InventoryGrids/Inventory"]
+position = Vector2(128, 128)
+shape = SubResource("RectangleShape2D_26jtl")
+
+[node name="Item1x1" parent="." instance=ExtResource("3_kxkxh")]
+offset_left = 400.0
+offset_top = 192.0
+offset_right = 432.0
+offset_bottom = 224.0
+
+[node name="Item1x2" parent="." instance=ExtResource("4_3y6rh")]
+offset_left = 360.0
+offset_top = 16.0
+offset_right = 392.0
+offset_bottom = 80.0
+
+[node name="Item1x4" parent="." instance=ExtResource("5_opoxo")]
+offset_left = 288.0
+offset_top = 96.0
+offset_right = 320.0
+offset_bottom = 224.0
+
+[node name="Item2x1" parent="." instance=ExtResource("6_o6t8v")]
+offset_left = 328.0
+offset_top = 192.0
+offset_right = 392.0
+offset_bottom = 224.0
+
+[node name="Item2x2" parent="." instance=ExtResource("7_4yk02")]
+offset_left = 288.0
+offset_top = 16.0
+offset_right = 352.0
+offset_bottom = 80.0
+
+[node name="Item2x3" parent="." instance=ExtResource("8_qkryk")]
+offset_left = 328.0
+offset_top = 88.0
+offset_right = 392.0
+offset_bottom = 184.0
+
+[node name="SortInventory" type="Button" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 272.0
+offset_right = 192.0
+offset_bottom = 312.0
+text = "Sort Inventory"
+
+[node name="AddItem1x1" type="Button" parent="."]
+layout_mode = 0
+offset_left = 288.0
+offset_top = 272.0
+offset_right = 416.0
+offset_bottom = 312.0
+text = "Add Item 1x1"
+
+[node name="AddItem1x2" type="Button" parent="."]
+offset_left = 288.0
+offset_top = 328.0
+offset_right = 416.0
+offset_bottom = 368.0
+text = "Add Item 1x2"
+
+[node name="AddItem1x4" type="Button" parent="."]
+offset_left = 288.0
+offset_top = 384.0
+offset_right = 416.0
+offset_bottom = 424.0
+text = "Add Item 1x4"
+
+[node name="AddItem2x1" type="Button" parent="."]
+offset_left = 432.0
+offset_top = 272.0
+offset_right = 560.0
+offset_bottom = 312.0
+text = "Add Item 2x1"
+
+[node name="AddItem2x2" type="Button" parent="."]
+offset_left = 432.0
+offset_top = 328.0
+offset_right = 560.0
+offset_bottom = 368.0
+text = "Add Item 2x2"
+
+[node name="AddItem2x3" type="Button" parent="."]
+offset_left = 432.0
+offset_top = 384.0
+offset_right = 560.0
+offset_bottom = 424.0
+text = "Add Item 2x3"
