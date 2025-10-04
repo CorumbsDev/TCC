@@ -16,6 +16,12 @@
 	"Value": 7,
 	"Operator": "",
 	"Grid": "0,0"
+  },
+  "item_number_10": {
+	"Name": "Number 10",
+	"Value": 10,
+	"Operator": "",
+	"Grid": "0,0"
   }
   
 }

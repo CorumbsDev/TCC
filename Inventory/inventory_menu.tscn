@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://0nqqxacxuayc"]
 
 [ext_resource type="Script" uid="uid://ce5ayxy8aycj8" path="res://Inventory/inventory_menu.gd" id="1_jolrh"]
-[ext_resource type="Script" path="res://Inventory/Controlador.py" id="2_26jtl"]
+[ext_resource type="Script" uid="uid://rtbsq2i184bq" path="res://Inventory/controlador.gd" id="2_26jtl"]
 
 [node name="InventoryMenu" type="Control"]
 layout_mode = 3
@@ -108,7 +108,7 @@ theme_override_constants/h_separation = 1
 theme_override_constants/v_separation = 1
 columns = 8
 
-[node name="Controlador" type="Control" parent="."]
+[node name="ControladorExterno" type="Control" parent="."]
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
