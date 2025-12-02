@@ -2,8 +2,15 @@ extends Node2D
 
 @onready var value_label: Label = $ColorRect/value_label
 
+# Enum para identificar o tipo de dado do orb
+enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR}
+
 var item_ID : String
+var data_type: DataType = DataType.INT  # Tipo padrão é INT
 var value : int = 0
+var value_float : float = 0.0
+var value_bool : bool = false
+var value_string : String = ""
 var operator : String = ""
 var selected = false
 var item_grids := [Vector2(0,0)]
@@ -20,26 +27,124 @@ func load_item(a_ItemID: String) -> void:
 	item_ID = a_ItemID
 	var data = DataHandler.item_data[item_ID]
 
+	# Verifica se é um operador
 	if data.has("Operator") and str(data["Operator"]) != "":
 		operator = str(data["Operator"])
+		data_type = DataType.OPERATOR
 		value = 0
-	elif data.has("Value") and int(data["Value"]) != 0:
-		value = int(data["Value"])
+		value_float = 0.0
+		value_bool = false
+		value_string = ""
+	# Verifica o tipo de dado
+	elif data.has("DataType"):
+		var tipo = str(data["DataType"]).to_upper()
+		match tipo:
+			"FLOAT":
+				data_type = DataType.FLOAT
+				value_float = float(data.get("Value", 0.0))
+				value = 0
+				value_bool = false
+				value_string = ""
+			"BOOLEAN", "BOOL":
+				data_type = DataType.BOOLEAN
+				value_bool = bool(data.get("Value", false))
+				value = 0
+				value_float = 0.0
+				value_string = ""
+			"STRING", "STR":
+				data_type = DataType.STRING
+				value_string = str(data.get("Value", ""))
+				value = 0
+				value_float = 0.0
+				value_bool = false
+			_:
+				# Padrão: INT
+				data_type = DataType.INT
+				value = int(data.get("Value", 0))
+				value_float = 0.0
+				value_bool = false
+				value_string = ""
+	else:
+		# Fallback: assume que é um número inteiro (compatibilidade)
+		data_type = DataType.INT
+		value = int(data.get("Value", 0))
+		value_float = 0.0
+		value_bool = false
+		value_string = ""
 		operator = ""
 
 	update_label_display()
 
 func set_value_directly(new_value: int):
-	"""Define o valor diretamente (para resultados de expressões)"""
+	"""Define o valor diretamente (para resultados de expressões) - mantém compatibilidade"""
 	value = new_value
+	value_float = float(new_value)
+	value_bool = false
+	value_string = ""
 	operator = ""
+	data_type = DataType.INT
 	item_ID = "item_number_" + str(new_value)
 	update_label_display()
+
+func set_value_by_type(new_value, tipo: DataType):
+	"""Define o valor baseado no tipo de dado"""
+	data_type = tipo
+	operator = ""
+	
+	match tipo:
+		DataType.INT:
+			value = int(new_value)
+			value_float = float(new_value)
+			value_bool = false
+			value_string = ""
+		DataType.FLOAT:
+			value_float = float(new_value)
+			value = int(value_float)
+			value_bool = false
+			value_string = ""
+		DataType.BOOLEAN:
+			value_bool = bool(new_value)
+			value = 1 if value_bool else 0
+			value_float = 1.0 if value_bool else 0.0
+			value_string = ""
+		DataType.STRING:
+			value_string = str(new_value)
+			value = 0
+			value_float = 0.0
+			value_bool = false
+		DataType.OPERATOR:
+			operator = str(new_value)
+			value = 0
+			value_float = 0.0
+			value_bool = false
+			value_string = ""
+	
+	update_label_display()
+
+func get_value_as_string() -> String:
+	"""Retorna o valor como string baseado no tipo"""
+	match data_type:
+		DataType.INT:
+			return str(value)
+		DataType.FLOAT:
+			return str(value_float)
+		DataType.BOOLEAN:
+			return "true" if value_bool else "false"
+		DataType.STRING:
+			return value_string
+		DataType.OPERATOR:
+			return operator
+		_:
+			return str(value)
 
 func set_operator_directly(new_operator: String):
 	"""Define o operador diretamente"""
 	operator = new_operator
+	data_type = DataType.OPERATOR
 	value = 0
+	value_float = 0.0
+	value_bool = false
+	value_string = ""
 	item_ID = "item_operator_" + new_operator
 	update_label_display()
 
@@ -60,11 +165,27 @@ func update_label_display():
 	# Garante que a Label está visível
 	value_label.visible = true
 	
-	# Configura o texto
-	if operator != "":
+	# Configura o texto baseado no tipo
+	if data_type == DataType.OPERATOR:
 		value_label.text = operator
 		value_label.add_theme_color_override("font_color", Color.RED)
 		value_label.add_theme_font_size_override("font_size", 24)
+	elif data_type == DataType.INT:
+		value_label.text = str(value)
+		value_label.add_theme_color_override("font_color", Color.BLUE)
+		value_label.add_theme_font_size_override("font_size", 20)
+	elif data_type == DataType.FLOAT:
+		value_label.text = str(value_float)
+		value_label.add_theme_color_override("font_color", Color.CYAN)
+		value_label.add_theme_font_size_override("font_size", 20)
+	elif data_type == DataType.BOOLEAN:
+		value_label.text = "true" if value_bool else "false"
+		value_label.add_theme_color_override("font_color", Color.GREEN)
+		value_label.add_theme_font_size_override("font_size", 20)
+	elif data_type == DataType.STRING:
+		value_label.text = '"' + value_string + '"'
+		value_label.add_theme_color_override("font_color", Color.YELLOW)
+		value_label.add_theme_font_size_override("font_size", 18)
 	else:
 		value_label.text = str(value)
 		value_label.add_theme_color_override("font_color", Color.BLACK) 
@@ -72,6 +193,7 @@ func update_label_display():
 	
 	# Força o redesenho
 	value_label.queue_redraw()
+
 func _snap_to(destination):
 	var tween = get_tree().create_tween()
 	# Ajuste para usar o tamanho da Label

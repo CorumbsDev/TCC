@@ -1,7 +1,8 @@
 extends Node
 class_name ControladorExterno
 
-signal expressao_processada(resultado: float, codigo: String)
+# Signal atualizado para incluir tipo do resultado
+signal expressao_processada(resultado: Variant, tipo_resultado: String, codigo: String)
 
 var ultima_expressao: String = ""
 var arquivo_resultado: String = "user://resultado.json"
@@ -17,8 +18,8 @@ func processar_expressao_assincrona(expressao: String):
 	
 	if not salvar_expressao(expressao, arquivo_expressao):
 		# Fallback se não conseguir salvar
-		var resultado = avaliar_expressao_rapida(expressao)
-		expressao_processada.emit(resultado, "Erro ao salvar: " + expressao)
+		var resultado_info = avaliar_expressao_rapida(expressao)
+		expressao_processada.emit(resultado_info.resultado, resultado_info.tipo, "Erro ao salvar: " + expressao)
 		return
 	
 	# Executa o Python
@@ -48,8 +49,8 @@ func processar_expressao_assincrona(expressao: String):
 	else:
 		print("Erro na execução do Python")
 		# Fallback para avaliação rápida
-		var resultado = avaliar_expressao_rapida(expressao)
-		expressao_processada.emit(resultado, "Erro Python: " + expressao)
+		var resultado_info = avaliar_expressao_rapida(ultima_expressao)
+		expressao_processada.emit(resultado_info.resultado, resultado_info.tipo, "Erro Python: " + ultima_expressao)
 
 func salvar_expressao(expressao: String, caminho: String) -> bool:
 	var dir = DirAccess.open("user://")
@@ -81,40 +82,86 @@ func ler_resultado_json():
 		if erro == OK:
 			var dados = json_resultado.data
 			var resultado = dados.get("resultado", 0.0)
+			var tipo = dados.get("tipo", "FLOAT")
 			var codigo = dados.get("codigo", "")
 			var sucesso = dados.get("sucesso", false)
 			
 			print("Expressão processada: ", dados.get("expressao", ""))
 			print("Resultado: ", resultado)
+			print("Tipo: ", tipo)
 			print("Sucesso: ", sucesso)
 			
 			if sucesso:
-				expressao_processada.emit(float(resultado), codigo)
+				# Converte o resultado para o tipo correto
+				var resultado_convertido = converter_resultado_para_tipo(resultado, tipo)
+				expressao_processada.emit(resultado_convertido, tipo, codigo)
 			else:
 				# Se não foi bem-sucedido, usa fallback
-				var resultado_fallback = avaliar_expressao_rapida(ultima_expressao)
-				expressao_processada.emit(resultado_fallback, "Fallback: " + ultima_expressao)
+				var resultado_info = avaliar_expressao_rapida(ultima_expressao)
+				expressao_processada.emit(resultado_info.resultado, resultado_info.tipo, "Fallback: " + ultima_expressao)
 		else:
 			print("Erro ao analisar JSON: ", erro)
 			# Fallback
-			var resultado = avaliar_expressao_rapida(ultima_expressao)
-			expressao_processada.emit(resultado, "Erro JSON: " + ultima_expressao)
+			var resultado_info = avaliar_expressao_rapida(ultima_expressao)
+			expressao_processada.emit(resultado_info.resultado, resultado_info.tipo, "Erro JSON: " + ultima_expressao)
 	else:
 		print("Arquivo de resultado não encontrado: ", arquivo_resultado)
 		# Fallback
-		var resultado = avaliar_expressao_rapida(ultima_expressao)
-		expressao_processada.emit(resultado, "Arquivo não encontrado: " + ultima_expressao)
+		var resultado_info = avaliar_expressao_rapida(ultima_expressao)
+		expressao_processada.emit(resultado_info.resultado, resultado_info.tipo, "Arquivo não encontrado: " + ultima_expressao)
 
-func avaliar_expressao_rapida(expressao: String) -> float:
-	# Avaliação simples em GDScript
+func converter_resultado_para_tipo(valor: Variant, tipo: String) -> Variant:
+	"""Converte o valor para o tipo correto"""
+	match tipo:
+		"INT":
+			return int(valor)
+		"FLOAT":
+			return float(valor)
+		"BOOLEAN":
+			if typeof(valor) == TYPE_BOOL:
+				return bool(valor)
+			elif typeof(valor) == TYPE_INT or typeof(valor) == TYPE_FLOAT:
+				return bool(valor)
+			else:
+				return bool(valor)
+		"STRING":
+			return str(valor)
+		_:
+			return float(valor)
+
+func avaliar_expressao_rapida(expressao: String) -> Dictionary:
+	"""Avaliação simples em GDScript com detecção de tipo"""
 	expressao = expressao.replace("×", "*").replace("÷", "/").replace(" ", "")
 	
+	# Tenta detectar strings
+	if expressao.begins_with('"') and expressao.ends_with('"'):
+		var str_valor = expressao.substr(1, expressao.length() - 2)
+		return {"resultado": str_valor, "tipo": "STRING"}
+	
+	# Tenta detectar booleanos
+	if expressao.to_lower() == "true":
+		return {"resultado": true, "tipo": "BOOLEAN"}
+	if expressao.to_lower() == "false":
+		return {"resultado": false, "tipo": "BOOLEAN"}
+	
+	# Tenta avaliar como expressão matemática
 	var expression = Expression.new()
 	var erro = expression.parse(expressao, [])
 	
 	if erro == OK:
 		var resultado = expression.execute([], null, true)
 		if not expression.has_execute_failed():
-			return float(resultado)
+			# Detecta o tipo do resultado
+			var tipo_resultado = "FLOAT"
+			if typeof(resultado) == TYPE_INT:
+				tipo_resultado = "INT"
+			elif typeof(resultado) == TYPE_FLOAT:
+				tipo_resultado = "FLOAT"
+			elif typeof(resultado) == TYPE_BOOL:
+				tipo_resultado = "BOOLEAN"
+			elif typeof(resultado) == TYPE_STRING:
+				tipo_resultado = "STRING"
+			
+			return {"resultado": resultado, "tipo": tipo_resultado}
 	
-	return 0.0
+	return {"resultado": 0.0, "tipo": "FLOAT"}
