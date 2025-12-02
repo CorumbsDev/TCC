@@ -6,6 +6,11 @@ extends Control
 @onready var scroll_container = $Background/MarginContainer/VBoxContainer/ScrollContainer
 @onready var col_count = grid_container.columns
 @onready var controlador_externo = $ControladorExterno
+@onready var info_panel = $InfoPanel  # Novo: referência ao painel de informações
+@onready var info_type_label = $InfoPanel/MarginContainer/VBoxContainer/ScrollContainer/InfoContainer/TypeLabel
+@onready var info_value_label = $InfoPanel/MarginContainer/VBoxContainer/ScrollContainer/InfoContainer/ValueLabel
+@onready var info_id_label = $InfoPanel/MarginContainer/VBoxContainer/ScrollContainer/InfoContainer/IDLabel
+@onready var info_details_label = $InfoPanel/MarginContainer/VBoxContainer/ScrollContainer/InfoContainer/DetailsLabel
 
 var grid_array := []
 var item_held = null
@@ -24,8 +29,36 @@ func _ready():
 	else:
 		print("Controlador externo não encontrado, usando fallback")
 	
+	# Conecta sinais de hover dos itens
+	connect_items_hover_signals()
+	
+	# Inicializa o painel de informações como vazio
+	clear_info_panel()
+	
 	for i in range(64):
 		create_slot()
+
+func connect_items_hover_signals():
+	"""Conecta os sinais de hover de todos os itens existentes"""
+	# Conecta itens que já existem
+	for slot in grid_array:
+		if slot.item_stored != null:
+			var item = slot.item_stored
+			if item.has_signal("mouse_entered_item"):
+				if not item.mouse_entered_item.is_connected(_on_item_mouse_entered):
+					item.mouse_entered_item.connect(_on_item_mouse_entered)
+			if item.has_signal("mouse_exited_item"):
+				if not item.mouse_exited_item.is_connected(_on_item_mouse_exited):
+					item.mouse_exited_item.connect(_on_item_mouse_exited)
+	
+	# Também conecta o item segurado
+	if item_held != null:
+		if item_held.has_signal("mouse_entered_item"):
+			if not item_held.mouse_entered_item.is_connected(_on_item_mouse_entered):
+				item_held.mouse_entered_item.connect(_on_item_mouse_entered)
+		if item_held.has_signal("mouse_exited_item"):
+			if not item_held.mouse_exited_item.is_connected(_on_item_mouse_exited):
+				item_held.mouse_exited_item.connect(_on_item_mouse_exited)
 
 func _on_expressao_processada(resultado: Variant, tipo_resultado: String, codigo: String):
 	print("=== EXPRESSÃO PROCESSADA ===")
@@ -53,6 +86,7 @@ func _on_item_changed(slot):
 	print("Item mudou no slot:", slot.slot_ID)
 	check_combinations()
 
+@warning_ignore("unused_parameter")
 func _process(delta):
 	if item_held:
 		if Input.is_action_just_pressed("select_item"):
@@ -70,6 +104,7 @@ func _on_slot_mouse_entered(a_Slot):
 		check_slot_availability(current_slot)
 		set_grids.call_deferred(current_slot)
 
+@warning_ignore("unused_parameter")
 func _on_slot_mouse_exited(a_Slot):
 	clear_grid()
 	if not grid_container.get_global_rect().has_point(get_global_mouse_position()):
@@ -92,6 +127,14 @@ func create_item_on_hand_randomly():
 			new_item.load_item(random_item)
 		else:
 			print("Item não tem método load_item")
+		
+		# Conecta sinais de hover (verifica se já está conectado)
+		if new_item.has_signal("mouse_entered_item"):
+			if not new_item.mouse_entered_item.is_connected(_on_item_mouse_entered):
+				new_item.mouse_entered_item.connect(_on_item_mouse_entered)
+		if new_item.has_signal("mouse_exited_item"):
+			if not new_item.mouse_exited_item.is_connected(_on_item_mouse_exited):
+				new_item.mouse_exited_item.connect(_on_item_mouse_exited)
 		
 		new_item.selected = true
 		item_held = new_item
@@ -160,6 +203,14 @@ func place_item():
 		grid_array[grid_to_check].item_stored = item_held
 		grid_array[grid_to_check].set_item(item_held)
 	
+	# Conecta sinais de hover do item colocado (verifica se já está conectado)
+	if item_held.has_signal("mouse_entered_item"):
+		if not item_held.mouse_entered_item.is_connected(_on_item_mouse_entered):
+			item_held.mouse_entered_item.connect(_on_item_mouse_entered)
+	if item_held.has_signal("mouse_exited_item"):
+		if not item_held.mouse_exited_item.is_connected(_on_item_mouse_exited):
+			item_held.mouse_exited_item.connect(_on_item_mouse_exited)
+	
 	item_held = null
 	clear_grid()
 
@@ -168,6 +219,15 @@ func pick_item():
 		return
 	
 	item_held = current_slot.item_stored
+	
+	# Desconecta sinais do item no grid (vai reconectar quando colocar de volta)
+	if item_held.has_signal("mouse_entered_item"):
+		if item_held.mouse_entered_item.is_connected(_on_item_mouse_entered):
+			item_held.mouse_entered_item.disconnect(_on_item_mouse_entered)
+	if item_held.has_signal("mouse_exited_item"):
+		if item_held.mouse_exited_item.is_connected(_on_item_mouse_exited):
+			item_held.mouse_exited_item.disconnect(_on_item_mouse_exited)
+	
 	item_held.selected = true
 	
 	item_held.get_parent().remove_child(item_held)
@@ -178,6 +238,14 @@ func pick_item():
 		var grid_to_check = item_held.grid_anchor.slot_ID + grid[0] + grid[1] * col_count
 		grid_array[grid_to_check].state = grid_array[grid_to_check].States.FREE 
 		grid_array[grid_to_check].item_stored = null
+	
+	# Conecta sinais do item segurado (verifica se já está conectado)
+	if item_held.has_signal("mouse_entered_item"):
+		if not item_held.mouse_entered_item.is_connected(_on_item_mouse_entered):
+			item_held.mouse_entered_item.connect(_on_item_mouse_entered)
+	if item_held.has_signal("mouse_exited_item"):
+		if not item_held.mouse_exited_item.is_connected(_on_item_mouse_exited):
+			item_held.mouse_exited_item.connect(_on_item_mouse_exited)
 	
 	check_slot_availability(current_slot)
 	set_grids.call_deferred(current_slot)
@@ -512,3 +580,57 @@ func debug_slots_expressao():
 	print("Slots marcados para consumo:")
 	for slot in ultimos_slots_expressao:
 		print(" - Slot ", slot.slot_ID)
+
+func _on_item_mouse_entered(item):
+	"""Chamado quando o mouse entra em um item"""
+	show_item_info(item)
+
+@warning_ignore("unused_parameter")
+func _on_item_mouse_exited(item):
+	"""Chamado quando o mouse sai de um item"""
+	clear_info_panel()
+
+func show_item_info(item):
+	"""Mostra as informações do item no painel"""
+	if not item or not info_panel:
+		return
+	
+	# Obtém as informações do item
+	var info = item.get_item_info() if item.has_method("get_item_info") else {}
+	
+	# Atualiza os labels com formatação melhorada
+	if info_type_label:
+		var tipo_texto = info.get("tipo", "Desconhecido")
+		info_type_label.text = "Tipo: " + tipo_texto
+	
+	if info_value_label:
+		var valor_texto = info.get("valor", "-")
+		info_value_label.text = "Valor: " + valor_texto
+	
+	if info_id_label:
+		var id_texto = info.get("id", "")
+		if id_texto == "" or id_texto == null:
+			id_texto = "N/A"
+		info_id_label.text = "ID: " + str(id_texto)
+	
+	if info_details_label:
+		var detalhes_texto = info.get("detalhes", "-")
+		info_details_label.text = "Detalhes:\n" + detalhes_texto
+	
+	# Mostra o painel
+	if info_panel:
+		info_panel.visible = true
+
+func clear_info_panel():
+	"""Limpa o painel de informações"""
+	if info_type_label:
+		info_type_label.text = "Tipo: -"
+	if info_value_label:
+		info_value_label.text = "Valor: -"
+	if info_id_label:
+		info_id_label.text = "ID: -"
+	if info_details_label:
+		info_details_label.text = "Detalhes: -"
+	
+	# Opcional: esconder o painel quando não há item
+	# info_panel.visible = false  # Descomente se quiser esconder

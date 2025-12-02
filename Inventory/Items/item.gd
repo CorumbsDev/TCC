@@ -15,13 +15,107 @@ var operator : String = ""
 var selected = false
 var item_grids := [Vector2(0,0)]
 var grid_anchor = null
+var is_hovered = false  # Nova variável para rastrear hover
+
+# Signal para notificar quando o mouse entra/sai
+signal mouse_entered_item(item)
+signal mouse_exited_item(item)
 
 func _ready():
+	# Adiciona área de detecção de mouse se não existir
+	setup_mouse_detection()
+
+func setup_mouse_detection():
+	# Verifica se já existe uma Area2D ou similar
+	# Se não, vamos usar o método de detecção no _process
 	pass
 
 func _process(delta):
 	if selected:
 		global_position = lerp(global_position, get_global_mouse_position(), 25 * delta)
+	
+	# Detecta se o mouse está sobre o item
+	check_mouse_hover()
+
+func check_mouse_hover():
+	# Verifica se o mouse está sobre o item
+	var mouse_pos = get_global_mouse_position()
+	var item_rect = get_item_rect()
+	
+	if item_rect.has_point(to_local(mouse_pos)):
+		if not is_hovered:
+			is_hovered = true
+			mouse_entered_item.emit(self)
+	else:
+		if is_hovered:
+			is_hovered = false
+			mouse_exited_item.emit(self)
+
+func get_item_rect() -> Rect2:
+	"""Retorna o retângulo do item para detecção de hover"""
+	if value_label:
+		var label_size = value_label.size
+		var label_pos = value_label.global_position - global_position
+		return Rect2(label_pos, label_size)
+	else:
+		# Fallback: retângulo padrão
+		return Rect2(Vector2(-20, -20), Vector2(40, 40))
+
+func get_item_info() -> Dictionary:
+	"""Retorna um dicionário com todas as informações do item"""
+	var info = {
+		"tipo": "",
+		"valor": "",
+		"id": "",
+		"detalhes": ""
+	}
+	
+	# Garante que o ID sempre tenha um valor
+	if item_ID == null or item_ID == "":
+		# Gera um ID baseado no tipo e valor
+		match data_type:
+			DataType.INT:
+				info.id = "item_number_" + str(value)
+			DataType.FLOAT:
+				info.id = "item_float_" + str(value_float)
+			DataType.BOOLEAN:
+				info.id = "item_bool_" + ("true" if value_bool else "false")
+			DataType.STRING:
+				info.id = "item_string_" + str(value_string.hash())
+			DataType.OPERATOR:
+				info.id = "item_operator_" + operator
+			_:
+				info.id = "item_unknown"
+	else:
+		info.id = item_ID
+	
+	match data_type:
+		DataType.INT:
+			info.tipo = "INT (Inteiro)"
+			info.valor = str(value)
+			info.detalhes = "Número inteiro: " + str(value)
+		DataType.FLOAT:
+			info.tipo = "FLOAT (Decimal)"
+			info.valor = str(value_float)
+			info.detalhes = "Número decimal: " + str(value_float)
+		DataType.BOOLEAN:
+			info.tipo = "BOOLEAN (Booleano)"
+			info.valor = "true" if value_bool else "false"
+			info.detalhes = "Valor booleano: " + ("Verdadeiro" if value_bool else "Falso")
+		DataType.STRING:
+			info.tipo = "STRING (Texto)"
+			info.valor = '"' + value_string + '"'
+			info.detalhes = "Texto: " + value_string
+		DataType.OPERATOR:
+			info.tipo = "OPERATOR (Operador)"
+			info.valor = operator
+			info.detalhes = "Operador: " + operator
+		_:
+			info.tipo = "DESCONHECIDO"
+			info.valor = str(value)
+			info.detalhes = "Tipo não identificado"
+	
+	return info
 
 func load_item(a_ItemID: String) -> void:
 	item_ID = a_ItemID
