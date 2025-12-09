@@ -29,7 +29,7 @@ func set_color(a_state = States.DEFAULT) -> void :
 		States.FREE:
 			filter.color = Color(Color.GREEN, 0.2)
 
-func _process(delta):
+func _process(_delta):
 	if get_global_rect().has_point(get_global_mouse_position()):
 		if not is_hovering:
 			is_hovering = true
