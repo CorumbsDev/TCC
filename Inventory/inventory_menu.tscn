@@ -143,8 +143,8 @@ theme_override_constants/separation = 12
 [node name="TitleLabel" type="Label" parent="InfoPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 0
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
 text = "Informações do Orb"
 horizontal_alignment = 1
 
@@ -165,24 +165,24 @@ theme_override_constants/separation = 12
 [node name="TypeLabel" type="Label" parent="InfoPanel/MarginContainer/VBoxContainer/ScrollContainer/InfoContainer"]
 layout_mode = 2
 size_flags_vertical = 0
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.8, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 16
 text = "Tipo: -"
 autowrap_mode = 3
 
 [node name="ValueLabel" type="Label" parent="InfoPanel/MarginContainer/VBoxContainer/ScrollContainer/InfoContainer"]
 layout_mode = 2
 size_flags_vertical = 0
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.8, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 16
 text = "Valor: -"
 autowrap_mode = 3
 
 [node name="IDLabel" type="Label" parent="InfoPanel/MarginContainer/VBoxContainer/ScrollContainer/InfoContainer"]
 layout_mode = 2
 size_flags_vertical = 0
-theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 14
 text = "ID: -"
 autowrap_mode = 3
 
@@ -193,8 +193,8 @@ size_flags_vertical = 0
 [node name="DetailsLabel" type="Label" parent="InfoPanel/MarginContainer/VBoxContainer/ScrollContainer/InfoContainer"]
 layout_mode = 2
 size_flags_vertical = 0
-theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
 text = "Detalhes: -"
 autowrap_mode = 3
 
