@@ -116,12 +116,15 @@ func create_item_on_hand_randomly():
 		add_child(new_item)
 		
 		var random_item = ""
-		match randi_range(1, 5):
+		match randi_range(1, 8):
 			1: random_item = "item_number_7"
 			2: random_item = "item_operator_plus"
 			3: random_item = "item_operator_increment"
 			4: random_item = "item_number_7"
 			5: random_item = "item_number_5"
+			6: random_item = "item_double_3.14159"
+			7: random_item = "item_binary_10"
+			8: random_item = "item_binary_42"
 		
 		if new_item.has_method("load_item"):
 			new_item.load_item(random_item)
@@ -189,29 +192,34 @@ func place_item():
 	if not can_place or not current_slot: 
 		return
 	
-	item_held.get_parent().remove_child(item_held)
-	grid_container.add_child(item_held)
-	item_held.global_position = get_global_mouse_position()
+	# Salva referência ao item sendo colocado (a cascata de expressão pode alterar item_held)
+	var placing_item = item_held
+	
+	placing_item.get_parent().remove_child(placing_item)
+	grid_container.add_child(placing_item)
+	placing_item.global_position = get_global_mouse_position()
 	
 	var calculated_grid_id = current_slot.slot_ID + int(icon_anchor.x) * col_count + int(icon_anchor.y)
-	item_held._snap_to(grid_array[calculated_grid_id].global_position)
-	item_held.grid_anchor = current_slot
+	placing_item._snap_to(grid_array[calculated_grid_id].global_position)
+	placing_item.grid_anchor = current_slot
 	
-	for grid in item_held.item_grids:
+	for grid in placing_item.item_grids:
 		var grid_to_check = current_slot.slot_ID + grid[0] + grid[1] * col_count
 		grid_array[grid_to_check].state = grid_array[grid_to_check].States.TAKEN 
-		grid_array[grid_to_check].item_stored = item_held
-		grid_array[grid_to_check].set_item(item_held)
+		grid_array[grid_to_check].item_stored = placing_item
+		grid_array[grid_to_check].set_item(placing_item)
 	
 	# Conecta sinais de hover do item colocado (verifica se já está conectado)
-	if item_held.has_signal("mouse_entered_item"):
-		if not item_held.mouse_entered_item.is_connected(_on_item_mouse_entered):
-			item_held.mouse_entered_item.connect(_on_item_mouse_entered)
-	if item_held.has_signal("mouse_exited_item"):
-		if not item_held.mouse_exited_item.is_connected(_on_item_mouse_exited):
-			item_held.mouse_exited_item.connect(_on_item_mouse_exited)
+	if placing_item.has_signal("mouse_entered_item"):
+		if not placing_item.mouse_entered_item.is_connected(_on_item_mouse_entered):
+			placing_item.mouse_entered_item.connect(_on_item_mouse_entered)
+	if placing_item.has_signal("mouse_exited_item"):
+		if not placing_item.mouse_exited_item.is_connected(_on_item_mouse_exited):
+			placing_item.mouse_exited_item.connect(_on_item_mouse_exited)
 	
-	item_held = null
+	# Só zera item_held se a cascata de expressão não criou um novo item resultado
+	if item_held == placing_item:
+		item_held = null
 	clear_grid()
 
 func pick_item():
@@ -258,12 +266,17 @@ func check_combinations():
 	for linha in range(8):
 		var sequence = []
 		var slots_na_sequencia = []  # Armazena os slots usados na sequência
+		var itens_ja_contados = []  # Evita duplicatas de itens multi-slot
 		for coluna in range(8):
 			var index = linha * 8 + coluna
 			if index < grid_array.size():
 				var slot = grid_array[index]
 				if slot.item_stored != null:
 					var item = slot.item_stored
+					# Pula se este item já foi contado (multi-slot)
+					if item in itens_ja_contados:
+						continue
+					itens_ja_contados.append(item)
 					# Verifica se é operador
 					if item.get("data_type") != null and item.data_type == item.DataType.OPERATOR:
 						if item.operator != "":
@@ -300,6 +313,7 @@ func check_combinations():
 						_process_sequence(sequence)
 					sequence.clear()
 					slots_na_sequencia.clear()
+					itens_ja_contados.clear()
 		
 		if sequence.size() >= 3:
 			# Armazena os slots usados antes de processar
@@ -310,12 +324,17 @@ func check_combinations():
 	for coluna in range(8):
 		var sequence = []
 		var slots_na_sequencia = []  # Armazena os slots usados na sequência
+		var itens_ja_contados = []  # Evita duplicatas de itens multi-slot
 		for linha in range(8):
 			var index = linha * 8 + coluna
 			if index < grid_array.size():
 				var slot = grid_array[index]
 				if slot.item_stored != null:
 					var item = slot.item_stored
+					# Pula se este item já foi contado (multi-slot)
+					if item in itens_ja_contados:
+						continue
+					itens_ja_contados.append(item)
 					# Verifica se é operador
 					if item.get("data_type") != null and item.data_type == item.DataType.OPERATOR:
 						if item.operator != "":
@@ -352,6 +371,7 @@ func check_combinations():
 						_process_sequence(sequence)
 					sequence.clear()
 					slots_na_sequencia.clear()
+					itens_ja_contados.clear()
 		
 		if sequence.size() >= 3:
 			# Armazena os slots usados antes de processar
@@ -528,6 +548,14 @@ func create_result_item_typed(resultado: Variant, tipo_resultado: String):
 					if valor_str.length() > 20:
 						valor_str = valor_str.substr(0, 20) + "..."
 					new_item.set_value_by_type(valor_str, tipo_enum)
+				"DOUBLE":
+					tipo_enum = new_item.DataType.DOUBLE
+					var valor_double = float(resultado)
+					new_item.set_value_by_type(valor_double, tipo_enum)
+				"BINARY":
+					tipo_enum = new_item.DataType.BINARY
+					var valor_binary = int(resultado)
+					new_item.set_value_by_type(valor_binary, tipo_enum)
 				_:
 					# Fallback: tenta converter para int
 					tipo_enum = new_item.DataType.INT
@@ -548,6 +576,12 @@ func create_result_item_typed(resultado: Variant, tipo_resultado: String):
 		new_item.selected = true
 		item_held = new_item
 		print("Item de resultado criado - Valor: ", resultado, " Tipo: ", tipo_resultado)
+		
+		# Força a verificação de disponibilidade para o novo item
+		# (o mouse já está sobre um slot, mas o sinal slot_entered não vai disparar novamente)
+		if current_slot:
+			check_slot_availability(current_slot)
+			set_grids.call_deferred(current_slot)
 
 func consumir_itens_expressao():
 	"""Remove os itens usados na expressão do grid"""

@@ -117,6 +117,8 @@ func converter_resultado_para_tipo(valor: Variant, tipo: String) -> Variant:
 			return int(valor)
 		"FLOAT":
 			return float(valor)
+		"DOUBLE":
+			return float(valor)
 		"BOOLEAN":
 			if typeof(valor) == TYPE_BOOL:
 				return bool(valor)
@@ -126,6 +128,8 @@ func converter_resultado_para_tipo(valor: Variant, tipo: String) -> Variant:
 				return bool(valor)
 		"STRING":
 			return str(valor)
+		"BINARY":
+			return int(valor)
 		_:
 			return float(valor)
 

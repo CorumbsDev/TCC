@@ -46,5 +46,21 @@ var item_data = {
 	"item_operator_shiftright": {"Operator": ">>"},
 	"item_function_sin": {"Operator": "sin"},
 	"item_function_cos": {"Operator": "cos"},
-	"item_function_sqrt": {"Operator": "sqrt"}
+	"item_function_sqrt": {"Operator": "sqrt"},
+	
+	# ===== DOUBLE (Precisão Dupla - ocupa 2 slots) =====
+	"item_double_3.14159": {"Value": 3.14159265, "DataType": "DOUBLE"},
+	"item_double_2.71828": {"Value": 2.71828182, "DataType": "DOUBLE"},
+	"item_double_1.41421": {"Value": 1.41421356, "DataType": "DOUBLE"},
+	
+	# ===== BINARY (Binário - ocupa 8 slots) =====
+	# ===== BINARY (Binário - 1 slot, sprite próprio) =====
+	"item_binary_0": {"Value": 0, "DataType": "BINARY", "Bits": 1},
+	"item_binary_1": {"Value": 1, "DataType": "BINARY", "Bits": 1},
+	"item_binary_10": {"Value": 2, "DataType": "BINARY", "Bits": 2},
+	"item_binary_11": {"Value": 3, "DataType": "BINARY", "Bits": 2},
+	"item_binary_5": {"Value": 5, "DataType": "BINARY", "Bits": 3},
+	"item_binary_1010": {"Value": 10, "DataType": "BINARY", "Bits": 4},
+	"item_binary_42": {"Value": 42, "DataType": "BINARY", "Bits": 6},
+	"item_binary_255": {"Value": 255, "DataType": "BINARY", "Bits": 8}
 }
