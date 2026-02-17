@@ -3,7 +3,7 @@ extends Node2D
 @onready var value_label: Label = $ColorRect/value_label
 
 # Enum para identificar o tipo de dado do orb
-enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR}
+enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR, DOUBLE, BINARY}
 
 var item_ID : String
 var data_type: DataType = DataType.INT  # Tipo padrão é INT
@@ -11,6 +11,9 @@ var value : int = 0
 var value_float : float = 0.0
 var value_bool : bool = false
 var value_string : String = ""
+var value_double : float = 0.0  # Precisão dupla (ocupa 2 slots)
+var value_binary : String = "00000000"  # Representação binária em string
+var binary_bits : int = 8  # Quantidade de bits para o tipo BINARY
 var operator : String = ""
 var selected = false
 var item_grids := [Vector2(0,0)]
@@ -84,6 +87,10 @@ func get_item_info() -> Dictionary:
 				info.id = "item_string_" + str(value_string.hash())
 			DataType.OPERATOR:
 				info.id = "item_operator_" + operator
+			DataType.DOUBLE:
+				info.id = "item_double_" + str(value_double)
+			DataType.BINARY:
+				info.id = "item_binary_" + str(value)
 			_:
 				info.id = "item_unknown"
 	else:
@@ -110,6 +117,15 @@ func get_item_info() -> Dictionary:
 			info.tipo = "OPERATOR (Operador)"
 			info.valor = operator
 			info.detalhes = "Operador: " + operator
+		DataType.DOUBLE:
+			info.tipo = "DOUBLE (Precisão Dupla)"
+			info.valor = str(value_double)
+			info.detalhes = "Valor double: " + str(value_double) + "\nOcupa 2 slots"
+		DataType.BINARY:
+			var decimal_val = binary_to_int(value_binary)
+			info.tipo = "BINARY (Binário)"
+			info.valor = value_binary
+			info.detalhes = "Binário: " + value_binary + "\nDecimal: " + str(decimal_val) + "\nBits: " + str(binary_bits) + "\nOcupa " + str(binary_bits) + " slots"
 		_:
 			info.tipo = "DESCONHECIDO"
 			info.valor = str(value)
@@ -151,6 +167,25 @@ func load_item(a_ItemID: String) -> void:
 				value = 0
 				value_float = 0.0
 				value_bool = false
+			"DOUBLE":
+				data_type = DataType.DOUBLE
+				value_double = float(data.get("Value", 0.0))
+				value = int(value_double)
+				value_float = value_double
+				value_bool = false
+				value_string = ""
+				# DOUBLE ocupa 2 slots horizontais
+				item_grids = [Vector2(0,0), Vector2(1,0)]
+			"BINARY", "BIN":
+				data_type = DataType.BINARY
+				binary_bits = int(data.get("Bits", 8))
+				value = int(data.get("Value", 0))
+				value_binary = int_to_binary(value, binary_bits)
+				value_float = float(value)
+				value_bool = false
+				value_string = ""
+				# BINARY ocupa 1 slot (antes era N slots)
+				item_grids = [Vector2(0,0)]
 			_:
 				# Padrão: INT
 				data_type = DataType.INT
@@ -191,27 +226,48 @@ func set_value_by_type(new_value, tipo: DataType):
 			value_float = float(new_value)
 			value_bool = false
 			value_string = ""
+			item_grids = [Vector2(0,0)]
 		DataType.FLOAT:
 			value_float = float(new_value)
 			value = int(value_float)
 			value_bool = false
 			value_string = ""
+			item_grids = [Vector2(0,0)]
 		DataType.BOOLEAN:
 			value_bool = bool(new_value)
 			value = 1 if value_bool else 0
 			value_float = 1.0 if value_bool else 0.0
 			value_string = ""
+			item_grids = [Vector2(0,0)]
 		DataType.STRING:
 			value_string = str(new_value)
 			value = 0
 			value_float = 0.0
 			value_bool = false
+			item_grids = [Vector2(0,0)]
 		DataType.OPERATOR:
 			operator = str(new_value)
 			value = 0
 			value_float = 0.0
 			value_bool = false
 			value_string = ""
+			item_grids = [Vector2(0,0)]
+		DataType.DOUBLE:
+			value_double = float(new_value)
+			value = int(value_double)
+			value_float = value_double
+			value_bool = false
+			value_string = ""
+			# DOUBLE ocupa 2 slots horizontais
+			item_grids = [Vector2(0,0), Vector2(1,0)]
+		DataType.BINARY:
+			value = int(new_value)
+			value_binary = int_to_binary(value, binary_bits)
+			value_float = float(value)
+			value_bool = false
+			value_string = ""
+			# BINARY ocupa 1 slot (antes era N slots)
+			item_grids = [Vector2(0,0)]
 	
 	update_label_display()
 
@@ -228,6 +284,10 @@ func get_value_as_string() -> String:
 			return value_string
 		DataType.OPERATOR:
 			return operator
+		DataType.DOUBLE:
+			return str(value_double)
+		DataType.BINARY:
+			return str(binary_to_int(value_binary))
 		_:
 			return str(value)
 
@@ -259,39 +319,105 @@ func update_label_display():
 	# Garante que a Label está visível
 	value_label.visible = true
 	
+	# Referência ao ColorRect pai da label
+	var color_rect = value_label.get_parent() if value_label.get_parent() is ColorRect else null
+	
 	# Configura o texto baseado no tipo
 	if data_type == DataType.OPERATOR:
 		value_label.text = operator
 		value_label.add_theme_color_override("font_color", Color.RED)
 		value_label.add_theme_font_size_override("font_size", 24)
+		_resize_visual(color_rect, 1)
 	elif data_type == DataType.INT:
 		value_label.text = str(value)
 		value_label.add_theme_color_override("font_color", Color.BLUE)
 		value_label.add_theme_font_size_override("font_size", 20)
+		_resize_visual(color_rect, 1)
 	elif data_type == DataType.FLOAT:
 		value_label.text = str(value_float)
 		value_label.add_theme_color_override("font_color", Color.CYAN)
 		value_label.add_theme_font_size_override("font_size", 20)
+		_resize_visual(color_rect, 1)
 	elif data_type == DataType.BOOLEAN:
 		value_label.text = "true" if value_bool else "false"
 		value_label.add_theme_color_override("font_color", Color.GREEN)
 		value_label.add_theme_font_size_override("font_size", 20)
+		_resize_visual(color_rect, 1)
 	elif data_type == DataType.STRING:
 		value_label.text = '"' + value_string + '"'
 		value_label.add_theme_color_override("font_color", Color.YELLOW)
 		value_label.add_theme_font_size_override("font_size", 18)
+		_resize_visual(color_rect, 1)
+	elif data_type == DataType.DOUBLE:
+		# DOUBLE: mostra valor com precisão, ocupa 2 slots
+		value_label.text = str(value_double)
+		value_label.add_theme_color_override("font_color", Color.MAGENTA)
+		value_label.add_theme_font_size_override("font_size", 16)
+		_resize_visual(color_rect, 2)
+	elif data_type == DataType.BINARY:
+		# BINARY: mostra valor bit a bit (ex: "1010") em 1 slot
+		value_label.text = value_binary
+		value_label.add_theme_color_override("font_color", Color.LIME)
+		value_label.add_theme_font_size_override("font_size", 14)
+		_resize_visual(color_rect, 1) # Sempre 1 slot
+		
+		# Tenta carregar sprite específico se existir
+		var icon = get_node_or_null("Icon")
+		if icon:
+			var binary_texture = load("res://Inventory/Sprites/Item_binary.png")
+			if binary_texture:
+				icon.texture = binary_texture
 	else:
 		value_label.text = str(value)
 		value_label.add_theme_color_override("font_color", Color.BLACK) 
 		value_label.add_theme_font_size_override("font_size", 20)
+		_resize_visual(color_rect, 1)
 	
 	# Força o redesenho
 	value_label.queue_redraw()
 
+func _resize_visual(color_rect, slot_count: int):
+	"""Redimensiona o ColorRect e a Label para cobrir múltiplos slots"""
+	var slot_size = 50  # Tamanho de cada slot em pixels
+	var total_width = slot_count * slot_size
+	
+	if color_rect and color_rect is ColorRect:
+		# Mantém margem de 5px em cada lado (slot = 50px, visual = 40px por slot)
+		color_rect.offset_left = -19
+		color_rect.offset_right = total_width - 19 - 10
+		color_rect.offset_top = -20
+		color_rect.offset_bottom = 20
+	
+	if value_label:
+		# Label preenche o ColorRect
+		value_label.offset_left = 0
+		value_label.offset_right = total_width - 10
+		value_label.custom_minimum_size.x = total_width - 10
+
 func _snap_to(destination):
 	var tween = get_tree().create_tween()
-	# Ajuste para usar o tamanho da Label
-	if value_label:
-		destination += value_label.size / 2
+	# Offset fixo baseado no centro de 1 slot (50x50)
+	# Não usa value_label.size pois itens multi-slot teriam offset errado
+	destination += Vector2(20, 10)
 	tween.tween_property(self, "global_position", destination, 0.15).set_trans(Tween.TRANS_SINE)
 	selected = false
+
+# ===== Funções auxiliares para BINARY =====
+
+func int_to_binary(val: int, bits: int) -> String:
+	"""Converte um inteiro para string binária com N bits"""
+	if val < 0:
+		val = 0
+	var result = ""
+	var temp = val
+	for i in range(bits):
+		result = str(temp % 2) + result
+		temp = temp / 2
+	return result
+
+func binary_to_int(bin_str: String) -> int:
+	"""Converte uma string binária para inteiro"""
+	var result = 0
+	for i in range(bin_str.length()):
+		result = result * 2 + int(bin_str[i])
+	return result
