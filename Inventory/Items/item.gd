@@ -123,9 +123,10 @@ func get_item_info() -> Dictionary:
 			info.detalhes = "Valor double: " + str(value_double) + "\nOcupa 2 slots"
 		DataType.BINARY:
 			var decimal_val = binary_to_int(value_binary)
+			var explicacao = get_binary_explanation(value_binary)
 			info.tipo = "BINARY (Binário)"
 			info.valor = value_binary
-			info.detalhes = "Binário: " + value_binary + "\nDecimal: " + str(decimal_val) + "\nBits: " + str(binary_bits) + "\nOcupa " + str(binary_bits) + " slots"
+			info.detalhes = "Binário: " + value_binary + "\nDecimal: " + str(decimal_val) + "\nBits: " + str(binary_bits) + "\nOcupa " + str(binary_bits) + " slots\n\nComo o binário funciona:\n" + explicacao
 		_:
 			info.tipo = "DESCONHECIDO"
 			info.valor = str(value)
@@ -412,6 +413,7 @@ func int_to_binary(val: int, bits: int) -> String:
 	var temp = val
 	for i in range(bits):
 		result = str(temp % 2) + result
+		@warning_ignore("integer_division")
 		temp = temp / 2
 	return result
 
@@ -421,3 +423,30 @@ func binary_to_int(bin_str: String) -> int:
 	for i in range(bin_str.length()):
 		result = result * 2 + int(bin_str[i])
 	return result
+
+func get_size_bytes() -> int:
+	"""Retorna o tamanho em bytes do item (para Fase 2 - Mochila)."""
+	if item_ID != null and item_ID != "" and DataHandler:
+		return DataHandler.get_item_bytes(item_ID)
+	match data_type:
+		DataType.DOUBLE:
+			return 2
+		DataType.BINARY:
+			return int(ceil(float(binary_bits) / 8.0))
+		_:
+			return 1
+
+func get_binary_explanation(bin_str: String) -> String:
+	"""Gera texto explicando a conversão binário → decimal (ex: 10₂ = 1·2¹ + 0·2⁰ = 2)"""
+	if bin_str.is_empty():
+		return "-"
+	var n = bin_str.length()
+	var termos: PackedStringArray = []
+	for i in range(n):
+		var dig = bin_str[i]
+		var pos = n - 1 - i
+		var exp_str = "2⁰" if pos == 0 else ("2¹" if pos == 1 else "2²" if pos == 2 else "2³" if pos == 3 else "2^" + str(pos))
+		termos.append(dig + "·" + exp_str)
+	var formula = " + ".join(termos)
+	var decimal_val = binary_to_int(bin_str)
+	return bin_str + "₂ = " + formula + " = " + str(decimal_val)

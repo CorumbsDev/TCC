@@ -3,6 +3,7 @@ import os
 import json
 import sys
 
+
 def detectar_tipo_python(valor):
     """Detecta o tipo Python do valor e retorna como string"""
     tipo_python = type(valor).__name__

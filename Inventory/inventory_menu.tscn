@@ -43,10 +43,16 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_vertical = 2
-theme_override_constants/separation = 0
+theme_override_constants/separation = 20
+
+[node name="BtnVoltar" type="Button" parent="Background/MarginContainer/VBoxContainer/Header"]
+custom_minimum_size = Vector2(120, 60)
+layout_mode = 2
+size_flags_vertical = 4
+text = "← Menu"
 
 [node name="Button_Spawn" type="Button" parent="Background/MarginContainer/VBoxContainer/Header"]
-custom_minimum_size = Vector2(200, 70)
+custom_minimum_size = Vector2(120, 60)
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4
@@ -54,7 +60,7 @@ theme_override_font_sizes/font_size = 20
 text = "Spawn Item"
 
 [node name="Add_slot" type="Button" parent="Background/MarginContainer/VBoxContainer/Header"]
-custom_minimum_size = Vector2(100, 50)
+custom_minimum_size = Vector2(120, 60)
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4
@@ -204,6 +210,7 @@ offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("2_26jtl")
 
+[connection signal="pressed" from="Background/MarginContainer/VBoxContainer/Header/BtnVoltar" to="." method="_on_voltar_pressed"]
 [connection signal="pressed" from="Background/MarginContainer/VBoxContainer/Header/Button_Spawn" to="." method="_on_button_spawn_pressed"]
 [connection signal="pressed" from="Background/MarginContainer/VBoxContainer/Header/Add_slot" to="." method="_on_add_slot_pressed"]
 [connection signal="pressed" from="Background2/MarginContainer/VBoxContainer/Header/Button_Spawn" to="." method="_on_button_spawn_pressed"]

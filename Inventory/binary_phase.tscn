@@ -1,0 +1,112 @@
+[gd_scene load_steps=3 format=3 uid="uid://flpmsau4qpiq"]
+
+[ext_resource type="Script" path="res://Inventory/binary_phase.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://b0uhc1jdhcm7s" path="res://Inventory/slot.tscn" id="2_slot"]
+
+[node name="BinaryPhase" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 50.0
+grow_horizontal = 2
+
+[node name="BtnVoltar" type="Button" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "← Voltar"
+
+[node name="Title" type="Label" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 20
+text = "Fase 1: Completar o binário (1 _ 0)"
+vertical_alignment = 1
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 55.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 30
+
+[node name="LeftPanel" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/LeftPanel"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="HBox/LeftPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="Label" type="Label" parent="HBox/LeftPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "1) Clique em 0 ou 1.
+2) Arraste o orb até o espaço em branco."
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="GridContainer" type="GridContainer" parent="HBox/LeftPanel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="RightPanel" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/RightPanel"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="HBox/RightPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Complete o binário: arraste 0 ou 1 para o espaço central."
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="BinaryDisplay" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 1, 0.7, 1)
+theme_override_font_sizes/font_size = 28
+text = "1 _ 0"
+horizontal_alignment = 1
+
+[node name="TargetSlot" parent="HBox/RightPanel/MarginContainer/VBox" instance=ExtResource("2_slot")]
+layout_mode = 2
+slot_ID = -1
+
+[node name="ResultLabel" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Depois de soltar o orb, veja abaixo a conversão de binário para decimal."
+horizontal_alignment = 1
+autowrap_mode = 3

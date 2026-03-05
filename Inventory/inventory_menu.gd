@@ -258,6 +258,9 @@ func pick_item():
 	check_slot_availability(current_slot)
 	set_grids.call_deferred(current_slot)
 
+func _on_voltar_pressed():
+	get_tree().change_scene_to_file("res://Inventory/main_menu.tscn")
+
 func _on_add_slot_pressed():
 	create_slot()
 
