@@ -1,0 +1,85 @@
+[gd_scene load_steps=2 format=3 uid="uid://c2backpack01"]
+
+[ext_resource type="Script" path="res://Inventory/backpack_phase.gd" id="1_script"]
+
+[node name="BackpackPhase" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 50.0
+grow_horizontal = 2
+
+[node name="BtnVoltar" type="Button" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "← Voltar"
+
+[node name="Title" type="Label" parent="TopBar"]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 20
+text = "Fase 2: Mochila (limite em bytes)"
+vertical_alignment = 1
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 55.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BackpackPanel" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/BackpackPanel"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="HBox/BackpackPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BytesLabel" type="Label" parent="HBox/BackpackPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Mochila: 0 / 8 bytes"
+
+[node name="HintLabel" type="Label" parent="HBox/BackpackPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Objetivo: a mochila suporta 8 bytes.
+Já há 7 bytes ocupados e falta 1 byte.
+Pegue um INT (1 byte) e coloque no slot vazio."
+autowrap_mode = 3
+
+[node name="Header" type="HBoxContainer" parent="HBox/BackpackPanel/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="BtnSpawn" type="Button" parent="HBox/BackpackPanel/MarginContainer/VBox/Header"]
+layout_mode = 2
+text = "Pegar item"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HBox/BackpackPanel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="HBox/BackpackPanel/MarginContainer/VBox/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 0
+columns = 4
