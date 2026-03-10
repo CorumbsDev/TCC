@@ -38,6 +38,7 @@ anchor_bottom = 1.0
 offset_top = 55.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 20
 
 [node name="BackpackPanel" type="PanelContainer" parent="HBox"]
 layout_mode = 2
@@ -83,3 +84,31 @@ layout_mode = 2
 theme_override_constants/h_separation = 0
 theme_override_constants/v_separation = 0
 columns = 4
+
+[node name="BancadaPanel" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/BancadaPanel"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="HBox/BancadaPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BancadaTitle" type="Label" parent="HBox/BancadaPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Bancada — escolha um número e coloque na mochila"
+autowrap_mode = 3
+
+[node name="BancadaGrid" type="GridContainer" parent="HBox/BancadaPanel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 5

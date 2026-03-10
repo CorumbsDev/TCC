@@ -304,18 +304,18 @@ func set_operator_directly(new_operator: String):
 	update_label_display()
 
 func update_label_display():
-	# Aguarda a Label estar pronta se necessário
+	# Garante que a Label existe (caminho correto na cena: ColorRect/value_label)
 	if not value_label:
-		# Tenta encontrar a Label se não foi atribuída automaticamente
+		value_label = get_node_or_null("ColorRect/value_label")
+	if not value_label:
 		value_label = get_node_or_null("ValueLabel")
-		if not value_label:
-			# Procura por qualquer Label na cena
-			var labels = get_children().filter(func(child): return child is Label)
-			if labels.size() > 0:
-				value_label = labels[0]
-			else:
-				push_error("Nenhuma Label encontrada no item!")
-				return
+	if not value_label:
+		var cr = get_node_or_null("ColorRect")
+		if cr:
+			value_label = cr.get_node_or_null("value_label")
+	if not value_label:
+		push_error("Nenhuma Label encontrada no item!")
+		return
 	
 	# Garante que a Label está visível
 	value_label.visible = true
