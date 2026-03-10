@@ -6,7 +6,7 @@ extends Control
 @onready var slot_scene = preload("res://Inventory/slot.tscn")
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
 @onready var left_grid = $HBox/LeftPanel/MarginContainer/VBox/GridContainer
-@onready var target_slot = $HBox/RightPanel/MarginContainer/VBox/TargetSlot
+@onready var target_slot = $HBox/RightPanel/MarginContainer/VBox/BinaryRow/TargetSlot
 @onready var result_label = $HBox/RightPanel/MarginContainer/VBox/ResultLabel
 @onready var binary_display = $HBox/RightPanel/MarginContainer/VBox/BinaryDisplay
 @onready var btn_voltar = $TopBar/BtnVoltar
@@ -44,10 +44,10 @@ func _spawn_bit_at_slot(slot_idx: int, bit_value: int):
 	if slot.item_stored != null:
 		return
 	var item = item_scene.instantiate()
-	left_grid.add_child(item)
+	slot.add_child(item)
+	item.position = Vector2(25, 25)
 	var id = "item_binary_1" if bit_value == 1 else "item_binary_0"
-	item.load_item(id)
-	item.global_position = slot.global_position + Vector2(25, 25)
+	item.call_deferred("load_item", id)
 	item.grid_anchor = slot
 	slot.state = slot.States.TAKEN
 	slot.item_stored = item
@@ -129,9 +129,12 @@ func _try_place_item():
 		return
 	var placing = item_held
 	placing.get_parent().remove_child(placing)
-	var dest_parent = left_grid if (current_slot in left_slots) else target_slot.get_parent()
-	dest_parent.add_child(placing)
-	placing.global_position = current_slot.global_position + Vector2(25, 25)
+	if current_slot in left_slots:
+		current_slot.add_child(placing)
+		placing.position = Vector2(25, 25)
+	else:
+		target_slot.add_child(placing)
+		placing.position = Vector2(25, 25)
 	placing._snap_to(current_slot.global_position + Vector2(25, 25))
 	placing.grid_anchor = current_slot
 	placing.selected = false
