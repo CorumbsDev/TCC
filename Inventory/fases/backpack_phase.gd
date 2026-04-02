@@ -3,7 +3,7 @@ extends Control
 ## Inventário com capacidade em bytes; cada item tem tamanho (ex: int = 1 byte).
 ## Objetivo: preencher o último byte livre (ex: colocar um int).
 
-@onready var slot_scene = preload("res://Inventory/slot.tscn")
+@onready var slot_scene = preload("res://Inventory/slots/slot.tscn")
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
 @onready var grid_container = $HBox/BackpackPanel/MarginContainer/VBox/ScrollContainer/GridContainer
 @onready var scroll_container = $HBox/BackpackPanel/MarginContainer/VBox/ScrollContainer

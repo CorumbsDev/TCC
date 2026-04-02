@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://0nqqxacxuayc"]
 
-[ext_resource type="Script" uid="uid://ce5ayxy8aycj8" path="res://Inventory/inventory_menu.gd" id="1_jolrh"]
-[ext_resource type="Script" uid="uid://rtbsq2i184bq" path="res://Inventory/controlador.gd" id="2_26jtl"]
+[ext_resource type="Script" uid="uid://ce5ayxy8aycj8" path="res://Inventory/fases/inventory_menu.gd" id="1_jncww"]
+[ext_resource type="Script" uid="uid://rtbsq2i184bq" path="res://Inventory/controlador.gd" id="2_1103q"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_InfoPanel"]
 bg_color = Color(0.2, 0.2, 0.2, 0.95)
@@ -18,7 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_jolrh")
+script = ExtResource("1_jncww")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 0
@@ -208,7 +208,7 @@ autowrap_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-script = ExtResource("2_26jtl")
+script = ExtResource("2_1103q")
 
 [connection signal="pressed" from="Background/MarginContainer/VBoxContainer/Header/BtnVoltar" to="." method="_on_voltar_pressed"]
 [connection signal="pressed" from="Background/MarginContainer/VBoxContainer/Header/Button_Spawn" to="." method="_on_button_spawn_pressed"]

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cnh2nxn617kuf"]
+
+[ext_resource type="Script" uid="uid://cijhjhnu78fq3" path="res://Inventory/grid/bancada_grid.gd" id="1_dymhn"]
+
+[node name="BancadaGrid" type="GridContainer"]
+custom_minimum_size = Vector2(200, 200)
+script = ExtResource("1_dymhn")

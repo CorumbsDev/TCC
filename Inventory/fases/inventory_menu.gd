@@ -1,6 +1,6 @@
 extends Control
 
-@onready var slot_scene = preload("res://Inventory/slot.tscn")
+@onready var slot_scene = preload("res://Inventory/slots/slot.tscn")
 @onready var grid_container = $Background/MarginContainer/VBoxContainer/ScrollContainer/GridContainer
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
 @onready var scroll_container = $Background/MarginContainer/VBoxContainer/ScrollContainer
@@ -259,7 +259,7 @@ func pick_item():
 	set_grids.call_deferred(current_slot)
 
 func _on_voltar_pressed():
-	get_tree().change_scene_to_file("res://Inventory/main_menu.tscn")
+	get_tree().change_scene_to_file("res://Inventory/fases/main_menu.tscn")
 
 func _on_add_slot_pressed():
 	create_slot()

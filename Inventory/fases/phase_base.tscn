@@ -1,0 +1,88 @@
+[gd_scene load_steps=3 format=3 uid="uid://bsem5c3x7xico"]
+
+[ext_resource type="Script" uid="uid://dstaq6vwoe03a" path="res://phaseBase.gd" id="1_fscm0"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_fscm0"]
+blend_mode = 1
+
+[node name="PhaseBase" type="Control"]
+clip_contents = true
+custom_minimum_size = Vector2(1280, 720)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_fscm0")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+clip_contents = true
+custom_minimum_size = Vector2(1280, 60)
+layout_mode = 0
+offset_left = 20.0
+offset_top = 10.0
+offset_right = 1300.0
+offset_bottom = 70.0
+
+[node name="BtnVoltar" type="Button" parent="TopBar"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+text = "voltar"
+
+[node name="HBox" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(1240, 630)
+layout_mode = 0
+offset_left = 20.0
+offset_top = 70.0
+offset_right = 1260.0
+offset_bottom = 700.0
+
+[node name="BackpackPanel" type="Panel" parent="HBox"]
+material = SubResource("CanvasItemMaterial_fscm0")
+custom_minimum_size = Vector2(600, 630)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/BackpackPanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 210.0
+offset_bottom = 210.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBox/BackpackPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="BtnSpawn" type="Button" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer/Header"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+text = "spawn"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+columns = 4
+
+[node name="BytesLabel" type="Label" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="HintLabel" type="Label" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="BancadaPanel" type="Panel" parent="HBox"]
+custom_minimum_size = Vector2(620, 630)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/BancadaPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBox/BancadaPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="HBox/BancadaPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2

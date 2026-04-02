@@ -3,7 +3,7 @@ extends Control
 ## Esquerda: inventário com 0 e 1. Direita: binário incompleto (ex: 1 _ 0).
 ## Jogador arrasta 0 ou 1 para o espaço vazio; não há penalidade por errar.
 
-@onready var slot_scene = preload("res://Inventory/slot.tscn")
+@onready var slot_scene = preload("res://Inventory/slots/slot.gd")
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
 @onready var left_grid = $HBox/LeftPanel/MarginContainer/VBox/GridContainer
 @onready var target_slot = $HBox/RightPanel/MarginContainer/VBox/BinaryRow/TargetSlot
