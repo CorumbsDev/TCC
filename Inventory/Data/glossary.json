@@ -1,0 +1,36 @@
+{
+  "termos": [
+    {
+      "termo": "Bit",
+      "definicao": "Dígito em base 2: apenas 0 ou 1. É a menor unidade de informação neste OA."
+    },
+    {
+      "termo": "Byte (neste projeto)",
+      "definicao": "Unidade de 'peso' usada na fase da mochila. Cada tipo de orb pode consumir 1 ou mais bytes conforme o DataHandler (ex.: INT frequentemente 1 byte; DOUBLE pode valer 2)."
+    },
+    {
+      "termo": "INT",
+      "definicao": "Número inteiro (sem parte fracionária), representado visualmente como orb numérico."
+    },
+    {
+      "termo": "FLOAT",
+      "definicao": "Número com parte decimal (ponto flutuante), em geral com 1 byte de peso neste OA, salvo configuração contrária."
+    },
+    {
+      "termo": "DOUBLE",
+      "definicao": "Número de ponto flutuante com mais precisão; neste OA costuma ocupar 2 slots/bytes na grade."
+    },
+    {
+      "termo": "Operador",
+      "definicao": "Símbolo de operação (+, -, *, /, etc.) representado como orb de operador."
+    },
+    {
+      "termo": "Pool",
+      "definicao": "Área com itens disponíveis para arrastar até a mochila do desafio na fase 2."
+    },
+    {
+      "termo": "DataHandler",
+      "definicao": "Autoload com a tabela de itens (IDs) e metadados como tipo e tamanho em bytes. Pode ser estendido via Item_data.json."
+    }
+  ]
+}

@@ -3,13 +3,15 @@ extends Control
 ## Esquerda: inventário com 0 e 1. Direita: binário incompleto (ex: 1 _ 0).
 ## Jogador arrasta 0 ou 1 para o espaço vazio; não há penalidade por errar.
 
-@onready var slot_scene = preload("res://Inventory/slots/slot.gd")
+@onready var slot_scene = preload("res://Inventory/slots/slot.tscn")
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
 @onready var left_grid = $HBox/LeftPanel/MarginContainer/VBox/GridContainer
 @onready var target_slot = $HBox/RightPanel/MarginContainer/VBox/BinaryRow/TargetSlot
 @onready var result_label = $HBox/RightPanel/MarginContainer/VBox/ResultLabel
+@onready var explanation_label = $HBox/RightPanel/MarginContainer/VBox/ExplanationLabel
 @onready var binary_display = $HBox/RightPanel/MarginContainer/VBox/BinaryDisplay
 @onready var btn_voltar = $TopBar/BtnVoltar
+@onready var btn_help = $TopBar/BtnHelp
 
 var left_slots := []
 var item_held = null
@@ -22,6 +24,7 @@ const BINARY_RIGHT = "0"
 
 func _ready():
 	btn_voltar.pressed.connect(_on_voltar_pressed)
+	btn_help.pressed.connect(_on_help_pressed)
 	# Cria 2 slots à esquerda (inventário de bits)
 	for i in range(2):
 		var s = slot_scene.instantiate()
@@ -38,6 +41,17 @@ func _ready():
 	target_slot.slot_exited.connect(_on_slot_exited)
 	target_slot.item_changed.connect(_on_target_item_changed)
 	_update_binary_display(null)
+	call_deferred("_try_show_intro")
+
+
+func _try_show_intro() -> void:
+	var k := TutorialTexts.KEY_PHASE_BINARY
+	TutorialOverlay.open(self, k, TutorialTexts.title_for(k), TutorialTexts.body_for(k), false)
+
+
+func _on_help_pressed() -> void:
+	var k := TutorialTexts.KEY_PHASE_BINARY
+	TutorialOverlay.open(self, k, TutorialTexts.title_for(k), TutorialTexts.body_for(k), false)
 
 func _spawn_bit_at_slot(slot_idx: int, bit_value: int):
 	var slot = left_slots[slot_idx]
@@ -54,7 +68,7 @@ func _spawn_bit_at_slot(slot_idx: int, bit_value: int):
 	slot.set_item(item)
 
 func _on_voltar_pressed():
-	get_tree().change_scene_to_file("res://Inventory/main_menu.tscn")
+	get_tree().change_scene_to_file("res://Inventory/fases/main_menu.tscn")
 
 func _on_slot_entered(s):
 	current_slot = s
@@ -75,16 +89,36 @@ func _on_slot_exited(_s):
 	can_place = false
 
 func _on_target_item_changed(slot):
-	if slot != target_slot or slot.item_stored == null:
+	if slot != target_slot:
+		return
+	if slot.item_stored == null:
+		result_label.text = "Depois de soltar o orb, veja abaixo a conversão de binário para decimal."
+		explanation_label.text = ""
+		_update_binary_display(null)
 		return
 	var item = slot.item_stored
 	var bit_str = item.value_binary if item.value_binary.length() == 1 else str(item.value)
 	var full_binary = BINARY_LEFT + bit_str + BINARY_RIGHT
 	var decimal = _binary_string_to_int(full_binary)
 	result_label.text = "Binário: %s = %d (decimal)" % [full_binary, decimal]
+	explanation_label.text = _binary_expansion_explanation(full_binary, decimal)
 	_update_binary_display(bit_str)
-	# Opcional: repor 0 e 1 no inventário para tentar de novo
 	_refill_bits_if_empty()
+
+
+func _binary_expansion_explanation(full_binary: String, decimal: int) -> String:
+	var n := full_binary.length()
+	var parts: PackedStringArray = PackedStringArray()
+	for i in range(n):
+		var bit := full_binary[i]
+		var power: int = n - 1 - i
+		parts.append("%s×2^%d" % [bit, power])
+	var joined := ""
+	for i in range(parts.size()):
+		if i > 0:
+			joined += " + "
+		joined += parts[i]
+	return "Expansão posicional: " + joined + " = %d." % decimal
 
 func _binary_string_to_int(bin_str: String) -> int:
 	var r = 0

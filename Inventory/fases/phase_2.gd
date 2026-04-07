@@ -1,156 +1,206 @@
-extends "res://phaseBase.gd"
+extends "res://Inventory/fases/phase_base.gd"
 
-@export var initial_backpack_string: String = "1_i, 2.5_f, 3.33_D"
+const GRID_SCENE := preload("res://Inventory/InventoryGrid.tscn")
+const ITEM_SCENE := preload("res://Inventory/Items/Item.tscn")
+
+@export var config: PhaseConfig
+
 
 func _ready():
-	# Chama o _ready da base (conecta botões, etc.)
 	super()
-	
-	# Limpa os containers (remove qualquer coisa que possa ter sido colocada na base)
+	var cfg := config
+	if cfg == null:
+		cfg = PhaseConfig.new()
+		cfg.initial_backpack_csv = "1_i, 2_i, 3_i"
+		cfg.pool_slot_count = 12
+		cfg.random_pool = PackedStringArray()
+		config = cfg
 	_clear_container(backpack_container)
-	_clear_container(bancada_container)
-	
-	# Instancia os grids personalizados (use os nomes reais dos arquivos)
-	var backpack_grid_instance = preload("res://Inventory/backpack/BackpackGrid.tscn").instantiate()
-	var bancada_grid_instance = preload("res://Inventory/grid/BancadaGrid.tscn").instantiate()
-	
-	# Adiciona como filhos dos containers
-	backpack_container.add_child(backpack_grid_instance)
-	bancada_container.add_child(bancada_grid_instance)
-	
-	var backpack = backpack_grid_instance
-	var bancada = bancada_grid_instance
-	
-	# Remove qualquer item criado pelos grids no _ready
+	_clear_container(pool_container)
+	var backpack: InventoryGrid = GRID_SCENE.instantiate()
+	var pool: InventoryGrid = GRID_SCENE.instantiate()
+	_apply_challenge_exports(backpack)
+	_apply_pool_exports(pool)
+	backpack_container.add_child(backpack)
+	pool_container.add_child(pool)
 	backpack.clear_all_items()
-	bancada.clear_all_items()
-	
-	# Conecta sinais
-	setup_grids(backpack, bancada)
-	
-	# Aguarda layout dos slots antes de criar itens
-	call_deferred("_initialize_game", backpack, bancada)
+	pool.clear_all_items()
+	setup_grids(backpack, pool)
+	call_deferred("_initialize_game", backpack, pool)
 
-func _initialize_game(backpack, bancada):
-	# Agora os grids estão prontos (layout já calculado)
+
+func _apply_challenge_exports(grid: InventoryGrid):
+	grid.capacity_bytes = config.capacity_bytes
+	grid.grid_columns = config.grid_columns
+	grid.number_of_slots = config.backpack_slot_count
+	grid.initial_items = []
+
+
+func _apply_pool_exports(grid: InventoryGrid):
+	grid.capacity_bytes = 999999
+	grid.grid_columns = config.pool_grid_columns
+	grid.number_of_slots = config.pool_slot_count
+	grid.initial_items = []
+
+
+func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 	backpack.clear_all_items()
-	bancada.clear_all_items()
-	
-	_create_backpack_items_from_string(initial_backpack_string, backpack)
-	var used = backpack.total_bytes_used()
-	var free = backpack.capacity_bytes - used
-	if free > 0:
-		_generate_bancada_items(bancada, free)
-	else:
-		_generate_bancada_items(bancada, 0)  # opcional: gera alguns itens mesmo com mochila cheia
-	
+	pool.clear_all_items()
+	for entry in config.get_backpack_entry_list():
+		_place_parsed_item_in_challenge(backpack, entry)
+	for entry in config.initial_pool_items:
+		if str(entry).strip_edges().is_empty():
+			continue
+		var item := _make_item_from_entry(str(entry))
+		if item == null:
+			continue
+		if not pool.try_place_item_automatically(item):
+			item.queue_free()
+			push_warning("Pool: sem espaço para item inicial: %s" % entry)
+	var min_extra := config.min_bytes_random_pool
+	if min_extra <= 0:
+		min_extra = max(0, backpack.capacity_bytes - backpack.total_bytes_used())
+	_generate_extra_pool_items(pool, min_extra)
 	_update_bytes_label()
 	_update_hint()
 
-func _clear_container(container):
+
+func _clear_container(container: Node):
 	for child in container.get_children():
 		child.queue_free()
 
-func _create_backpack_items_from_string(str_data: String, backpack):
-	var entries = str_data.split(",", false)
-	var slots = backpack.slots_array
-	var slot_index = 0
-	
-	for entry in entries:
-		entry = entry.strip_edges()
-		if entry.is_empty():
-			continue
-		
-		var parts = entry.split("_")
-		if parts.size() != 2:
-			push_warning("Entrada inválida: %s" % entry)
-			continue
-		
-		var value_str = parts[0]
-		var type_str = parts[1].to_lower()
-		
-		var item = preload("res://Inventory/Items/Item.tscn").instantiate()
-		
-		match type_str:
-			"i":
-				item.set_value_directly(int(value_str))
-			"f":
-				item.set_value_by_type(float(value_str), item.DataType.FLOAT)
-			"D", "d":
-				item.set_value_by_type(float(value_str), item.DataType.DOUBLE)
-			_:
-				push_warning("Tipo desconhecido: %s para %s" % [type_str, entry])
+
+func _make_item_from_entry(entry: String) -> Node2D:
+	var e := entry.strip_edges()
+	if e.is_empty():
+		return null
+	if DataHandler and DataHandler.item_data.has(e):
+		var by_id: Node2D = ITEM_SCENE.instantiate()
+		by_id.load_item(e)
+		# Nesta fase, o objetivo é trabalhar apenas com INT (1 byte cada).
+		if by_id.data_type != by_id.DataType.INT:
+			by_id.queue_free()
+			push_warning("Nesta fase, use apenas IDs de INT. Entrada: %s" % e)
+			return null
+		return by_id
+	if e.begins_with("item_"):
+		if DataHandler and DataHandler.item_data.has(e):
+			var by_id2: Node2D = ITEM_SCENE.instantiate()
+			by_id2.load_item(e)
+			if by_id2.data_type != by_id2.DataType.INT:
+				by_id2.queue_free()
+				push_warning("Nesta fase, use apenas IDs de INT. Entrada: %s" % e)
+				return null
+			return by_id2
+		push_warning("ID não cadastrado no DataHandler: %s" % e)
+		return null
+	var parts := e.split("_")
+	if parts.size() < 2:
+		push_warning("Entrada inválida: %s" % e)
+		return null
+	var type_str := parts[parts.size() - 1].to_lower()
+	if type_str != "i":
+		push_warning("Nesta fase, use apenas INT no formato X_i (ex: 3_i). Entrada inválida: %s" % e)
+		return null
+	var value_str := parts[0]
+	for pi in range(1, parts.size() - 1):
+		value_str += "_" + parts[pi]
+	var shorthand: Node2D = ITEM_SCENE.instantiate()
+	shorthand.set_value_directly(int(value_str))
+	return shorthand
+
+
+func _place_parsed_item_in_challenge(backpack: InventoryGrid, entry: String):
+	var item := _make_item_from_entry(entry)
+	if item == null:
+		return
+	var placed := false
+	for slot in backpack.slots_array:
+		if backpack.can_place_item(item, slot):
+			backpack.place_item(item, slot)
+			placed = true
+			break
+	if not placed:
+		item.queue_free()
+		push_warning("Mochila: não coube %s" % entry)
+
+
+func _generate_extra_pool_items(pool: InventoryGrid, min_extra_bytes: int):
+	var total := 0
+	var guard := 0
+	while total < min_extra_bytes and guard < pool.number_of_slots * 4:
+		guard += 1
+		var item: Node2D = ITEM_SCENE.instantiate()
+		if config.random_pool.size() > 0:
+			var id := str(config.random_pool[randi() % config.random_pool.size()])
+			if not DataHandler or not DataHandler.item_data.has(id):
 				item.queue_free()
 				continue
-		
-		# Encontra slot livre
-		var placed = false
-		for i in range(slot_index, slots.size()):
-			var slot = slots[i]
-			if backpack.can_place_item(item, slot):
-				backpack.place_item(item, slot)
-				slot_index = i + 1
-				placed = true
-				break
-		if not placed:
-			push_warning("Não foi possível colocar o item %s na mochila" % entry)
-			item.queue_free()
-
-func _generate_bancada_items(bancada, min_bytes: int):
-	var tipos = [
-		{"type": "i", "size": 1},
-		{"type": "f", "size": 4},
-		{"type": "D", "size": 2}
-	]
-	
-	var total_bytes = 0
-	var items_created = 0
-	var max_items = bancada.number_of_slots
-	
-	while total_bytes < min_bytes and items_created < max_items:
-		var tipo_info = tipos[randi() % tipos.size()]
-		var tipo = tipo_info["type"]
-		var size = tipo_info["size"]
-		
-		var valor
-		match tipo:
-			"i":
-				valor = randi() % 100
-			"f", "D":
-				valor = randf_range(0.0, 100.0)
-		
-		var item = preload("res://Inventory/Items/Item.tscn").instantiate()
-		if tipo == "i":
-			item.set_value_directly(valor)
+			item.load_item(id)
 		else:
-			item.set_value_by_type(valor, item.DataType.FLOAT if tipo == "f" else item.DataType.DOUBLE)
-		
-		var placed = false
-		for slot in bancada.slots_array:
-			if slot.item_stored == null:
-				slot.state = slot.States.TAKEN
-				slot.item_stored = item
-				slot.set_item(item)
-				bancada.add_child(item)
-				item.global_position = slot.global_position + Vector2(25, 25)
-				item.grid_anchor = slot
-				placed = true
-				break
-		if not placed:
+			# Nesta versão, o pool é composto apenas por INT (1 byte).
+			item.set_value_directly(randi() % 100)
+		var sz: int = item.get_size_bytes() if item.has_method("get_size_bytes") else 1
+		if not pool.try_place_item_automatically(item):
 			item.queue_free()
 			break
-		
-		total_bytes += size
-		items_created += 1
-	
-	print("Bancada gerada com %d itens (total de bytes: %d)" % [items_created, total_bytes])
+		total += sz
+
+
+func _tutorial_intro_id() -> String:
+	return TutorialTexts.KEY_PHASE_BACKPACK
+
+
+func _pedagogy_extra_when_full() -> String:
+	if not backpack_grid:
+		return ""
+	var seen := {}
+	var parts: PackedStringArray = PackedStringArray()
+	var total := 0
+	for slot in backpack_grid.slots_array:
+		var it = slot.item_stored
+		if it == null or seen.has(it):
+			continue
+		seen[it] = true
+		var b: int = it.get_size_bytes() if it.has_method("get_size_bytes") else 1
+		total += b
+		parts.append("%s → %d byte(s)" % [_item_pedagogy_label(it), b])
+	if parts.is_empty():
+		return ""
+	var joined := ""
+	for i in range(parts.size()):
+		if i > 0:
+			joined += ", "
+		joined += parts[i]
+	return "Por que fecha? Cada item conta uma vez pelo seu tamanho em bytes: " + joined + ". Total = %d bytes." % total
+
+
+func _item_pedagogy_label(it: Node) -> String:
+	if it.has_method("get_item_info"):
+		var info: Dictionary = it.get_item_info()
+		var v = str(info.get("valor", "?"))
+		var t = str(info.get("tipo", ""))
+		return v + " (" + t + ")"
+	if it.has_method("get_value_as_string"):
+		return it.get_value_as_string()
+	return str(it)
+
 
 func _on_spawn_pressed():
 	if item_held != null:
 		return
-	var item = preload("res://Inventory/Items/Item.tscn").instantiate()
+	var item: Node2D = ITEM_SCENE.instantiate()
 	add_child(item)
-	item.set_value_directly(randi() % 10)
+	if config.random_pool.size() > 0:
+		var id := str(config.random_pool[randi() % config.random_pool.size()])
+		if DataHandler and DataHandler.item_data.has(id):
+			item.load_item(id)
+			if item.data_type != item.DataType.INT:
+				item.set_value_directly(randi() % 10)
+		else:
+			item.set_value_directly(randi() % 10)
+	else:
+		item.set_value_directly(randi() % 10)
 	item.selected = true
 	item_held = item
 	_update_bytes_label()

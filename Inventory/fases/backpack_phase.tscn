@@ -1,105 +1,24 @@
-[gd_scene load_steps=2 format=3 uid="uid://c2backpack01"]
+[gd_scene load_steps=4 format=3 uid="uid://c2backpack01"]
 
-[ext_resource type="Script" uid="uid://b1k6xutnt7mov" path="res://Inventory/fases/backpack_phase.gd" id="1_4n3aa"]
+[ext_resource type="PackedScene" uid="uid://bsem5c3x7xico" path="res://Inventory/fases/phase_base.tscn" id="1_pb"]
+[ext_resource type="Script" path="res://Inventory/fases/phase_2.gd" id="2_ph"]
+[ext_resource type="Script" path="res://Inventory/fases/phase_config.gd" id="3_cfg"]
 
-[node name="BackpackPhase" type="Control"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("1_4n3aa")
+[sub_resource type="Resource" id="legacy_cfg"]
+script = ExtResource("3_cfg")
+capacity_bytes = 8
+grid_columns = 4
+backpack_slot_count = 8
+pool_slot_count = 10
+pool_grid_columns = 5
+initial_backpack_items = PackedStringArray("1_i", "2_i", "3_i", "4_i", "5_i", "6_i", "7_i")
+initial_pool_items = PackedStringArray("item_number_0", "item_number_1", "item_number_2", "item_number_3", "item_number_4", "item_number_5", "item_number_6", "item_number_7", "item_number_8", "item_number_9")
+random_pool = PackedStringArray()
+min_bytes_random_pool = 0
 
-[node name="TopBar" type="HBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 50.0
-grow_horizontal = 2
+[node name="BackpackPhaseLegacy" instance=ExtResource("1_pb")]
+script = ExtResource("2_ph")
+config = SubResource("legacy_cfg")
 
-[node name="BtnVoltar" type="Button" parent="TopBar"]
-layout_mode = 2
-text = "← Voltar"
-
-[node name="Title" type="Label" parent="TopBar"]
-layout_mode = 2
-size_flags_vertical = 1
-theme_override_font_sizes/font_size = 20
-text = "Fase 2: Mochila (limite em bytes)"
-vertical_alignment = 1
-
-[node name="HBox" type="HBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 55.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 20
-
-[node name="BackpackPanel" type="PanelContainer" parent="HBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="MarginContainer" type="MarginContainer" parent="HBox/BackpackPanel"]
-layout_mode = 2
-
-[node name="VBox" type="VBoxContainer" parent="HBox/BackpackPanel/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="BytesLabel" type="Label" parent="HBox/BackpackPanel/MarginContainer/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Mochila: 0 / 8 bytes"
-
-[node name="HintLabel" type="Label" parent="HBox/BackpackPanel/MarginContainer/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "Objetivo: a mochila suporta 8 bytes.
-Já há 7 bytes ocupados e falta 1 byte.
-Pegue um INT (1 byte) e coloque no slot vazio."
-autowrap_mode = 3
-
-[node name="Header" type="HBoxContainer" parent="HBox/BackpackPanel/MarginContainer/VBox"]
-layout_mode = 2
-
-[node name="BtnSpawn" type="Button" parent="HBox/BackpackPanel/MarginContainer/VBox/Header"]
-layout_mode = 2
-text = "Pegar item"
-
-[node name="ScrollContainer" type="ScrollContainer" parent="HBox/BackpackPanel/MarginContainer/VBox"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="GridContainer" type="GridContainer" parent="HBox/BackpackPanel/MarginContainer/VBox/ScrollContainer"]
-layout_mode = 2
-theme_override_constants/h_separation = 0
-theme_override_constants/v_separation = 0
-columns = 4
-
-[node name="BancadaPanel" type="PanelContainer" parent="HBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="MarginContainer" type="MarginContainer" parent="HBox/BancadaPanel"]
-layout_mode = 2
-
-[node name="VBox" type="VBoxContainer" parent="HBox/BancadaPanel/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="BancadaTitle" type="Label" parent="HBox/BancadaPanel/MarginContainer/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Bancada — escolha um número e coloque na mochila"
-autowrap_mode = 3
-
-[node name="BancadaGrid" type="GridContainer" parent="HBox/BancadaPanel/MarginContainer/VBox"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/h_separation = 6
-theme_override_constants/v_separation = 6
-columns = 5
+[node name="GridContainer" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer/ScrollContainer" index="0"]
+visible = true

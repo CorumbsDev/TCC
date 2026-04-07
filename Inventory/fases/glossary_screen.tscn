@@ -1,0 +1,53 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4dwtofxanvcy"]
+
+[ext_resource type="Script" path="res://Inventory/fases/glossary_screen.gd" id="1"]
+
+[node name="GlossaryScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.09, 0.12, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Glossário"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+
+[node name="BtnVoltar" type="Button" parent="Margin/VBox"]
+layout_mode = 2
+text = "← Voltar ao menu"

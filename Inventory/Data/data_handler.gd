@@ -1,6 +1,8 @@
 # DataHandler.gd
 extends Node
 
+const ITEM_JSON_PATH := "res://Inventory/Data/Item_data.json"
+
 # Tamanho em bytes por tipo (para Fase 2 - Mochila): INT=1, DOUBLE=2, BINARY=ceil(bits/8), etc.
 var item_data = {
 	# ===== NÚMEROS INTEIROS (INT) =====
@@ -64,6 +66,40 @@ var item_data = {
 	"item_binary_42": {"Value": 42, "DataType": "BINARY", "Bits": 6, "Bytes": 1},
 	"item_binary_255": {"Value": 255, "DataType": "BINARY", "Bits": 8, "Bytes": 1}
 }
+
+
+func _ready():
+	_merge_item_definitions_from_json(ITEM_JSON_PATH)
+
+
+func _merge_item_definitions_from_json(path: String) -> void:
+	if not FileAccess.file_exists(path):
+		return
+	var raw := FileAccess.get_file_as_string(path)
+	var parsed = JSON.parse_string(raw)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_warning("DataHandler: %s não é um objeto JSON." % path)
+		return
+	for item_id in parsed:
+		item_data[str(item_id)] = _json_row_to_item_entry(parsed[item_id])
+
+
+func _json_row_to_item_entry(row: Variant) -> Dictionary:
+	if typeof(row) != TYPE_DICTIONARY:
+		return {}
+	var d: Dictionary = row
+	var op := str(d.get("Operator", "")).strip_edges()
+	if op != "":
+		return {"Operator": op}
+	var out = {}
+	out["DataType"] = str(d.get("DataType", "INT")).to_upper()
+	out["Value"] = d.get("Value", 0)
+	if d.has("Bytes"):
+		out["Bytes"] = int(d["Bytes"])
+	if d.has("Bits"):
+		out["Bits"] = int(d["Bits"])
+	return out
+
 
 func get_item_bytes(item_id: String) -> int:
 	"""Retorna o tamanho em bytes do item (para Fase 2 - Mochila)."""

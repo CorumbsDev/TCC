@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Inventory/fases/phase_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+capacity_bytes = 8
+grid_columns = 4
+backpack_slot_count = 8
+pool_slot_count = 12
+pool_grid_columns = 4
+initial_backpack_csv = "1_i, 2_i, 3_i"
+min_bytes_random_pool = 0

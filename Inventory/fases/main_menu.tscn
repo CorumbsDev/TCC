@@ -28,9 +28,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -150.0
-offset_top = -120.0
-offset_right = 150.0
-offset_bottom = 120.0
+offset_top = -200.0
+offset_right = 180.0
+offset_bottom = 200.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 20
@@ -49,13 +49,31 @@ text = "Fase 1: Completar binário (1 _ 0)"
 [node name="BtnFase2" type="Button" parent="VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Fase 2: Mochila (limite em bytes)"
+text = "Fase 2: Mochila (parametrizada)"
+
+[node name="BtnFase2Classic" type="Button" parent="VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Fase 2: Clássica (7 ints + pool)"
+
+[node name="BtnFase3" type="Button" parent="VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Fase 3: Decimal → binário (3 bits)"
 
 [node name="BtnInventario" type="Button" parent="VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Inventário livre"
 
+[node name="BtnGlossary" type="Button" parent="VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Glossário"
+
 [connection signal="pressed" from="VBox/BtnFase1" to="." method="_on_fase1_pressed"]
 [connection signal="pressed" from="VBox/BtnFase2" to="." method="_on_fase2_pressed"]
+[connection signal="pressed" from="VBox/BtnFase2Classic" to="." method="_on_fase2_classic_pressed"]
+[connection signal="pressed" from="VBox/BtnFase3" to="." method="_on_fase3_pressed"]
 [connection signal="pressed" from="VBox/BtnInventario" to="." method="_on_inventario_livre_pressed"]
+[connection signal="pressed" from="VBox/BtnGlossary" to="." method="_on_glossary_pressed"]
