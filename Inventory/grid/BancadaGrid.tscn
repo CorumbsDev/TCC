@@ -1,7 +1,8 @@
 [gd_scene load_steps=2 format=3 uid="uid://cnh2nxn617kuf"]
 
-[ext_resource type="Script" uid="uid://cijhjhnu78fq3" path="res://Inventory/grid/bancada_grid.gd" id="1_dymhn"]
+[ext_resource type="PackedScene" uid="uid://ccfccqt4m42om" path="res://Inventory/InventoryGrid.tscn" id="1"]
 
-[node name="BancadaGrid" type="GridContainer"]
-custom_minimum_size = Vector2(200, 200)
-script = ExtResource("1_dymhn")
+[node name="PoolGrid" instance=ExtResource("1")]
+grid_columns = 5
+number_of_slots = 10
+capacity_bytes = 999999

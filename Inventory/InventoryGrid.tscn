@@ -1,0 +1,34 @@
+[gd_scene load_steps=3 format=3 uid="uid://cys5sf0454a5j"]
+
+[ext_resource type="Script" path="res://Inventory/inventory_grid.gd" id="1_inv"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_knrsg"]
+
+[node name="InventoryGrid" type="Panel"]
+custom_minimum_size = Vector2(400, 400)
+layout_mode = 2
+script = ExtResource("1_inv")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+material = SubResource("CanvasItemMaterial_knrsg")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2

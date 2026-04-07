@@ -1,16 +1,15 @@
-[gd_scene load_steps=3 format=3 uid="uid://flpmsau4qpiq"]
+[gd_scene load_steps=2 format=3 uid="uid://convphase001"]
 
-[ext_resource type="Script" uid="uid://ddmhud65ipxev" path="res://Inventory/fases/binary_phase.gd" id="1_0j8i7"]
-[ext_resource type="PackedScene" uid="uid://b0uhc1jdhcm7s" path="res://Inventory/slots/slot.tscn" id="2_y8gdq"]
+[ext_resource type="Script" uid="uid://br80u35ey0dmm" path="res://Inventory/fases/conversion_phase.gd" id="1"]
 
-[node name="BinaryPhase" type="Control"]
+[node name="ConversionPhase" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_0j8i7")
+script = ExtResource("1")
 
 [node name="TopBar" type="HBoxContainer" parent="."]
 layout_mode = 1
@@ -31,7 +30,14 @@ text = "?"
 layout_mode = 2
 size_flags_vertical = 1
 theme_override_font_sizes/font_size = 20
-text = "Fase 1: Completar o binário (1 _ 0)"
+text = "Fase 3: Decimal → binário (3 bits)"
+vertical_alignment = 1
+
+[node name="BitsInfoLabel" type="Label" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="HBox" type="HBoxContainer" parent="."]
@@ -42,7 +48,7 @@ anchor_bottom = 1.0
 offset_top = 55.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 30
+theme_override_constants/separation = 24
 
 [node name="LeftPanel" type="PanelContainer" parent="HBox"]
 layout_mode = 2
@@ -53,21 +59,18 @@ layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="HBox/LeftPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 15
+theme_override_constants/separation = 12
 
 [node name="Label" type="Label" parent="HBox/LeftPanel/MarginContainer/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "1) Clique em 0 ou 1.
-2) Arraste o orb até o espaço em branco."
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 15
+text = "Pool: arraste 0 ou 1 para os três slots à direita (esquerda = bit mais significativo)."
 autowrap_mode = 3
 
 [node name="GridContainer" type="GridContainer" parent="HBox/LeftPanel/MarginContainer/VBox"]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
 columns = 2
 
 [node name="RightPanel" type="PanelContainer" parent="HBox"]
@@ -79,52 +82,30 @@ layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="HBox/RightPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 16
 
-[node name="Label" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
+[node name="GoalLabel" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Complete o binário: arraste 0 ou 1 para o espaço central."
+text = "Objetivo: representar o decimal 5 usando exatamente 3 bits."
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="BinaryDisplay" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
+[node name="ProgressLabel" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 1, 0.7, 1)
-theme_override_font_sizes/font_size = 28
-text = "1 _ 0"
+theme_override_font_sizes/font_size = 14
+text = "Desafio 1 de 3"
 horizontal_alignment = 1
 
-[node name="BinaryRow" type="HBoxContainer" parent="HBox/RightPanel/MarginContainer/VBox"]
+[node name="TargetsRow" type="HBoxContainer" parent="HBox/RightPanel/MarginContainer/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 alignment = 1
-
-[node name="LeftDigit" type="Label" parent="HBox/RightPanel/MarginContainer/VBox/BinaryRow"]
-custom_minimum_size = Vector2(50, 50)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 1, 0.7, 1)
-theme_override_font_sizes/font_size = 28
-text = "1"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TargetSlot" parent="HBox/RightPanel/MarginContainer/VBox/BinaryRow" instance=ExtResource("2_y8gdq")]
-layout_mode = 2
-
-[node name="RightDigit" type="Label" parent="HBox/RightPanel/MarginContainer/VBox/BinaryRow"]
-custom_minimum_size = Vector2(50, 50)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 1, 0.7, 1)
-theme_override_font_sizes/font_size = 28
-text = "0"
-horizontal_alignment = 1
-vertical_alignment = 1
 
 [node name="ResultLabel" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
-text = "Depois de soltar o orb, veja abaixo a conversão de binário para decimal."
+text = "Preencha os três bits (esquerda = MSB)."
 horizontal_alignment = 1
 autowrap_mode = 3
 
