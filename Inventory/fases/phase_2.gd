@@ -8,13 +8,15 @@ const ITEM_SCENE := preload("res://Inventory/Items/Item.tscn")
 
 func _ready():
 	super()
-	var cfg := config
+	var injected: PhaseConfig = PhaseRunner.take_backpack_config_if_any()
+	var cfg := injected if injected != null else config
 	if cfg == null:
 		cfg = PhaseConfig.new()
 		cfg.initial_backpack_csv = "1_i, 2_i, 3_i"
 		cfg.pool_slot_count = 12
 		cfg.random_pool = PackedStringArray()
-		config = cfg
+	config = cfg
+	config.apply_constraints()
 	_clear_container(backpack_container)
 	_clear_container(pool_container)
 	var backpack: InventoryGrid = GRID_SCENE.instantiate()
@@ -27,6 +29,17 @@ func _ready():
 	pool.clear_all_items()
 	setup_grids(backpack, pool)
 	call_deferred("_initialize_game", backpack, pool)
+
+
+func _update_phase_title() -> void:
+	if phase_title:
+		phase_title.text = "Mochila | Cap: %d | Slots: %d | Pool: %d | Valores: %d-%d" % [
+			config.capacity_bytes,
+			config.backpack_slot_count,
+			config.pool_slot_count,
+			config.spawn_int_min,
+			config.spawn_int_max
+		]
 
 
 func _apply_challenge_exports(grid: InventoryGrid):
@@ -106,7 +119,8 @@ func _make_item_from_entry(entry: String) -> Node2D:
 	for pi in range(1, parts.size() - 1):
 		value_str += "_" + parts[pi]
 	var shorthand: Node2D = ITEM_SCENE.instantiate()
-	shorthand.set_value_directly(int(value_str))
+	var raw := int(value_str)
+	shorthand.set_value_directly(config.clamp_int_value(raw))
 	return shorthand
 
 
@@ -139,7 +153,7 @@ func _generate_extra_pool_items(pool: InventoryGrid, min_extra_bytes: int):
 			item.load_item(id)
 		else:
 			# Nesta versão, o pool é composto apenas por INT (1 byte).
-			item.set_value_directly(randi() % 100)
+			item.set_value_directly(randi_range(config.spawn_int_min, config.spawn_int_max))
 		var sz: int = item.get_size_bytes() if item.has_method("get_size_bytes") else 1
 		if not pool.try_place_item_automatically(item):
 			item.queue_free()
@@ -196,11 +210,18 @@ func _on_spawn_pressed():
 		if DataHandler and DataHandler.item_data.has(id):
 			item.load_item(id)
 			if item.data_type != item.DataType.INT:
-				item.set_value_directly(randi() % 10)
+				item.set_value_directly(randi_range(config.spawn_int_min, config.spawn_int_max))
 		else:
-			item.set_value_directly(randi() % 10)
+			item.set_value_directly(randi_range(config.spawn_int_min, config.spawn_int_max))
 	else:
-		item.set_value_directly(randi() % 10)
+		item.set_value_directly(randi_range(config.spawn_int_min, config.spawn_int_max))
 	item.selected = true
 	item_held = item
 	_update_bytes_label()
+
+
+func is_phase_success() -> bool:
+	# Considera concluída quando os bytes usados na mochila atingem ou ultrapassam a capacidade
+	if not backpack_grid:
+		return false
+	return backpack_grid.total_bytes_used() >= backpack_grid.capacity_bytes

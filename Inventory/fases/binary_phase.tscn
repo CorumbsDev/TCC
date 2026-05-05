@@ -27,6 +27,11 @@ text = "← Voltar"
 layout_mode = 2
 text = "?"
 
+[node name="BtnProxima" type="Button" parent="TopBar"]
+visible = false
+layout_mode = 2
+text = "Próxima fase →"
+
 [node name="Title" type="Label" parent="TopBar"]
 layout_mode = 2
 size_flags_vertical = 1

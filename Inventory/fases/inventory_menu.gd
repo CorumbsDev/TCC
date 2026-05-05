@@ -519,72 +519,71 @@ func create_result_item(resultado: float):
 
 func create_result_item_typed(resultado: Variant, tipo_resultado: String):
 	"""Cria um item de resultado com o tipo correto"""
-	if item_held == null:
-		var new_item = item_scene.instantiate()
-		add_child(new_item)
+	var new_item = item_scene.instantiate()
+	add_child(new_item)
+	
+	# Verifica se o item tem o método set_value_by_type
+	if new_item.has_method("set_value_by_type"):
+		# Mapeia o tipo string para o enum DataType
+		var tipo_enum = new_item.DataType.INT  # Default
 		
-		# Verifica se o item tem o método set_value_by_type
-		if new_item.has_method("set_value_by_type"):
-			# Mapeia o tipo string para o enum DataType
-			var tipo_enum = new_item.DataType.INT  # Default
-			
-			match tipo_resultado:
-				"INT":
-					tipo_enum = new_item.DataType.INT
-					var valor_int = int(resultado)
-					valor_int = clamp(valor_int, -999, 999)  # Permite negativos
-					new_item.set_value_by_type(valor_int, tipo_enum)
-				"FLOAT":
-					tipo_enum = new_item.DataType.FLOAT
-					var valor_float = float(resultado)
-					# Limita casas decimais para exibição
-					valor_float = clamp(valor_float, -999.99, 999.99)
-					new_item.set_value_by_type(valor_float, tipo_enum)
-				"BOOLEAN":
-					tipo_enum = new_item.DataType.BOOLEAN
-					var valor_bool = bool(resultado)
-					new_item.set_value_by_type(valor_bool, tipo_enum)
-				"STRING":
-					tipo_enum = new_item.DataType.STRING
-					var valor_str = str(resultado)
-					# Limita tamanho da string
-					if valor_str.length() > 20:
-						valor_str = valor_str.substr(0, 20) + "..."
-					new_item.set_value_by_type(valor_str, tipo_enum)
-				"DOUBLE":
-					tipo_enum = new_item.DataType.DOUBLE
-					var valor_double = float(resultado)
-					new_item.set_value_by_type(valor_double, tipo_enum)
-				"BINARY":
-					tipo_enum = new_item.DataType.BINARY
-					var valor_binary = int(resultado)
-					new_item.set_value_by_type(valor_binary, tipo_enum)
-				_:
-					# Fallback: tenta converter para int
-					tipo_enum = new_item.DataType.INT
-					var valor_int = int(float(resultado))
-					valor_int = clamp(valor_int, -999, 999)
-					new_item.set_value_by_type(valor_int, tipo_enum)
+		match tipo_resultado:
+			"INT":
+				tipo_enum = new_item.DataType.INT
+				var valor_int = int(resultado)
+				valor_int = clamp(valor_int, -999, 999)  # Permite negativos
+				new_item.set_value_by_type(valor_int, tipo_enum)
+			"FLOAT":
+				tipo_enum = new_item.DataType.FLOAT
+				var valor_float = float(resultado)
+				# Limita casas decimais para exibição
+				valor_float = clamp(valor_float, -999.99, 999.99)
+				new_item.set_value_by_type(valor_float, tipo_enum)
+			"BOOLEAN":
+				tipo_enum = new_item.DataType.BOOLEAN
+				var valor_bool = bool(resultado)
+				new_item.set_value_by_type(valor_bool, tipo_enum)
+			"STRING":
+				tipo_enum = new_item.DataType.STRING
+				var valor_str = str(resultado)
+				# Limita tamanho da string
+				if valor_str.length() > 20:
+					valor_str = valor_str.substr(0, 20) + "..."
+				new_item.set_value_by_type(valor_str, tipo_enum)
+			"DOUBLE":
+				tipo_enum = new_item.DataType.DOUBLE
+				var valor_double = float(resultado)
+				new_item.set_value_by_type(valor_double, tipo_enum)
+			"BINARY":
+				tipo_enum = new_item.DataType.BINARY
+				var valor_binary = int(resultado)
+				new_item.set_value_by_type(valor_binary, tipo_enum)
+			_:
+				# Fallback: tenta converter para int
+				tipo_enum = new_item.DataType.INT
+				var valor_int = int(float(resultado))
+				valor_int = clamp(valor_int, -999, 999)
+				new_item.set_value_by_type(valor_int, tipo_enum)
+	else:
+		# Fallback: usa método antigo
+		var valor_inteiro = int(float(resultado))
+		valor_inteiro = clamp(valor_inteiro, 0, 999)
+		if new_item.has_method("set_value_directly"):
+			new_item.set_value_directly(valor_inteiro)
 		else:
-			# Fallback: usa método antigo
-			var valor_inteiro = int(float(resultado))
-			valor_inteiro = clamp(valor_inteiro, 0, 999)
-			if new_item.has_method("set_value_directly"):
-				new_item.set_value_directly(valor_inteiro)
-			else:
-				var item_type = "item_number_" + str(valor_inteiro)
-				if new_item.has_method("load_item"):
-					new_item.load_item(item_type)
-		
-		new_item.selected = true
-		item_held = new_item
-		print("Item de resultado criado - Valor: ", resultado, " Tipo: ", tipo_resultado)
-		
-		# Força a verificação de disponibilidade para o novo item
-		# (o mouse já está sobre um slot, mas o sinal slot_entered não vai disparar novamente)
-		if current_slot:
-			check_slot_availability(current_slot)
-			set_grids.call_deferred(current_slot)
+			var item_type = "item_number_" + str(valor_inteiro)
+			if new_item.has_method("load_item"):
+				new_item.load_item(item_type)
+	
+	new_item.selected = true
+	item_held = new_item
+	print("Item de resultado criado - Valor: ", resultado, " Tipo: ", tipo_resultado)
+	
+	# Força a verificação de disponibilidade para o novo item
+	# (o mouse já está sobre um slot, mas o sinal slot_entered não vai disparar novamente)
+	if current_slot:
+		check_slot_availability(current_slot)
+		set_grids.call_deferred(current_slot)
 
 func consumir_itens_expressao():
 	"""Remove os itens usados na expressão do grid"""

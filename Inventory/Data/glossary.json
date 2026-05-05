@@ -31,6 +31,34 @@
     {
       "termo": "DataHandler",
       "definicao": "Autoload com a tabela de itens (IDs) e metadados como tipo e tamanho em bytes. Pode ser estendido via Item_data.json."
+    },
+    {
+      "termo": "PARAMETRIZAÇÃO",
+      "definicao": "O sistema permite criar fases com valores ajustáveis:"
+    },
+    {
+      "termo": "  • Capacidade da Mochila",
+      "definicao": "Total de bytes disponíveis no desafio (ex: 8, 12, 16 bytes). Controla a dificuldade."
+    },
+    {
+      "termo": "  • Slots Disponíveis",
+      "definicao": "Número de espaços na grade para itens (ex: 8, 16, 20 slots). Mais slots = mais liberdade."
+    },
+    {
+      "termo": "  • Slots no Pool",
+      "definicao": "Quantidade de itens oferecidos para escolher (ex: 10, 15, 20 itens). Mais itens = mais opções."
+    },
+    {
+      "termo": "  • Intervalo de Valores",
+      "definicao": "Faixa de valores dos itens gerados dinamicamente (ex: 1-10, 50-100). Define o nível de variação."
+    },
+    {
+      "termo": "  • Tipo de Fase",
+      "definicao": "Escolher entre MOCHILA (knapsack) ou BINÁRIO (completar padrões). Permite misturar tipos em sequências."
+    },
+    {
+      "termo": "  • Sequências",
+      "definicao": "Criar múltiplas fases seguidas com parâmetros diferentes. Ex: 5 fases de mochila + binário intercaladas."
     }
   ]
 }

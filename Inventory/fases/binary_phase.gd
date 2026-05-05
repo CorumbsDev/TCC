@@ -3,6 +3,8 @@ extends Control
 ## Esquerda: inventário com 0 e 1. Direita: binário incompleto (ex: 1 _ 0).
 ## Jogador arrasta 0 ou 1 para o espaço vazio; não há penalidade por errar.
 
+@export var config: BinaryPhaseConfig
+
 @onready var slot_scene = preload("res://Inventory/slots/slot.tscn")
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
 @onready var left_grid = $HBox/LeftPanel/MarginContainer/VBox/GridContainer
@@ -12,19 +14,44 @@ extends Control
 @onready var binary_display = $HBox/RightPanel/MarginContainer/VBox/BinaryDisplay
 @onready var btn_voltar = $TopBar/BtnVoltar
 @onready var btn_help = $TopBar/BtnHelp
+@onready var btn_proxima = $TopBar/BtnProxima
+@onready var title_label = $TopBar/Title
+@onready var left_digit_label = $HBox/RightPanel/MarginContainer/VBox/BinaryRow/LeftDigit
+@onready var right_digit_label = $HBox/RightPanel/MarginContainer/VBox/BinaryRow/RightDigit
 
 var left_slots := []
 var item_held = null
 var current_slot = null
 var can_place = false
 var icon_anchor: Vector2
-# Binário alvo: posição 0 = "1", posição 1 = vazio (a preencher), posição 2 = "0"
-const BINARY_LEFT = "1"
-const BINARY_RIGHT = "0"
+var BINARY_LEFT := "1"
+var BINARY_RIGHT := "0"
+
+
+func _resolve_binary_config() -> BinaryPhaseConfig:
+	var injected := PhaseRunner.take_binary_config_if_any()
+	if injected != null:
+		return injected
+	if config != null:
+		return config
+	return BinaryPhaseConfig.new()
+
 
 func _ready():
+	var cfg := _resolve_binary_config()
+	cfg.apply_constraints()
+	BINARY_LEFT = cfg.left_digit_string()
+	BINARY_RIGHT = cfg.right_digit_string()
+	if title_label:
+		title_label.text = "Fase binário: %s _ %s" % [BINARY_LEFT, BINARY_RIGHT]
+	if left_digit_label:
+		left_digit_label.text = BINARY_LEFT
+	if right_digit_label:
+		right_digit_label.text = BINARY_RIGHT
 	btn_voltar.pressed.connect(_on_voltar_pressed)
 	btn_help.pressed.connect(_on_help_pressed)
+	btn_proxima.visible = PhaseRunner.should_show_next_button()
+	btn_proxima.pressed.connect(_on_proxima_pressed)
 	# Cria 2 slots à esquerda (inventário de bits)
 	for i in range(2):
 		var s = slot_scene.instantiate()
@@ -68,7 +95,12 @@ func _spawn_bit_at_slot(slot_idx: int, bit_value: int):
 	slot.set_item(item)
 
 func _on_voltar_pressed():
+	PhaseRunner.abort_sequence()
 	get_tree().change_scene_to_file("res://Inventory/fases/main_menu.tscn")
+
+
+func _on_proxima_pressed():
+	PhaseRunner.advance_from_phase()
 
 func _on_slot_entered(s):
 	current_slot = s
