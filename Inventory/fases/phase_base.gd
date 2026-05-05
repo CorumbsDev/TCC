@@ -2,6 +2,8 @@ extends Control
 
 @onready var btn_voltar = $TopBar/BtnVoltar
 @onready var btn_help = get_node_or_null("TopBar/BtnHelp")
+@onready var btn_proxima = get_node_or_null("TopBar/BtnProxima")
+@onready var phase_title = get_node_or_null("TopBar/PhaseTitle")
 @onready var btn_spawn = $HBox/BackpackPanel/MarginContainer/VBoxContainer/Header/BtnSpawn
 @onready var bytes_label = $HBox/BackpackPanel/MarginContainer/VBoxContainer/BytesLabel
 @onready var hint_label = $HBox/BackpackPanel/MarginContainer/VBoxContainer/HintLabel
@@ -21,13 +23,27 @@ func _ready():
 	btn_voltar.pressed.connect(_on_voltar_pressed)
 	if btn_help:
 		btn_help.pressed.connect(_on_help_pressed)
+	if btn_proxima:
+		btn_proxima.visible = PhaseRunner.should_show_next_button()
+		btn_proxima.pressed.connect(_on_proxima_pressed)
+		# Inicialmente atualizar estado (enabled/disabled) do botão Próxima
+		call_deferred("_update_next_button_state")
 	if btn_spawn:
 		btn_spawn.pressed.connect(_on_spawn_pressed)
+	# Conectar ao signal do PhaseRunner para feedback amigável
+	PhaseRunner.phase_advance_blocked.connect(_on_phase_advance_blocked)
 	call_deferred("_try_show_intro")
+	call_deferred("_update_phase_title")
 
 
 func _tutorial_intro_id() -> String:
 	return ""
+
+
+func _update_phase_title() -> void:
+	"""Override this in subclasses to update the phase title with parameters"""
+	if phase_title:
+		phase_title.text = "Fase"
 
 
 func _try_show_intro() -> void:
@@ -59,7 +75,40 @@ func setup_grids(backpack: InventoryGrid, pool: InventoryGrid):
 
 
 func _on_voltar_pressed():
+	PhaseRunner.abort_sequence()
 	get_tree().change_scene_to_file("res://Inventory/fases/main_menu.tscn")
+
+
+func _on_proxima_pressed():
+	# Verifica se a fase permite avanço; mostra modal amigável caso contrário
+	if has_method("is_phase_success") and not is_phase_success():
+		_show_not_ready_modal()
+		return
+	PhaseRunner.advance_from_phase()
+
+
+func _on_phase_advance_blocked(reason: String):
+	# Handler para o signal emitido pelo PhaseRunner quando avanço é bloqueado
+	_show_not_ready_modal(reason)
+
+
+func _show_not_ready_modal(custom_message: String = ""):
+	# Cria e mostra um AcceptDialog temporário com mensagem clara
+	var message := custom_message if custom_message != "" else "Você precisa completar o objetivo desta fase antes de avançar. Verifique as instruções e tente novamente."
+	var dlg := AcceptDialog.new()
+	dlg.dialog_text = message
+	add_child(dlg)
+	dlg.popup_centered_minsize(Vector2(400, 120))
+
+
+func _update_next_button_state():
+	if not btn_proxima:
+		return
+	# Se a cena atual implementa is_phase_success, usar seu retorno; caso contrário, permitir avanço
+	if has_method("is_phase_success"):
+		btn_proxima.disabled = not is_phase_success()
+	else:
+		btn_proxima.disabled = false
 
 
 func _on_spawn_pressed():
@@ -151,6 +200,8 @@ func _update_bytes_label():
 	bytes_label.text = "Mochila (desafio): %d / %d bytes" % [used, cap]
 	if used >= cap:
 		bytes_label.text += " — Cheia!"
+	# Atualiza estado do botão Próxima quando bytes mudam
+	_update_next_button_state()
 
 
 func _update_hint():
@@ -165,6 +216,8 @@ func _update_hint():
 		hint_label.text = "Falta 1 byte. Clique em um INT do pool e arraste para o slot vazio da mochila."
 	else:
 		hint_label.text = "Faltam %d bytes. Use INTs do pool na mochila até fechar a capacidade." % free
+	# Atualiza estado do botão Próxima quando hints mudam
+	_update_next_button_state()
 
 
 func _hint_full_message() -> String:
@@ -177,3 +230,8 @@ func _hint_full_message() -> String:
 
 func _pedagogy_extra_when_full() -> String:
 	return ""
+
+
+func is_phase_success() -> bool:
+	# Padrão: permitir avanço. Subclasses (ex: mochila) podem sobrescrever.
+	return true

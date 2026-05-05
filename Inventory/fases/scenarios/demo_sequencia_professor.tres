@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="PhaseSequenceList" load_steps=15 format=3 uid="uid://cseqdemo01"]
+
+[ext_resource type="Script" uid="uid://b7au1khhn077c" path="res://Inventory/fases/phase_sequence_list.gd" id="1_list"]
+[ext_resource type="Script" uid="uid://bgkwc44wd6mda" path="res://Inventory/fases/phase_sequence_step.gd" id="2_step"]
+[ext_resource type="Script" uid="uid://con7k4wlr7x86" path="res://Inventory/fases/phase_config.gd" id="3_pc"]
+[ext_resource type="Script" uid="uid://bo5xjuxwc1qwi" path="res://Inventory/fases/binary_phase_config.gd" id="4_bc"]
+
+[sub_resource type="Resource" id="bcfg_1"]
+script = ExtResource("4_bc")
+fixed_left_bit = 1
+fixed_right_bit = 0
+
+[sub_resource type="Resource" id="step_1"]
+script = ExtResource("2_step")
+kind = 1
+config_binario = SubResource("bcfg_1")
+
+[sub_resource type="Resource" id="m2"]
+script = ExtResource("3_pc")
+capacity_bytes = 6
+grid_columns = 3
+backpack_slot_count = 6
+pool_slot_count = 10
+pool_grid_columns = 5
+spawn_int_min = 0
+spawn_int_max = 7
+initial_backpack_items = null
+initial_backpack_csv = "1_i, 2_i"
+initial_pool_items = null
+random_pool = null
+min_bytes_random_pool = 0
+
+[sub_resource type="Resource" id="step_2"]
+script = ExtResource("2_step")
+kind = 0
+config_mochila = SubResource("m2")
+
+[sub_resource type="Resource" id="bcfg_3"]
+script = ExtResource("4_bc")
+fixed_left_bit = 0
+fixed_right_bit = 1
+
+[sub_resource type="Resource" id="step_3"]
+script = ExtResource("2_step")
+kind = 1
+config_binario = SubResource("bcfg_3")
+
+[sub_resource type="Resource" id="m4"]
+script = ExtResource("3_pc")
+capacity_bytes = 8
+grid_columns = 4
+backpack_slot_count = 8
+pool_slot_count = 10
+pool_grid_columns = 5
+spawn_int_min = 1
+spawn_int_max = 12
+initial_backpack_items = null
+initial_backpack_csv = "3_i, 4_i"
+initial_pool_items = null
+random_pool = null
+min_bytes_random_pool = 0
+
+[sub_resource type="Resource" id="step_4"]
+script = ExtResource("2_step")
+kind = 0
+config_mochila = SubResource("m4")
+
+[sub_resource type="Resource" id="bcfg_5"]
+script = ExtResource("4_bc")
+fixed_left_bit = 1
+fixed_right_bit = 0
+
+[sub_resource type="Resource" id="step_5"]
+script = ExtResource("2_step")
+kind = 1
+config_binario = SubResource("bcfg_5")
+
+[resource]
+script = ExtResource("1_list")
+steps = Array[ExtResource("2_step")]([SubResource("step_1"), SubResource("step_2"), SubResource("step_3"), SubResource("step_4"), SubResource("step_5")])

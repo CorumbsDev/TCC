@@ -1,0 +1,175 @@
+[gd_scene load_steps=2 format=3 uid="uid://genphase01"]
+
+[ext_resource type="Script" path="res://Inventory/fases/generator_phase.gd" id="1_script"]
+
+[node name="GeneratorPhase" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.1, 0.12, 1)
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+offset_bottom = 60.0
+grow_horizontal = 2
+theme_override_constants/separation = 10
+
+[node name="BtnVoltar" type="Button" parent="TopBar"]
+layout_mode = 2
+text = "← Voltar"
+
+[node name="Title" type="Label" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "📚 Criar Sequência de Fases"
+horizontal_alignment = 1
+
+[node name="MainVBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 15
+
+[node name="Description" type="Label" parent="MainVBox"]
+layout_mode = 2
+text = "Escolha a dificuldade e configure quantas fases deseja:"
+autowrap_mode = 2
+
+[node name="DifficultyPanel" type="PanelContainer" parent="MainVBox"]
+layout_mode = 2
+
+[node name="DifficultyVBox" type="VBoxContainer" parent="MainVBox/DifficultyPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DifficultyLabel" type="Label" parent="MainVBox/DifficultyPanel/DifficultyVBox"]
+layout_mode = 2
+text = "DIFICULDADE:"
+text_overrun_behavior = 3
+
+[node name="DifficultyHBox" type="HBoxContainer" parent="MainVBox/DifficultyPanel/DifficultyVBox"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="RadioEasy" type="CheckBox" parent="MainVBox/DifficultyPanel/DifficultyVBox/DifficultyHBox"]
+layout_mode = 2
+button_pressed = true
+text = "Fácil (Cap 50, Val 1-10)"
+
+[node name="RadioMedium" type="CheckBox" parent="MainVBox/DifficultyPanel/DifficultyVBox/DifficultyHBox"]
+layout_mode = 2
+text = "Médio (Cap 100, Val 5-50)"
+
+[node name="RadioHard" type="CheckBox" parent="MainVBox/DifficultyPanel/DifficultyVBox/DifficultyHBox"]
+layout_mode = 2
+text = "Difícil (Cap 200, Val 20-100)"
+
+[node name="ConfigPanel" type="PanelContainer" parent="MainVBox"]
+layout_mode = 2
+
+[node name="ConfigVBox" type="VBoxContainer" parent="MainVBox/ConfigPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="NumPhasesRow" type="HBoxContainer" parent="MainVBox/ConfigPanel/ConfigVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="NumPhasesLabel" type="Label" parent="MainVBox/ConfigPanel/ConfigVBox/NumPhasesRow"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Número de Fases:"
+
+[node name="NumPhasesSpinBox" type="SpinBox" parent="MainVBox/ConfigPanel/ConfigVBox/NumPhasesRow"]
+layout_mode = 2
+size_flags_horizontal = 1
+value = 3.0
+min_value = 1.0
+max_value = 10.0
+step = 1.0
+
+[node name="BinaryCheckBox" type="CheckBox" parent="MainVBox/ConfigPanel/ConfigVBox"]
+layout_mode = 2
+button_pressed = true
+text = "☑ Intercalar com Fases Binárias"
+
+[node name="PreviewPanel" type="PanelContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PreviewVBox" type="VBoxContainer" parent="MainVBox/PreviewPanel"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="PreviewTitle" type="Label" parent="MainVBox/PreviewPanel/PreviewVBox"]
+layout_mode = 2
+text = "PREVIEW DAS FASES:"
+text_overrun_behavior = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MainVBox/PreviewPanel/PreviewVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PhasesList" type="VBoxContainer" parent="MainVBox/PreviewPanel/PreviewVBox/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PhaseExample1" type="Label" parent="MainVBox/PreviewPanel/PreviewVBox/ScrollContainer/PhasesList"]
+layout_mode = 2
+text = "Fase 1: MOCHILA (Cap: 50 | Slots: 6 | Pool: 15 | Valores: 1-10)"
+text_overrun_behavior = 3
+
+[node name="PhaseExample2" type="Label" parent="MainVBox/PreviewPanel/PreviewVBox/ScrollContainer/PhasesList"]
+layout_mode = 2
+text = "Fase 2: BINÁRIO"
+text_overrun_behavior = 3
+
+[node name="PhaseExample3" type="Label" parent="MainVBox/PreviewPanel/PreviewVBox/ScrollContainer/PhasesList"]
+layout_mode = 2
+text = "Fase 3: MOCHILA (Cap: 50 | Slots: 6 | Pool: 15 | Valores: 1-10)"
+text_overrun_behavior = 3
+
+[node name="BottomRow" type="HBoxContainer" parent="MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnCancelar" type="Button" parent="MainVBox/BottomRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Cancelar"
+
+[node name="BtnJogar" type="Button" parent="MainVBox/BottomRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "▶ Jogar"
+
+[connection signal="pressed" from="TopBar/BtnVoltar" to="." method="_on_voltar_pressed"]
+[connection signal="pressed" from="MainVBox/BottomRow/BtnCancelar" to="." method="_on_voltar_pressed"]
+[connection signal="pressed" from="MainVBox/BottomRow/BtnJogar" to="." method="_on_jogar_pressed"]
+[connection signal="toggled" from="MainVBox/DifficultyPanel/DifficultyVBox/DifficultyHBox/RadioEasy" to="." method="_on_difficulty_changed"]
+[connection signal="toggled" from="MainVBox/DifficultyPanel/DifficultyVBox/DifficultyHBox/RadioMedium" to="." method="_on_difficulty_changed"]
+[connection signal="toggled" from="MainVBox/DifficultyPanel/DifficultyVBox/DifficultyHBox/RadioHard" to="." method="_on_difficulty_changed"]
+[connection signal="value_changed" from="MainVBox/ConfigPanel/ConfigVBox/NumPhasesSpinBox" to="." method="_on_num_phases_changed"]
+[connection signal="toggled" from="MainVBox/ConfigPanel/ConfigVBox/BinaryCheckBox" to="." method="_on_binary_toggled"]

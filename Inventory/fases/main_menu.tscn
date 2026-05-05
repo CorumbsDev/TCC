@@ -49,7 +49,7 @@ text = "Fase 1: Completar binário (1 _ 0)"
 [node name="BtnFase2" type="Button" parent="VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Fase 2: Mochila (parametrizada)"
+text = "Fase 2: Mochila (parâmetros fixos)"
 
 [node name="BtnFase2Classic" type="Button" parent="VBox"]
 layout_mode = 2
@@ -71,9 +71,15 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Glossário"
 
+[node name="BtnGerador" type="Button" parent="VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "� Criar Sequência de Fases"
+
 [connection signal="pressed" from="VBox/BtnFase1" to="." method="_on_fase1_pressed"]
 [connection signal="pressed" from="VBox/BtnFase2" to="." method="_on_fase2_pressed"]
 [connection signal="pressed" from="VBox/BtnFase2Classic" to="." method="_on_fase2_classic_pressed"]
 [connection signal="pressed" from="VBox/BtnFase3" to="." method="_on_fase3_pressed"]
 [connection signal="pressed" from="VBox/BtnInventario" to="." method="_on_inventario_livre_pressed"]
 [connection signal="pressed" from="VBox/BtnGlossary" to="." method="_on_glossary_pressed"]
+[connection signal="pressed" from="VBox/BtnGerador" to="." method="_on_gerador_pressed"]

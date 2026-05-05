@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 DataHandler="*res://Inventory/Data/data_handler.gd"
 LearningPrefs="*res://Inventory/learning/learning_prefs.gd"
+PhaseRunner="*res://Inventory/fases/phase_runner.gd"
 
 [global_group]
 
