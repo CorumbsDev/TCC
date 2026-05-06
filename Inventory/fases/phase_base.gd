@@ -14,6 +14,7 @@ extends Control
 var backpack_grid: InventoryGrid = null
 var pool_grid: InventoryGrid = null
 var converter_slot = null
+var double_slot = null
 
 var item_held = null
 var current_slot = null
@@ -124,6 +125,10 @@ func _on_slot_entered(slot):
 		can_place = true
 		hint_label.text = "Solte o orbe aqui para convertê-lo (Int ↔ Float)."
 		_update_next_button_state()
+	elif slot == double_slot:
+		can_place = true
+		hint_label.text = "Solte o orbe aqui para convertê-lo para Double (4 slots, Rosa)."
+		_update_next_button_state()
 	elif backpack_grid and slot in backpack_grid.slots_array:
 		can_place = backpack_grid.can_place_item(item_held, slot)
 		var need = item_held.get_size_bytes() if item_held.has_method("get_size_bytes") else 1
@@ -198,6 +203,27 @@ func _place_item():
 		_update_hint()
 		return
 		
+	if current_slot == double_slot:
+		item_held.set_value_by_type(float(item_held.get_value_as_string()), item_held.DataType.DOUBLE)
+		
+		if item_held.has_method("update_label_display"):
+			item_held.update_label_display()
+		
+		if item_held.get_parent() != double_slot:
+			item_held.get_parent().remove_child(item_held)
+			double_slot.add_child(item_held)
+		
+		item_held.global_position = double_slot.global_position + Vector2(25, 25)
+		item_held.grid_anchor = double_slot
+		item_held.selected = false
+		double_slot.item_stored = item_held
+		double_slot.state = double_slot.States.TAKEN
+		item_held = null
+		can_place = false
+		_update_bytes_label()
+		_update_hint()
+		return
+		
 	if current_slot in backpack_grid.slots_array:
 		backpack_grid.place_item(item_held, current_slot)
 	else:
@@ -219,6 +245,9 @@ func _pick_item():
 	if slot == converter_slot:
 		converter_slot.state = converter_slot.States.FREE
 		converter_slot.item_stored = null
+	elif slot == double_slot:
+		double_slot.state = double_slot.States.FREE
+		double_slot.item_stored = null
 	elif backpack_grid and slot in backpack_grid.slots_array:
 		backpack_grid.remove_item(item_held)
 	elif pool_grid and slot in pool_grid.slots_array:

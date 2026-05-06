@@ -82,6 +82,28 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 		converter_slot.slot_entered.connect(_on_slot_entered)
 		converter_slot.slot_exited.connect(_on_slot_exited)
 		
+		# --- Double Slot Panel ---
+		var d_panel = PanelContainer.new()
+		var d_vbox = VBoxContainer.new()
+		d_panel.add_child(d_vbox)
+		
+		var d_lbl = Label.new()
+		d_lbl.text = "Para Double\n(4 slots)"
+		d_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		d_lbl.add_theme_font_size_override("font_size", 14)
+		d_vbox.add_child(d_lbl)
+		
+		var d_center = CenterContainer.new()
+		d_center.custom_minimum_size = Vector2(64, 64)
+		d_vbox.add_child(d_center)
+		
+		double_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
+		double_slot.slot_ID = 998
+		d_center.add_child(double_slot)
+		
+		double_slot.slot_entered.connect(_on_slot_entered)
+		double_slot.slot_exited.connect(_on_slot_exited)
+		
 		var pool_vbox = pool_container.get_parent()
 		if pool_vbox:
 			var tools_hbox = pool_vbox.get_node_or_null("ToolsHBox")
@@ -94,8 +116,10 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 				# Mover o HBox para ficar imediatamente acima da grid de orbes
 				pool_vbox.move_child(tools_hbox, pool_container.get_index())
 			tools_hbox.add_child(panel)
+			tools_hbox.add_child(d_panel)
 		else:
 			add_child(panel)
+			add_child(d_panel)
 	for entry in config.get_backpack_entry_list():
 		_place_parsed_item_in_challenge(backpack, entry)
 	for entry in config.initial_pool_items:

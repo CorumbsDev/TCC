@@ -175,8 +175,8 @@ func load_item(a_ItemID: String) -> void:
 				value_float = value_double
 				value_bool = false
 				value_string = ""
-				# DOUBLE ocupa 2 slots horizontais
-				item_grids = [Vector2(0,0), Vector2(1,0)]
+				# DOUBLE ocupa 4 slots horizontais
+				item_grids = [Vector2(0,0), Vector2(1,0), Vector2(2,0), Vector2(3,0)]
 			"BINARY", "BIN":
 				data_type = DataType.BINARY
 				binary_bits = int(data.get("Bits", 8))
@@ -259,8 +259,8 @@ func set_value_by_type(new_value, tipo: DataType):
 			value_float = value_double
 			value_bool = false
 			value_string = ""
-			# DOUBLE ocupa 2 slots horizontais
-			item_grids = [Vector2(0,0), Vector2(1,0)]
+			# DOUBLE ocupa 4 slots horizontais
+			item_grids = [Vector2(0,0), Vector2(1,0), Vector2(2,0), Vector2(3,0)]
 		DataType.BINARY:
 			value = int(new_value)
 			value_binary = int_to_binary(value, binary_bits)
@@ -350,11 +350,11 @@ func update_label_display():
 		value_label.add_theme_font_size_override("font_size", 18)
 		_resize_visual(color_rect, 1)
 	elif data_type == DataType.DOUBLE:
-		# DOUBLE: mostra valor com precisão, ocupa 2 slots
+		# DOUBLE: mostra valor com precisão, ocupa 4 slots
 		value_label.text = str(value_double)
 		value_label.add_theme_color_override("font_color", Color.MAGENTA)
 		value_label.add_theme_font_size_override("font_size", 16)
-		_resize_visual(color_rect, 2)
+		_resize_visual(color_rect, 4)
 	elif data_type == DataType.BINARY:
 		# BINARY: mostra valor bit a bit (ex: "1010") em 1 slot
 		value_label.text = value_binary
@@ -430,7 +430,7 @@ func get_size_bytes() -> int:
 		return DataHandler.get_item_bytes(item_ID)
 	match data_type:
 		DataType.DOUBLE:
-			return 2
+			return 4
 		DataType.BINARY:
 			return int(ceil(float(binary_bits) / 8.0))
 		_:
