@@ -1,5 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://bppackinstcene"]
+[gd_scene load_steps=2 format=3 uid="uid://dcdvhtmr1vvj7"]
 
-[ext_resource type="PackedScene" uid="uid://ccfccqt4m42om" path="res://Inventory/InventoryGrid.tscn" id="1"]
+[ext_resource type="PackedScene" uid="uid://cys5sf0454a5j" path="res://Inventory/InventoryGrid.tscn" id="1"]
 
 [node name="BackpackGrid" instance=ExtResource("1")]
+layout_mode = 3

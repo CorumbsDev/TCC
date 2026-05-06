@@ -326,7 +326,7 @@ func update_label_display():
 	# Configura o texto baseado no tipo
 	if data_type == DataType.OPERATOR:
 		value_label.text = operator
-		value_label.add_theme_color_override("font_color", Color.RED)
+		value_label.add_theme_color_override("font_color", Color.ORANGE)
 		value_label.add_theme_font_size_override("font_size", 24)
 		_resize_visual(color_rect, 1)
 	elif data_type == DataType.INT:
@@ -336,7 +336,7 @@ func update_label_display():
 		_resize_visual(color_rect, 1)
 	elif data_type == DataType.FLOAT:
 		value_label.text = str(value_float)
-		value_label.add_theme_color_override("font_color", Color.CYAN)
+		value_label.add_theme_color_override("font_color", Color.RED)
 		value_label.add_theme_font_size_override("font_size", 20)
 		_resize_visual(color_rect, 1)
 	elif data_type == DataType.BOOLEAN:

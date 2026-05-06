@@ -21,8 +21,12 @@ def detectar_tipo_python(valor):
 def processar_expressao(expressao):
     """Processa uma expressão e retorna resultado com tipo"""
     try:
+        # Pre-processamento para conversores de tipo (int <-> float)
+        expressao_proc = re.sub(r'([0-9\.]+)\+?to_float\+?([0-9\.]+)', r'(float(\1)+0*\2)', expressao, flags=re.IGNORECASE)
+        expressao_proc = re.sub(r'([0-9\.]+)\+?to_int\+?([0-9\.]+)', r'(int(\1)+0*\2)', expressao_proc, flags=re.IGNORECASE)
+        
         # Remove espaços e padroniza operadores
-        expressao_limpa = expressao.replace(" ", "").replace("×", "*").replace("÷", "/")
+        expressao_limpa = expressao_proc.replace(" ", "").replace("×", "*").replace("÷", "/")
         
         # Remove aspas das strings se necessário para eval
         # Mas preserva strings entre aspas

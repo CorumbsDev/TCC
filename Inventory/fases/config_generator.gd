@@ -12,7 +12,8 @@ static func generate_knapsack_config(
 	int_min: int = 1,
 	int_max: int = 10,
 	initial_csv: String = "1_i,2_i",
-	random_pool_size: int = 4
+	random_pool_size: int = 4,
+	use_converter: bool = false
 ) -> PhaseConfig:
 	var config = PhaseConfig.new()
 	# Garantir coerência: a capacidade objetivo (bytes) deve corresponder
@@ -28,6 +29,8 @@ static func generate_knapsack_config(
 	config.min_bytes_random_pool = 0
 	
 	config.random_pool = _random_int_items(random_pool_size)
+	config.use_converter = use_converter
+	
 	
 	config.apply_constraints()
 	return config
@@ -52,6 +55,7 @@ static func generate_sequence(num_phases: int, mix_types: bool = true, base_knap
 	var random_pool_size := int(base_knapsack_params.get("random_pool_size", 4))
 	var vary_capacity := bool(base_knapsack_params.get("vary_capacity", true))
 	var vary_int_max := bool(base_knapsack_params.get("vary_int_max", true))
+	var use_converter := bool(base_knapsack_params.get("use_converter", false))
 
 	for i in range(phase_count):
 		var step = PhaseSequenceStep.new()
@@ -77,7 +81,8 @@ static func generate_sequence(num_phases: int, mix_types: bool = true, base_knap
 				varying_int_min,
 				varying_int_max,
 				initial_csv,
-				random_pool_size
+				random_pool_size,
+				use_converter
 			)
 		steps.append(step)
 	return steps

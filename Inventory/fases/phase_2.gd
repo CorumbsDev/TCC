@@ -59,6 +59,43 @@ func _apply_pool_exports(grid: InventoryGrid):
 func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 	backpack.clear_all_items()
 	pool.clear_all_items()
+	
+	if config.use_converter and converter_slot == null:
+		var panel = PanelContainer.new()
+		var vbox = VBoxContainer.new()
+		panel.add_child(vbox)
+		
+		var lbl = Label.new()
+		lbl.text = "Int ↔ Float"
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 14)
+		vbox.add_child(lbl)
+		
+		var center = CenterContainer.new()
+		center.custom_minimum_size = Vector2(64, 64)
+		vbox.add_child(center)
+		
+		converter_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
+		converter_slot.slot_ID = 999
+		center.add_child(converter_slot)
+		
+		converter_slot.slot_entered.connect(_on_slot_entered)
+		converter_slot.slot_exited.connect(_on_slot_exited)
+		
+		var pool_vbox = pool_container.get_parent()
+		if pool_vbox:
+			var tools_hbox = pool_vbox.get_node_or_null("ToolsHBox")
+			if not tools_hbox:
+				tools_hbox = HBoxContainer.new()
+				tools_hbox.name = "ToolsHBox"
+				tools_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+				tools_hbox.add_theme_constant_override("separation", 15)
+				pool_vbox.add_child(tools_hbox)
+				# Mover o HBox para ficar imediatamente acima da grid de orbes
+				pool_vbox.move_child(tools_hbox, pool_container.get_index())
+			tools_hbox.add_child(panel)
+		else:
+			add_child(panel)
 	for entry in config.get_backpack_entry_list():
 		_place_parsed_item_in_challenge(backpack, entry)
 	for entry in config.initial_pool_items:

@@ -8,7 +8,9 @@ extends Control
 @onready var binary_checkbox = $MainVBox/ConfigPanel/ConfigVBox/BinaryCheckBox
 @onready var phases_list = $MainVBox/PreviewPanel/PreviewVBox/ScrollContainer/PhasesList
 @onready var btn_jogar = $MainVBox/BottomRow/BtnJogar
+@onready var config_vbox = $MainVBox/ConfigPanel/ConfigVBox
 
+var converter_checkbox: CheckBox
 var _pending_steps: Array = []
 var _current_difficulty: String = "easy"
 
@@ -43,6 +45,9 @@ var _presets = {
 
 func _ready():
 	# Signals já estão conectados na cena
+	converter_checkbox = CheckBox.new()
+	converter_checkbox.text = "Permitir Conversor de Orbes (Int <-> Float)"
+	config_vbox.add_child(converter_checkbox)
 	_update_preview()
 
 
@@ -109,7 +114,8 @@ func _on_jogar_pressed():
 		"grid_cols": 4,
 		"int_min": preset["int_min"],
 		"int_max": preset["int_max"],
-		"random_pool_size": 4
+		"random_pool_size": 4,
+		"use_converter": converter_checkbox.button_pressed if converter_checkbox else false
 	}
 	
 	var dh = get_node("/root/DataHandler")

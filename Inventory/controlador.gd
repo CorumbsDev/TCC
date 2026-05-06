@@ -135,6 +135,14 @@ func converter_resultado_para_tipo(valor: Variant, tipo: String) -> Variant:
 
 func avaliar_expressao_rapida(expressao: String) -> Dictionary:
 	"""Avaliação simples em GDScript com detecção de tipo"""
+	
+	# Pre-processamento para conversores de tipo (int <-> float)
+	var regex = RegEx.new()
+	regex.compile("([0-9\\.]+)\\+?to_float\\+?([0-9\\.]+)")
+	expressao = regex.sub(expressao, "($1 * 1.0 + 0 * $2)", true)
+	regex.compile("([0-9\\.]+)\\+?to_int\\+?([0-9\\.]+)")
+	expressao = regex.sub(expressao, "(floor($1) + 0 * $2)", true)
+	
 	expressao = expressao.replace("×", "*").replace("÷", "/").replace(" ", "")
 	
 	# Tenta detectar strings

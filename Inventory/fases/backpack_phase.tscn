@@ -1,8 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://c2backpack01"]
+[gd_scene load_steps=5 format=3 uid="uid://c2backpack01"]
 
 [ext_resource type="PackedScene" uid="uid://bsem5c3x7xico" path="res://Inventory/fases/phase_base.tscn" id="1_pb"]
-[ext_resource type="Script" path="res://Inventory/fases/phase_2.gd" id="2_ph"]
-[ext_resource type="Script" path="res://Inventory/fases/phase_config.gd" id="3_cfg"]
+[ext_resource type="Script" uid="uid://iw0a7sno32i0" path="res://Inventory/fases/phase_2.gd" id="2_ph"]
+[ext_resource type="Script" uid="uid://con7k4wlr7x86" path="res://Inventory/fases/phase_config.gd" id="3_cfg"]
 
 [sub_resource type="Resource" id="legacy_cfg"]
 script = ExtResource("3_cfg")
@@ -11,14 +11,15 @@ grid_columns = 4
 backpack_slot_count = 8
 pool_slot_count = 10
 pool_grid_columns = 5
+spawn_int_min = 0
+spawn_int_max = 99
 initial_backpack_items = PackedStringArray("1_i", "2_i", "3_i", "4_i", "5_i", "6_i", "7_i")
+initial_backpack_csv = ""
 initial_pool_items = PackedStringArray("item_number_0", "item_number_1", "item_number_2", "item_number_3", "item_number_4", "item_number_5", "item_number_6", "item_number_7", "item_number_8", "item_number_9")
 random_pool = PackedStringArray()
 min_bytes_random_pool = 0
+use_converter = false
 
 [node name="BackpackPhaseLegacy" instance=ExtResource("1_pb")]
 script = ExtResource("2_ph")
 config = SubResource("legacy_cfg")
-
-[node name="GridContainer" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer/ScrollContainer" index="0"]
-visible = true
