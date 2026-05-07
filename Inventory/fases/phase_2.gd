@@ -59,6 +59,86 @@ func _apply_pool_exports(grid: InventoryGrid):
 func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 	backpack.clear_all_items()
 	pool.clear_all_items()
+	
+	if config.use_converter and converter_slot == null:
+		var panel = PanelContainer.new()
+		var vbox = VBoxContainer.new()
+		panel.add_child(vbox)
+		
+		var lbl = Label.new()
+		lbl.text = "Int ↔ Float"
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 14)
+		vbox.add_child(lbl)
+		
+		var center = CenterContainer.new()
+		center.custom_minimum_size = Vector2(64, 64)
+		vbox.add_child(center)
+		
+		converter_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
+		converter_slot.slot_ID = 999
+		center.add_child(converter_slot)
+		
+		converter_slot.slot_entered.connect(_on_slot_entered)
+		converter_slot.slot_exited.connect(_on_slot_exited)
+		
+		# --- Double Slot Panel ---
+		var d_panel = PanelContainer.new()
+		var d_vbox = VBoxContainer.new()
+		d_panel.add_child(d_vbox)
+		
+		var d_lbl = Label.new()
+		d_lbl.text = "Para Double\n(4 slots)"
+		d_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		d_lbl.add_theme_font_size_override("font_size", 14)
+		d_vbox.add_child(d_lbl)
+		
+		var d_center = CenterContainer.new()
+		d_center.custom_minimum_size = Vector2(64, 64)
+		d_vbox.add_child(d_center)
+		
+		double_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
+		double_slot.slot_ID = 998
+		d_center.add_child(double_slot)
+		
+		double_slot.slot_entered.connect(_on_slot_entered)
+		double_slot.slot_exited.connect(_on_slot_exited)
+		
+		var pool_vbox = pool_container.get_parent()
+		if pool_vbox:
+			var tools_container = pool_vbox.get_node_or_null("ToolsContainer")
+			var tools_hbox = null
+			if not tools_container:
+				tools_container = VBoxContainer.new()
+				tools_container.name = "ToolsContainer"
+				
+				var toggle_btn = Button.new()
+				toggle_btn.text = "▼ Ferramentas de Conversão"
+				
+				tools_hbox = HBoxContainer.new()
+				tools_hbox.name = "ToolsHBox"
+				tools_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+				tools_hbox.add_theme_constant_override("separation", 15)
+				
+				toggle_btn.pressed.connect(func():
+					tools_hbox.visible = not tools_hbox.visible
+					toggle_btn.text = "▼ Ferramentas de Conversão" if tools_hbox.visible else "▶ Ferramentas de Conversão"
+				)
+				
+				tools_container.add_child(toggle_btn)
+				tools_container.add_child(tools_hbox)
+				
+				pool_vbox.add_child(tools_container)
+				# Mover o container para ficar imediatamente acima da grid de orbes
+				pool_vbox.move_child(tools_container, pool_container.get_index())
+			else:
+				tools_hbox = tools_container.get_node("ToolsHBox")
+				
+			tools_hbox.add_child(panel)
+			tools_hbox.add_child(d_panel)
+		else:
+			add_child(panel)
+			add_child(d_panel)
 	for entry in config.get_backpack_entry_list():
 		_place_parsed_item_in_challenge(backpack, entry)
 	for entry in config.initial_pool_items:

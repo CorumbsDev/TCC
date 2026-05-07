@@ -462,6 +462,14 @@ func _process_sequence(seq: Array):
 
 func avaliar_expressao_com_tipo(expr: String) -> Dictionary:
 	"""Avalia expressão e retorna resultado com tipo"""
+	
+	# Pre-processamento para conversores de tipo (int <-> float)
+	var regex = RegEx.new()
+	regex.compile("([0-9\\.]+)\\+?to_float\\+?([0-9\\.]+)")
+	expr = regex.sub(expr, "($1 * 1.0 + 0 * $2)", true)
+	regex.compile("([0-9\\.]+)\\+?to_int\\+?([0-9\\.]+)")
+	expr = regex.sub(expr, "(floor($1) + 0 * $2)", true)
+	
 	expr = expr.replace(" ", "")
 	
 	# Detecta strings

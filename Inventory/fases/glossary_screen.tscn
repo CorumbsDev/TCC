@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c4dwtofxanvcy"]
 
-[ext_resource type="Script" path="res://Inventory/fases/glossary_screen.gd" id="1"]
+[ext_resource type="Script" uid="uid://ybkrnqqari4v" path="res://Inventory/fases/glossary_screen.gd" id="1"]
 
 [node name="GlossaryScreen" type="Control"]
 layout_mode = 3
@@ -45,8 +45,6 @@ text = "Glossário"
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
-fit_content = false
-scroll_active = true
 
 [node name="BtnVoltar" type="Button" parent="Margin/VBox"]
 layout_mode = 2

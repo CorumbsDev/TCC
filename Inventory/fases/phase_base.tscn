@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://bsem5c3x7xico"]
 
-[ext_resource type="Script" path="res://Inventory/fases/phase_base.gd" id="1_fscm0"]
+[ext_resource type="Script" uid="uid://b1jyg31jo23kp" path="res://Inventory/fases/phase_base.gd" id="1_fscm0"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_fscm0"]
 blend_mode = 1
@@ -83,8 +83,8 @@ layout_mode = 2
 text = "spawn"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 280)
+layout_mode = 2
 size_flags_vertical = 0
 
 [node name="GridContainer" type="GridContainer" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer/ScrollContainer"]

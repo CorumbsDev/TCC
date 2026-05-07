@@ -1,8 +1,9 @@
 [gd_scene load_steps=2 format=3 uid="uid://cnh2nxn617kuf"]
 
-[ext_resource type="PackedScene" uid="uid://ccfccqt4m42om" path="res://Inventory/InventoryGrid.tscn" id="1"]
+[ext_resource type="PackedScene" uid="uid://cys5sf0454a5j" path="res://Inventory/InventoryGrid.tscn" id="1"]
 
 [node name="PoolGrid" instance=ExtResource("1")]
-grid_columns = 5
-number_of_slots = 10
+layout_mode = 3
 capacity_bytes = 999999
+number_of_slots = 10
+grid_columns = 5

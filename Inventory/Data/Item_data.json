@@ -22,6 +22,17 @@
 	"Value": 10,
 	"Operator": "",
 	"Grid": "0,0"
+  },
+  "item_operator_to_float": {
+	"Name": "To Float",
+	"Value": 0,
+	"Operator": "to_float",
+	"Grid": "0,0"
+  },
+  "item_operator_to_int": {
+	"Name": "To Int",
+	"Value": 0,
+	"Operator": "to_int",
+	"Grid": "0,0"
   }
-  
 }

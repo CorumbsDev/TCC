@@ -26,7 +26,9 @@ func _init_item_data():
 		"item_binary_10": {"Value": 10, "DataType": "BINARY", "Bits": 4, "Bytes": 1},
 		"item_binary_42": {"Value": 42, "DataType": "BINARY", "Bits": 6, "Bytes": 1},
 		"item_binary_0": {"Value": 0, "DataType": "BINARY", "Bits": 1, "Bytes": 1},
-		"item_binary_1": {"Value": 1, "DataType": "BINARY", "Bits": 1, "Bytes": 1}
+		"item_binary_1": {"Value": 1, "DataType": "BINARY", "Bits": 1, "Bytes": 1},
+		"item_operator_to_float": {"Operator": "to_float"},
+		"item_operator_to_int": {"Operator": "to_int"}
 	}
 
 
@@ -70,8 +72,8 @@ func get_item_bytes(item_id: String) -> int:
 
 
 # Generator methods
-func generate_knapsack_config(capacity: int = 8, backpack_slots: int = 8, pool_slots: int = 10, grid_cols: int = 4, int_min: int = 1, int_max: int = 10, initial_csv: String = "1_i,2_i", random_pool_size: int = 4) -> PhaseConfig:
-	return ConfigGenerator.generate_knapsack_config(capacity, backpack_slots, pool_slots, grid_cols, int_min, int_max, initial_csv, random_pool_size)
+func generate_knapsack_config(capacity: int = 8, backpack_slots: int = 8, pool_slots: int = 10, grid_cols: int = 4, int_min: int = 1, int_max: int = 10, initial_csv: String = "1_i,2_i", random_pool_size: int = 4, use_converter: bool = false) -> PhaseConfig:
+	return ConfigGenerator.generate_knapsack_config(capacity, backpack_slots, pool_slots, grid_cols, int_min, int_max, initial_csv, random_pool_size, use_converter)
 
 func generate_sequence(num_phases: int, mix_types: bool = true, base_params: Dictionary = {}) -> Array:
 	return ConfigGenerator.generate_sequence(num_phases, mix_types, base_params)
