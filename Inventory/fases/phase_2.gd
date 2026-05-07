@@ -106,15 +106,34 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 		
 		var pool_vbox = pool_container.get_parent()
 		if pool_vbox:
-			var tools_hbox = pool_vbox.get_node_or_null("ToolsHBox")
-			if not tools_hbox:
+			var tools_container = pool_vbox.get_node_or_null("ToolsContainer")
+			var tools_hbox = null
+			if not tools_container:
+				tools_container = VBoxContainer.new()
+				tools_container.name = "ToolsContainer"
+				
+				var toggle_btn = Button.new()
+				toggle_btn.text = "▼ Ferramentas de Conversão"
+				
 				tools_hbox = HBoxContainer.new()
 				tools_hbox.name = "ToolsHBox"
 				tools_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 				tools_hbox.add_theme_constant_override("separation", 15)
-				pool_vbox.add_child(tools_hbox)
-				# Mover o HBox para ficar imediatamente acima da grid de orbes
-				pool_vbox.move_child(tools_hbox, pool_container.get_index())
+				
+				toggle_btn.pressed.connect(func():
+					tools_hbox.visible = not tools_hbox.visible
+					toggle_btn.text = "▼ Ferramentas de Conversão" if tools_hbox.visible else "▶ Ferramentas de Conversão"
+				)
+				
+				tools_container.add_child(toggle_btn)
+				tools_container.add_child(tools_hbox)
+				
+				pool_vbox.add_child(tools_container)
+				# Mover o container para ficar imediatamente acima da grid de orbes
+				pool_vbox.move_child(tools_container, pool_container.get_index())
+			else:
+				tools_hbox = tools_container.get_node("ToolsHBox")
+				
 			tools_hbox.add_child(panel)
 			tools_hbox.add_child(d_panel)
 		else:

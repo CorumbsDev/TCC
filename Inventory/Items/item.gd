@@ -426,14 +426,16 @@ func binary_to_int(bin_str: String) -> int:
 
 func get_size_bytes() -> int:
 	"""Retorna o tamanho em bytes do item (para Fase 2 - Mochila)."""
-	if item_ID != null and item_ID != "" and DataHandler:
-		return DataHandler.get_item_bytes(item_ID)
 	match data_type:
 		DataType.DOUBLE:
 			return 4
 		DataType.BINARY:
+			if item_ID != null and item_ID != "" and DataHandler:
+				return DataHandler.get_item_bytes(item_ID)
 			return int(ceil(float(binary_bits) / 8.0))
 		_:
+			if item_ID != null and item_ID != "" and DataHandler:
+				return DataHandler.get_item_bytes(item_ID)
 			return 1
 
 func get_binary_explanation(bin_str: String) -> String:
