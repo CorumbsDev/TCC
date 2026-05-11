@@ -17,14 +17,35 @@ func _ready():
 		cfg.random_pool = PackedStringArray()
 	config = cfg
 	config.apply_constraints()
-	_clear_container(backpack_container)
-	_clear_container(pool_container)
+	# Remove placeholders velhos e inúteis para não criar Grids duplos (que esmagam o conteúdo)
+	var bp_scroll = backpack_container.get_parent()
+	var bp_vbox = bp_scroll.get_parent()
+	bp_vbox.remove_child(bp_scroll)
+	bp_scroll.queue_free()
+	
+	var pl_vbox = pool_container.get_parent()
+	pl_vbox.remove_child(pool_container)
+	pool_container.queue_free()
+	
 	var backpack: InventoryGrid = GRID_SCENE.instantiate()
 	var pool: InventoryGrid = GRID_SCENE.instantiate()
 	_apply_challenge_exports(backpack)
 	_apply_pool_exports(pool)
-	backpack_container.add_child(backpack)
-	pool_container.add_child(pool)
+	
+	bp_vbox.add_child(backpack)
+	pl_vbox.add_child(pool)
+	
+	# Atualiza referências e limpa tamanhos travados
+	backpack_container = backpack
+	pool_container = pool
+	
+	backpack.custom_minimum_size = Vector2(0, 0)
+	backpack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	backpack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pool.custom_minimum_size = Vector2(0, 0)
+	pool.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	pool.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
 	backpack.clear_all_items()
 	pool.clear_all_items()
 	setup_grids(backpack, pool)
@@ -150,24 +171,24 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 		
 		var pool_vbox = pool_container.get_parent()
 		if pool_vbox:
-			var tools_container = pool_vbox.get_node_or_null("ToolsContainer")
+			var tools_container = pool_vbox.get_node_or_null("ConvertersContainer")
 			var tools_hbox = null
 			if not tools_container:
 				tools_container = VBoxContainer.new()
-				tools_container.name = "ToolsContainer"
+				tools_container.name = "ConvertersContainer"
 				
 				var toggle_btn = Button.new()
-				toggle_btn.text = "▼ Ferramentas"
+				toggle_btn.text = "▼ Conversores"
 				
 				tools_hbox = HFlowContainer.new()
-				tools_hbox.name = "ToolsHBox"
+				tools_hbox.name = "ConvertersHBox"
 				tools_hbox.alignment = FlowContainer.ALIGNMENT_CENTER
 				tools_hbox.add_theme_constant_override("h_separation", 15)
 				tools_hbox.add_theme_constant_override("v_separation", 15)
 				
 				toggle_btn.pressed.connect(func():
 					tools_hbox.visible = not tools_hbox.visible
-					toggle_btn.text = "▼ Ferramentas" if tools_hbox.visible else "▶ Ferramentas"
+					toggle_btn.text = "▼ Conversores" if tools_hbox.visible else "▶ Conversores"
 				)
 				
 				tools_container.add_child(toggle_btn)
@@ -177,7 +198,7 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 				# Mover o container para ficar imediatamente acima da grid de orbes
 				pool_vbox.move_child(tools_container, pool_container.get_index())
 			else:
-				tools_hbox = tools_container.get_node("ToolsHBox")
+				tools_hbox = tools_container.get_node("ConvertersHBox")
 				
 			tools_hbox.add_child(panel)
 			tools_hbox.add_child(d_panel)
@@ -212,6 +233,14 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 
 
 func _create_calculator_ui():
+	var pool_vbox = pool_container.get_parent()
+	if not pool_vbox:
+		return
+		
+	# Previne criação duplicada se já existir
+	if pool_vbox.has_node("BottomToolsContainer"):
+		return
+		
 	var panel = PanelContainer.new()
 	var vbox = VBoxContainer.new()
 	panel.add_child(vbox)
@@ -255,18 +284,33 @@ func _create_calculator_ui():
 	calc_slot_2.slot_entered.connect(_on_slot_entered)
 	calc_slot_2.slot_exited.connect(_on_slot_exited)
 	
-	var pool_vbox = pool_container.get_parent()
-	var container_para_adicionar = self
-	if pool_vbox:
-		var tools_container = pool_vbox.get_node_or_null("ToolsContainer")
-		if tools_container:
-			var tools_hbox = tools_container.get_node_or_null("ToolsHBox")
-			if tools_hbox:
-				container_para_adicionar = tools_hbox
-			else:
-				container_para_adicionar = tools_container
-		else:
-			container_para_adicionar = pool_vbox
+	var tools_container = VBoxContainer.new()
+	tools_container.name = "BottomToolsContainer"
+	
+	var toggle_btn = Button.new()
+	toggle_btn.text = "▲ Ferramentas"
+	toggle_btn.custom_minimum_size = Vector2(150, 35) # Força o botão a ter tamanho visível
+	
+	var tools_hbox = HFlowContainer.new()
+	tools_hbox.name = "BottomToolsHBox"
+	tools_hbox.alignment = FlowContainer.ALIGNMENT_CENTER
+	tools_hbox.add_theme_constant_override("h_separation", 15)
+	tools_hbox.add_theme_constant_override("v_separation", 15)
+	tools_hbox.visible = false
+	
+	toggle_btn.pressed.connect(func():
+		tools_hbox.visible = not tools_hbox.visible
+		toggle_btn.text = "▼ Ferramentas" if tools_hbox.visible else "▲ Ferramentas"
+	)
+	
+	tools_container.add_child(tools_hbox)
+	tools_container.add_child(toggle_btn)
+	
+	pool_vbox.add_child(tools_container)
+	# Força a ficar logo abaixo do pool de itens
+	pool_vbox.move_child(tools_container, pool_container.get_index() + 1)
+	
+	var container_para_adicionar = tools_hbox
 	
 	container_para_adicionar.add_child(panel)
 	

@@ -64,23 +64,47 @@ func _fill_initial_items():
 func _position_item(item, slot):
 	await get_tree().process_frame
 	if is_instance_valid(item) and is_instance_valid(slot):
-		var base_pos = slot.global_position + Vector2(25, 25)
+		var base_pos = slot.global_position + Vector2(32, 32)
 		
-		# Calcular offset se for item fracionário
-		var bytes_before = 0
-		if slot.items_stored.size() > 1:
-			for i in slot.items_stored:
-				if i == item:
-					break
-				if i and i.has_method("get_size_bytes"):
-					bytes_before += i.get_size_bytes()
+		var current_grid = [null, null, null, null]
+		var my_pos = 0
 		
-		var x_offset = 0.0
-		# 1 byte = 12.5 pixels offset
-		if bytes_before > 0:
-			x_offset = (bytes_before / 4.0) * 50.0
+		for it in slot.items_stored:
+			var sz = it.get_size_bytes() if it.has_method("get_size_bytes") else 4
+			var pos_found = 0
+			if sz >= 4:
+				current_grid[0] = it; current_grid[1] = it; current_grid[2] = it; current_grid[3] = it
+				pos_found = 0
+			elif sz == 2:
+				if current_grid[0] == null and current_grid[1] == null:
+					current_grid[0] = it; current_grid[1] = it
+					pos_found = 0
+				elif current_grid[2] == null and current_grid[3] == null:
+					current_grid[2] = it; current_grid[3] = it
+					pos_found = 2
+			elif sz == 1:
+				for i in range(4):
+					if current_grid[i] == null:
+						current_grid[i] = it
+						pos_found = i
+						break
+			if it == item:
+				my_pos = pos_found
+				break
+				
+		var offset = Vector2(0, 0)
+		var item_bytes = item.get_size_bytes() if item.has_method("get_size_bytes") else 4
+		
+		if item_bytes == 1:
+			if my_pos == 0: offset = Vector2(-16, -16)
+			elif my_pos == 1: offset = Vector2(-16, 16)
+			elif my_pos == 2: offset = Vector2(16, -16)
+			elif my_pos == 3: offset = Vector2(16, 16)
+		elif item_bytes == 2:
+			if my_pos == 0: offset = Vector2(-16, 0)
+			else: offset = Vector2(16, 0)
 			
-		item.global_position = base_pos + Vector2(x_offset, 0)
+		item.global_position = base_pos + offset
 
 
 func total_bytes_used() -> int:
@@ -98,13 +122,40 @@ func can_place_item(item, slot) -> bool:
 	if not item or not slot:
 		return false
 	var item_bytes = item.get_size_bytes() if item.has_method("get_size_bytes") else 4
+	
 	for offset in item.item_grids:
 		var idx = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
 		if idx < 0 or idx >= slots_array.size():
 			return false
 		var target_slot = slots_array[idx]
-		var used_bytes = target_slot.get_used_bytes()
-		if used_bytes + item_bytes > 4:
+		
+		# Simulando o espaço de memória (4 blocos de 1 byte por slot)
+		var current_grid = [null, null, null, null]
+		for it in target_slot.items_stored:
+			if it == item: continue
+			var sz = it.get_size_bytes() if it.has_method("get_size_bytes") else 4
+			if sz >= 4:
+				current_grid[0] = it; current_grid[1] = it; current_grid[2] = it; current_grid[3] = it
+			elif sz == 2:
+				if current_grid[0] == null and current_grid[1] == null:
+					current_grid[0] = it; current_grid[1] = it
+				elif current_grid[2] == null and current_grid[3] == null:
+					current_grid[2] = it; current_grid[3] = it
+			elif sz == 1:
+				for i in range(4):
+					if current_grid[i] == null:
+						current_grid[i] = it
+						break
+		
+		var can_fit = false
+		if item_bytes >= 4:
+			can_fit = (current_grid[0] == null and current_grid[1] == null and current_grid[2] == null and current_grid[3] == null)
+		elif item_bytes == 2:
+			can_fit = (current_grid[0] == null and current_grid[1] == null) or (current_grid[2] == null and current_grid[3] == null)
+		elif item_bytes == 1:
+			can_fit = (current_grid[0] == null or current_grid[1] == null or current_grid[2] == null or current_grid[3] == null)
+			
+		if not can_fit:
 			return false
 	return true
 

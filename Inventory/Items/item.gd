@@ -401,21 +401,45 @@ func update_label_display():
 
 func _resize_visual(color_rect, slot_count: float):
 	"""Redimensiona o ColorRect e a Label para cobrir múltiplos slots"""
-	var slot_size = 50  # Tamanho de cada slot em pixels
+	var slot_size = 64  # Aumentado para 64 pixels por slot
+	
+	if data_type == DataType.BOOLEAN:
+		if color_rect and color_rect is ColorRect:
+			color_rect.position = Vector2(-12, -12)
+			color_rect.size = Vector2(24, 24)
+		if value_label:
+			value_label.position = Vector2(0, 0)
+			value_label.size = Vector2(24, 24)
+			value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			value_label.add_theme_font_size_override("font_size", 14)
+		return
+	elif data_type == DataType.SHORT_INT:
+		if color_rect and color_rect is ColorRect:
+			color_rect.position = Vector2(-12, -28)
+			color_rect.size = Vector2(24, 56)
+		if value_label:
+			value_label.position = Vector2(0, 0)
+			value_label.size = Vector2(24, 56)
+			value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			value_label.add_theme_font_size_override("font_size", 16)
+		return
+
 	var total_width = slot_count * slot_size
 	
 	if color_rect and color_rect is ColorRect:
-		# Mantém margem de 5px em cada lado (slot = 50px, visual = 40px por slot)
-		color_rect.offset_left = -19
-		color_rect.offset_right = max(-19 + total_width - 10, -19 + 5)
-		color_rect.offset_top = -20
-		color_rect.offset_bottom = 20
+		var visual_width = max(total_width - 8, 5)
+		color_rect.position = Vector2(-28, -28)
+		color_rect.size = Vector2(visual_width, 56)
 	
 	if value_label:
-		# Label preenche o ColorRect
-		value_label.offset_left = 0
-		value_label.offset_right = total_width - 10
-		value_label.custom_minimum_size.x = total_width - 10
+		var visual_width = max(total_width - 8, 5)
+		value_label.position = Vector2(0, 0)
+		value_label.size = Vector2(visual_width, 56)
+		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		value_label.add_theme_font_size_override("font_size", 24)
 
 func _snap_to(destination):
 	var tween = get_tree().create_tween()

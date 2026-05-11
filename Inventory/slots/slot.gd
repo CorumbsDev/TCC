@@ -23,6 +23,9 @@ var item_stored:
 signal item_changed(slot)
 
 func _ready():
+	custom_minimum_size = Vector2(64, 64)
+	size = Vector2(64, 64)
+	expand_mode = 1 # TextureRect.EXPAND_IGNORE_SIZE
 	add_to_group("slot")
 
 

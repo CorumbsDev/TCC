@@ -28,6 +28,9 @@ var can_place := false
 
 
 func _ready():
+	# Força a interface a não vazar da tela do jogo
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	
 	btn_voltar.pressed.connect(_on_voltar_pressed)
 	if btn_help:
 		btn_help.pressed.connect(_on_help_pressed)
@@ -366,7 +369,7 @@ func _pick_item():
 				if not color_rect:
 					color_rect = item_held.get_node_or_null("ValueLabel").get_parent()
 				if color_rect:
-					item_held._resize_visual(color_rect, 4)
+					item_held._resize_visual(color_rect, 2)
 	elif backpack_grid and slot in backpack_grid.slots_array:
 		backpack_grid.remove_item(item_held)
 	elif pool_grid and slot in pool_grid.slots_array:
