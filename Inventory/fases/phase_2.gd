@@ -104,6 +104,50 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 		double_slot.slot_entered.connect(_on_slot_entered)
 		double_slot.slot_exited.connect(_on_slot_exited)
 		
+		# --- Short Slot Panel ---
+		var s_panel = PanelContainer.new()
+		var s_vbox = VBoxContainer.new()
+		s_panel.add_child(s_vbox)
+		
+		var s_lbl = Label.new()
+		s_lbl.text = "Para Short\n(0.5 slot)"
+		s_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		s_lbl.add_theme_font_size_override("font_size", 14)
+		s_vbox.add_child(s_lbl)
+		
+		var s_center = CenterContainer.new()
+		s_center.custom_minimum_size = Vector2(64, 64)
+		s_vbox.add_child(s_center)
+		
+		short_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
+		short_slot.slot_ID = 997
+		s_center.add_child(short_slot)
+		
+		short_slot.slot_entered.connect(_on_slot_entered)
+		short_slot.slot_exited.connect(_on_slot_exited)
+		
+		# --- Boolean Slot Panel ---
+		var b_panel = PanelContainer.new()
+		var b_vbox = VBoxContainer.new()
+		b_panel.add_child(b_vbox)
+		
+		var b_lbl = Label.new()
+		b_lbl.text = "Para Bool\n(0.25 slot)"
+		b_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		b_lbl.add_theme_font_size_override("font_size", 14)
+		b_vbox.add_child(b_lbl)
+		
+		var b_center = CenterContainer.new()
+		b_center.custom_minimum_size = Vector2(64, 64)
+		b_vbox.add_child(b_center)
+		
+		boolean_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
+		boolean_slot.slot_ID = 996
+		b_center.add_child(boolean_slot)
+		
+		boolean_slot.slot_entered.connect(_on_slot_entered)
+		boolean_slot.slot_exited.connect(_on_slot_exited)
+		
 		var pool_vbox = pool_container.get_parent()
 		if pool_vbox:
 			var tools_container = pool_vbox.get_node_or_null("ToolsContainer")
@@ -113,16 +157,17 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 				tools_container.name = "ToolsContainer"
 				
 				var toggle_btn = Button.new()
-				toggle_btn.text = "▼ Ferramentas de Conversão"
+				toggle_btn.text = "▼ Ferramentas"
 				
-				tools_hbox = HBoxContainer.new()
+				tools_hbox = HFlowContainer.new()
 				tools_hbox.name = "ToolsHBox"
-				tools_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-				tools_hbox.add_theme_constant_override("separation", 15)
+				tools_hbox.alignment = FlowContainer.ALIGNMENT_CENTER
+				tools_hbox.add_theme_constant_override("h_separation", 15)
+				tools_hbox.add_theme_constant_override("v_separation", 15)
 				
 				toggle_btn.pressed.connect(func():
 					tools_hbox.visible = not tools_hbox.visible
-					toggle_btn.text = "▼ Ferramentas de Conversão" if tools_hbox.visible else "▶ Ferramentas de Conversão"
+					toggle_btn.text = "▼ Ferramentas" if tools_hbox.visible else "▶ Ferramentas"
 				)
 				
 				tools_container.add_child(toggle_btn)
@@ -136,9 +181,17 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 				
 			tools_hbox.add_child(panel)
 			tools_hbox.add_child(d_panel)
+			tools_hbox.add_child(s_panel)
+			tools_hbox.add_child(b_panel)
 		else:
 			add_child(panel)
 			add_child(d_panel)
+			add_child(s_panel)
+			add_child(b_panel)
+			
+	if config.use_converter:
+		_create_calculator_ui()
+
 	for entry in config.get_backpack_entry_list():
 		_place_parsed_item_in_challenge(backpack, entry)
 	for entry in config.initial_pool_items:
@@ -156,6 +209,89 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 	_generate_extra_pool_items(pool, min_extra)
 	_update_bytes_label()
 	_update_hint()
+
+
+func _create_calculator_ui():
+	var panel = PanelContainer.new()
+	var vbox = VBoxContainer.new()
+	panel.add_child(vbox)
+	
+	var lbl = Label.new()
+	lbl.text = "Calculadora"
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 14)
+	vbox.add_child(lbl)
+	
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 10)
+	vbox.add_child(hbox)
+	
+	var c1 = CenterContainer.new()
+	c1.custom_minimum_size = Vector2(64, 64)
+	calc_slot_1 = preload("res://Inventory/slots/slot.tscn").instantiate()
+	calc_slot_1.slot_ID = 901
+	c1.add_child(calc_slot_1)
+	hbox.add_child(c1)
+	
+	calc_op_btn = Button.new()
+	calc_op_btn.text = "+"
+	calc_op_btn.custom_minimum_size = Vector2(40, 40)
+	calc_op_btn.add_theme_font_size_override("font_size", 24)
+	calc_op_btn.pressed.connect(func():
+		calc_op_btn.text = "-" if calc_op_btn.text == "+" else "+"
+	)
+	hbox.add_child(calc_op_btn)
+	
+	var c2 = CenterContainer.new()
+	c2.custom_minimum_size = Vector2(64, 64)
+	calc_slot_2 = preload("res://Inventory/slots/slot.tscn").instantiate()
+	calc_slot_2.slot_ID = 902
+	c2.add_child(calc_slot_2)
+	hbox.add_child(c2)
+	
+	calc_slot_1.slot_entered.connect(_on_slot_entered)
+	calc_slot_1.slot_exited.connect(_on_slot_exited)
+	calc_slot_2.slot_entered.connect(_on_slot_entered)
+	calc_slot_2.slot_exited.connect(_on_slot_exited)
+	
+	var pool_vbox = pool_container.get_parent()
+	var container_para_adicionar = self
+	if pool_vbox:
+		var tools_container = pool_vbox.get_node_or_null("ToolsContainer")
+		if tools_container:
+			var tools_hbox = tools_container.get_node_or_null("ToolsHBox")
+			if tools_hbox:
+				container_para_adicionar = tools_hbox
+			else:
+				container_para_adicionar = tools_container
+		else:
+			container_para_adicionar = pool_vbox
+	
+	container_para_adicionar.add_child(panel)
+	
+	var insp_panel = PanelContainer.new()
+	var insp_vbox = VBoxContainer.new()
+	insp_panel.add_child(insp_vbox)
+	
+	var insp_lbl = Label.new()
+	insp_lbl.text = "Inspecionar"
+	insp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	insp_lbl.add_theme_font_size_override("font_size", 14)
+	insp_vbox.add_child(insp_lbl)
+	
+	var insp_c = CenterContainer.new()
+	insp_c.custom_minimum_size = Vector2(64, 64)
+	insp_vbox.add_child(insp_c)
+	
+	inspect_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
+	inspect_slot.slot_ID = 903
+	insp_c.add_child(inspect_slot)
+	
+	inspect_slot.slot_entered.connect(_on_slot_entered)
+	inspect_slot.slot_exited.connect(_on_slot_exited)
+	
+	container_para_adicionar.add_child(insp_panel)
 
 
 func _clear_container(container: Node):

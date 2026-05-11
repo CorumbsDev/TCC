@@ -142,6 +142,10 @@ func avaliar_expressao_rapida(expressao: String) -> Dictionary:
 	expressao = regex.sub(expressao, "($1 * 1.0 + 0 * $2)", true)
 	regex.compile("([0-9\\.]+)\\+?to_int\\+?([0-9\\.]+)")
 	expressao = regex.sub(expressao, "(floor($1) + 0 * $2)", true)
+	regex.compile("([0-9\\.]+)\\+?to_short\\+?([0-9\\.]+)")
+	expressao = regex.sub(expressao, "(floor($1) + 0 * $2)", true)
+	regex.compile("([0-9\\.]+)\\+?to_boolean\\+?([0-9\\.]+)")
+	expressao = regex.sub(expressao, "($1 != 0 or $2 != 0)", true)
 	
 	expressao = expressao.replace("×", "*").replace("÷", "/").replace(" ", "")
 	
@@ -173,6 +177,9 @@ func avaliar_expressao_rapida(expressao: String) -> Dictionary:
 				tipo_resultado = "BOOLEAN"
 			elif typeof(resultado) == TYPE_STRING:
 				tipo_resultado = "STRING"
+			
+			if "to_short" in expressao.to_lower():
+				tipo_resultado = "SHORT_INT"
 			
 			return {"resultado": resultado, "tipo": tipo_resultado}
 	

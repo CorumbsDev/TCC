@@ -52,37 +52,59 @@ func _fill_initial_items():
 			var idx = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
 			if idx >= 0 and idx < slots_array.size():
 				var target_slot = slots_array[idx]
-				target_slot.state = target_slot.States.TAKEN
-				target_slot.item_stored = item
-				target_slot.set_item(item)
+				target_slot.add_item(item)
+				if target_slot.get_used_bytes() >= 4:
+					target_slot.state = target_slot.States.TAKEN
+				elif target_slot.get_used_bytes() > 0:
+					target_slot.state = target_slot.States.PARTIAL
+				target_slot.set_color(target_slot.state)
 		call_deferred("_position_item", item, slot)
 
 
 func _position_item(item, slot):
 	await get_tree().process_frame
 	if is_instance_valid(item) and is_instance_valid(slot):
-		item.global_position = slot.global_position + Vector2(25, 25)
+		var base_pos = slot.global_position + Vector2(25, 25)
+		
+		# Calcular offset se for item fracionário
+		var bytes_before = 0
+		if slot.items_stored.size() > 1:
+			for i in slot.items_stored:
+				if i == item:
+					break
+				if i and i.has_method("get_size_bytes"):
+					bytes_before += i.get_size_bytes()
+		
+		var x_offset = 0.0
+		# 1 byte = 12.5 pixels offset
+		if bytes_before > 0:
+			x_offset = (bytes_before / 4.0) * 50.0
+			
+		item.global_position = base_pos + Vector2(x_offset, 0)
 
 
 func total_bytes_used() -> int:
 	var total = 0
 	var counted := {}
 	for slot in slots_array:
-		var it = slot.item_stored
-		if it and it.has_method("get_size_bytes") and not counted.has(it):
-			counted[it] = true
-			total += it.get_size_bytes()
+		for it in slot.items_stored:
+			if it and it.has_method("get_size_bytes") and not counted.has(it):
+				counted[it] = true
+				total += it.get_size_bytes()
 	return total
 
 
 func can_place_item(item, slot) -> bool:
 	if not item or not slot:
 		return false
+	var item_bytes = item.get_size_bytes() if item.has_method("get_size_bytes") else 4
 	for offset in item.item_grids:
 		var idx = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
 		if idx < 0 or idx >= slots_array.size():
 			return false
-		if slots_array[idx].state != slots_array[idx].States.FREE:
+		var target_slot = slots_array[idx]
+		var used_bytes = target_slot.get_used_bytes()
+		if used_bytes + item_bytes > 4:
 			return false
 	return true
 
@@ -112,9 +134,12 @@ func place_item(item, slot):
 		if idx < 0 or idx >= slots_array.size():
 			continue
 		var target_slot = slots_array[idx]
-		target_slot.state = target_slot.States.TAKEN
-		target_slot.item_stored = item
-		target_slot.set_item(item)
+		target_slot.add_item(item)
+		if target_slot.get_used_bytes() >= 4:
+			target_slot.state = target_slot.States.TAKEN
+		elif target_slot.get_used_bytes() > 0:
+			target_slot.state = target_slot.States.PARTIAL
+		target_slot.set_color(target_slot.state)
 	item.grid_anchor = slot
 	var parent = item.get_parent()
 	if parent != grid_container:
@@ -126,10 +151,13 @@ func place_item(item, slot):
 
 func remove_item(item):
 	for slot in slots_array:
-		if slot.item_stored == item:
-			slot.state = slot.States.FREE
-			slot.item_stored = null
-			slot.set_item(null)
+		if slot.items_stored.has(item):
+			slot.remove_item(item)
+			if slot.get_used_bytes() == 0:
+				slot.state = slot.States.FREE
+			elif slot.get_used_bytes() < 4:
+				slot.state = slot.States.PARTIAL
+			slot.set_color(slot.state)
 
 
 func clear_all_items():
@@ -137,21 +165,20 @@ func clear_all_items():
 		push_error("InventoryGrid: grid_container is null.")
 		return
 	for slot in slots_array:
-		if slot.item_stored:
-			var item = slot.item_stored
+		for item in slot.items_stored.duplicate():
 			if item.get_parent() == grid_container:
 				grid_container.remove_child(item)
 			item.queue_free()
-			slot.state = slot.States.FREE
-			slot.item_stored = null
-			slot.set_item(null)
+		slot.clear_items()
+		slot.state = slot.States.FREE
+		slot.set_color(slot.state)
 	initial_items = []
 
 
 func remove_item_single_slot(slot):
 	# Compatível com código antigo que liberava um slot do pool
-	if slot.item_stored:
-		var it = slot.item_stored
+	if slot.items_stored.size() > 0:
+		var it = slot.items_stored[0]
 		remove_item(it)
 
 

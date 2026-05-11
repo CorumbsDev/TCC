@@ -34,5 +34,17 @@
 	"Value": 0,
 	"Operator": "to_int",
 	"Grid": "0,0"
+  },
+  "item_operator_to_short": {
+	"Name": "To Short",
+	"Value": 0,
+	"Operator": "to_short",
+	"Grid": "0,0"
+  },
+  "item_operator_to_boolean": {
+	"Name": "To Boolean",
+	"Value": 0,
+	"Operator": "to_boolean",
+	"Grid": "0,0"
   }
 }

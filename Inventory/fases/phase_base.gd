@@ -13,8 +13,14 @@ extends Control
 
 var backpack_grid: InventoryGrid = null
 var pool_grid: InventoryGrid = null
-var converter_slot = null
-var double_slot = null
+var converter_slot: TextureRect = null
+var double_slot: TextureRect = null
+var short_slot: TextureRect = null
+var boolean_slot: TextureRect = null
+var calc_slot_1: TextureRect = null
+var calc_slot_2 = null
+var calc_op_btn = null
+var inspect_slot: TextureRect = null
 
 var item_held = null
 var current_slot = null
@@ -127,8 +133,30 @@ func _on_slot_entered(slot):
 		_update_next_button_state()
 	elif slot == double_slot:
 		can_place = true
-		hint_label.text = "Solte o orbe aqui para convertê-lo para Double (4 slots, Rosa)."
+		hint_label.text = "Solte o orbe aqui para convertê-lo para Double (2 slots, Rosa)."
 		_update_next_button_state()
+	elif slot == short_slot:
+		can_place = true
+		hint_label.text = "Solte o orbe aqui para convertê-lo para Short Int (0.5 slot, Ciano)."
+		_update_next_button_state()
+	elif slot == boolean_slot:
+		can_place = true
+		hint_label.text = "Solte o orbe aqui para convertê-lo para Boolean (0.25 slot, Verde)."
+		_update_next_button_state()
+	elif slot == calc_slot_1 or slot == calc_slot_2:
+		if slot.item_stored == null:
+			can_place = true
+			hint_label.text = "Solte o orbe na calculadora."
+			_update_next_button_state()
+		else:
+			can_place = false
+	elif slot == inspect_slot:
+		if slot.item_stored == null:
+			can_place = true
+			hint_label.text = "Slot de inspeção."
+			_update_next_button_state()
+		else:
+			can_place = false
 	elif backpack_grid and slot in backpack_grid.slots_array:
 		can_place = backpack_grid.can_place_item(item_held, slot)
 		var need = item_held.get_size_bytes() if item_held.has_method("get_size_bytes") else 1
@@ -224,6 +252,70 @@ func _place_item():
 		_update_hint()
 		return
 		
+	if current_slot == short_slot:
+		item_held.set_value_by_type(int(item_held.value), item_held.DataType.SHORT_INT)
+		if item_held.has_method("update_label_display"):
+			item_held.update_label_display()
+		if item_held.get_parent() != short_slot:
+			item_held.get_parent().remove_child(item_held)
+			short_slot.add_child(item_held)
+		item_held.global_position = short_slot.global_position + Vector2(25, 25)
+		item_held.grid_anchor = short_slot
+		item_held.selected = false
+		short_slot.item_stored = item_held
+		short_slot.state = short_slot.States.TAKEN
+		item_held = null
+		can_place = false
+		_update_bytes_label()
+		_update_hint()
+		return
+		
+	if current_slot == boolean_slot:
+		item_held.set_value_by_type(item_held.value != 0, item_held.DataType.BOOLEAN)
+		if item_held.has_method("update_label_display"):
+			item_held.update_label_display()
+		if item_held.get_parent() != boolean_slot:
+			item_held.get_parent().remove_child(item_held)
+			boolean_slot.add_child(item_held)
+		item_held.global_position = boolean_slot.global_position + Vector2(25, 25)
+		item_held.grid_anchor = boolean_slot
+		item_held.selected = false
+		boolean_slot.item_stored = item_held
+		boolean_slot.state = boolean_slot.States.TAKEN
+		item_held = null
+		can_place = false
+		_update_bytes_label()
+		_update_hint()
+		return
+		
+	if current_slot == calc_slot_1 or current_slot == calc_slot_2 or current_slot == inspect_slot:
+		if item_held.get_parent() != current_slot:
+			item_held.get_parent().remove_child(item_held)
+			current_slot.add_child(item_held)
+		
+		# Shrink DOUBLE visually while in calculator
+		if item_held.data_type == item_held.DataType.DOUBLE:
+			if item_held.has_method("_resize_visual"):
+				var color_rect = item_held.get_node_or_null("ColorRect")
+				if not color_rect:
+					color_rect = item_held.get_node_or_null("ValueLabel").get_parent()
+				if color_rect:
+					item_held._resize_visual(color_rect, 1)
+		
+		item_held.global_position = current_slot.global_position + Vector2(25, 25)
+		item_held.grid_anchor = current_slot
+		item_held.selected = false
+		current_slot.item_stored = item_held
+		current_slot.state = current_slot.States.TAKEN
+		item_held = null
+		can_place = false
+		
+		_check_calculator()
+		
+		_update_bytes_label()
+		_update_hint()
+		return
+		
 	if current_slot in backpack_grid.slots_array:
 		backpack_grid.place_item(item_held, current_slot)
 	else:
@@ -243,11 +335,38 @@ func _pick_item():
 	add_child(item_held)
 	item_held.global_position = get_global_mouse_position()
 	if slot == converter_slot:
+		if converter_slot:
+			converter_slot.item_stored = null
+		if double_slot:
+			double_slot.item_stored = null
+		if short_slot:
+			short_slot.item_stored = null
+		if boolean_slot:
+			boolean_slot.item_stored = null
 		converter_slot.state = converter_slot.States.FREE
-		converter_slot.item_stored = null
 	elif slot == double_slot:
 		double_slot.state = double_slot.States.FREE
 		double_slot.item_stored = null
+	elif slot == short_slot:
+		short_slot.state = short_slot.States.FREE
+		short_slot.item_stored = null
+	elif slot == boolean_slot:
+		boolean_slot.state = boolean_slot.States.FREE
+		boolean_slot.item_stored = null
+	elif slot == inspect_slot:
+		inspect_slot.state = inspect_slot.States.FREE
+		inspect_slot.item_stored = null
+	elif slot == calc_slot_1 or slot == calc_slot_2:
+		slot.state = slot.States.FREE
+		slot.item_stored = null
+		# Restore DOUBLE visual
+		if item_held.data_type == item_held.DataType.DOUBLE:
+			if item_held.has_method("_resize_visual"):
+				var color_rect = item_held.get_node_or_null("ColorRect")
+				if not color_rect:
+					color_rect = item_held.get_node_or_null("ValueLabel").get_parent()
+				if color_rect:
+					item_held._resize_visual(color_rect, 4)
 	elif backpack_grid and slot in backpack_grid.slots_array:
 		backpack_grid.remove_item(item_held)
 	elif pool_grid and slot in pool_grid.slots_array:
@@ -291,6 +410,75 @@ func _hint_full_message() -> String:
 		return base
 	return base + "\n\n" + extra
 
+func _check_calculator():
+	if double_slot != null and double_slot.item_stored != null:
+		var item = double_slot.item_stored
+		if item.data_type == item.DataType.INT or item.data_type == item.DataType.FLOAT:
+			item.set_value_by_type(float(item.value), item.DataType.DOUBLE)
+		double_slot.item_stored = null
+		item_held = item
+		item.grid_anchor = null
+		
+	if short_slot != null and short_slot.item_stored != null:
+		var item = short_slot.item_stored
+		item.set_value_by_type(int(item.value), item.DataType.SHORT_INT)
+		short_slot.item_stored = null
+		item_held = item
+		item.grid_anchor = null
+		
+	if boolean_slot != null and boolean_slot.item_stored != null:
+		var item = boolean_slot.item_stored
+		var bool_val = item.value != 0
+		item.set_value_by_type(bool_val, item.DataType.BOOLEAN)
+		boolean_slot.item_stored = null
+		item_held = item
+		item.grid_anchor = null
+		
+	if calc_slot_1 and calc_slot_2 and calc_op_btn:
+		if calc_slot_1.item_stored != null and calc_slot_2.item_stored != null:
+			var item1 = calc_slot_1.item_stored
+			var item2 = calc_slot_2.item_stored
+			
+			var val1 = item1.value_float if item1.data_type in [item1.DataType.FLOAT, item1.DataType.DOUBLE] else float(item1.value)
+			var val2 = item2.value_float if item2.data_type in [item2.DataType.FLOAT, item2.DataType.DOUBLE] else float(item2.value)
+			
+			var is_float = (item1.data_type in [item1.DataType.FLOAT, item1.DataType.DOUBLE] or item2.data_type in [item2.DataType.FLOAT, item2.DataType.DOUBLE])
+			var is_double = (item1.data_type == item1.DataType.DOUBLE or item2.data_type == item2.DataType.DOUBLE)
+			
+			var result_val = 0.0
+			if calc_op_btn.text == "+":
+				result_val = val1 + val2
+			else:
+				result_val = val1 - val2
+			
+			item1.queue_free()
+			item2.queue_free()
+			calc_slot_1.item_stored = null
+			calc_slot_1.state = calc_slot_1.States.FREE
+			calc_slot_2.item_stored = null
+			calc_slot_2.state = calc_slot_2.States.FREE
+			
+			var new_item = preload("res://Inventory/Items/Item.tscn").instantiate()
+			add_child(new_item)
+			
+			if is_double:
+				new_item.set_value_by_type(result_val, new_item.DataType.DOUBLE)
+			elif is_float:
+				new_item.set_value_by_type(result_val, new_item.DataType.FLOAT)
+			else:
+				new_item.set_value_by_type(int(result_val), new_item.DataType.INT)
+			
+			if new_item.has_method("update_label_display"):
+				new_item.update_label_display()
+			
+			new_item.selected = true
+			item_held = new_item
+			item_held.global_position = get_global_mouse_position()
+			
+			var tween = create_tween()
+			new_item.scale = Vector2(0.2, 0.2)
+			tween.tween_property(new_item, "scale", Vector2(1.2, 1.2), 0.2)
+			tween.tween_property(new_item, "scale", Vector2(1.0, 1.0), 0.1)
 
 func _pedagogy_extra_when_full() -> String:
 	return ""
