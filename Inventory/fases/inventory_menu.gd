@@ -116,15 +116,17 @@ func create_item_on_hand_randomly():
 		add_child(new_item)
 		
 		var random_item = ""
-		match randi_range(1, 8):
+		match randi_range(1, 10):
 			1: random_item = "item_number_7"
 			2: random_item = "item_operator_plus"
 			3: random_item = "item_operator_increment"
-			4: random_item = "item_number_7"
+			4: random_item = "item_operator_to_short"
 			5: random_item = "item_number_5"
 			6: random_item = "item_double_3.14159"
 			7: random_item = "item_binary_10"
-			8: random_item = "item_binary_42"
+			8: random_item = "item_operator_to_boolean"
+			9: random_item = "item_operator_to_float"
+			10: random_item = "item_operator_to_int"
 		
 		if new_item.has_method("load_item"):
 			new_item.load_item(random_item)
@@ -223,10 +225,10 @@ func place_item():
 	clear_grid()
 
 func pick_item():
-	if not current_slot or not current_slot.item_stored: 
+	if not current_slot or current_slot.items_stored.size() == 0: 
 		return
 	
-	item_held = current_slot.item_stored
+	item_held = current_slot.items_stored.back()
 	
 	# Desconecta sinais do item no grid (vai reconectar quando colocar de volta)
 	if item_held.has_signal("mouse_entered_item"):
@@ -244,8 +246,11 @@ func pick_item():
 	
 	for grid in item_held.item_grids:
 		var grid_to_check = item_held.grid_anchor.slot_ID + grid[0] + grid[1] * col_count
-		grid_array[grid_to_check].state = grid_array[grid_to_check].States.FREE 
-		grid_array[grid_to_check].item_stored = null
+		grid_array[grid_to_check].remove_item(item_held)
+		if grid_array[grid_to_check].get_used_bytes() == 0:
+			grid_array[grid_to_check].state = grid_array[grid_to_check].States.FREE 
+		elif grid_array[grid_to_check].get_used_bytes() < 4:
+			grid_array[grid_to_check].state = grid_array[grid_to_check].States.PARTIAL
 	
 	# Conecta sinais do item segurado (verifica se já está conectado)
 	if item_held.has_signal("mouse_entered_item"):
@@ -469,6 +474,10 @@ func avaliar_expressao_com_tipo(expr: String) -> Dictionary:
 	expr = regex.sub(expr, "($1 * 1.0 + 0 * $2)", true)
 	regex.compile("([0-9\\.]+)\\+?to_int\\+?([0-9\\.]+)")
 	expr = regex.sub(expr, "(floor($1) + 0 * $2)", true)
+	regex.compile("([0-9\\.]+)\\+?to_short\\+?([0-9\\.]+)")
+	expr = regex.sub(expr, "(floor($1) + 0 * $2)", true)
+	regex.compile("([0-9\\.]+)\\+?to_boolean\\+?([0-9\\.]+)")
+	expr = regex.sub(expr, "($1 != 0 or $2 != 0)", true)
 	
 	expr = expr.replace(" ", "")
 	
@@ -497,6 +506,9 @@ func avaliar_expressao_com_tipo(expr: String) -> Dictionary:
 				tipo_resultado = "BOOLEAN"
 			elif typeof(resultado) == TYPE_STRING:
 				tipo_resultado = "STRING"
+			
+			if "to_short" in expr.to_lower():
+				tipo_resultado = "SHORT_INT"
 			
 			return {"resultado": resultado, "tipo": tipo_resultado}
 	
@@ -540,6 +552,11 @@ func create_result_item_typed(resultado: Variant, tipo_resultado: String):
 				tipo_enum = new_item.DataType.INT
 				var valor_int = int(resultado)
 				valor_int = clamp(valor_int, -999, 999)  # Permite negativos
+				new_item.set_value_by_type(valor_int, tipo_enum)
+			"SHORT_INT":
+				tipo_enum = new_item.DataType.SHORT_INT
+				var valor_int = int(resultado)
+				valor_int = clamp(valor_int, -999, 999)
 				new_item.set_value_by_type(valor_int, tipo_enum)
 			"FLOAT":
 				tipo_enum = new_item.DataType.FLOAT
@@ -598,11 +615,7 @@ func consumir_itens_expressao():
 	print("Consumindo ", ultimos_slots_expressao.size(), " itens da expressão")
 	
 	for slot in ultimos_slots_expressao:
-		if slot.item_stored != null:
-			var item = slot.item_stored
-			
-			# Remove o item do slot
-			slot.item_stored = null
+		for item in slot.items_stored.duplicate():
 			
 			# Se o item está atualmente segurado, solta ele
 			if item == item_held:
@@ -611,10 +624,10 @@ func consumir_itens_expressao():
 			# Remove o item da cena
 			item.queue_free()
 			
-			# Atualiza o estado do slot
-			slot.state = slot.States.FREE
-			slot.set_color(slot.States.DEFAULT)
-			slot.set_item(null)  # Dispara o sinal de mudança
+		# Atualiza o estado do slot
+		slot.clear_items()
+		slot.state = slot.States.FREE
+		slot.set_color(slot.States.DEFAULT)
 	
 	# Limpa a lista de slots usados
 	ultimos_slots_expressao.clear()

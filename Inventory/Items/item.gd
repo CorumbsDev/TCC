@@ -3,7 +3,7 @@ extends Node2D
 @onready var value_label: Label = $ColorRect/value_label
 
 # Enum para identificar o tipo de dado do orb
-enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR, DOUBLE, BINARY}
+enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR, DOUBLE, BINARY, SHORT_INT}
 
 var item_ID : String
 var data_type: DataType = DataType.INT  # Tipo padrão é INT
@@ -12,6 +12,7 @@ var value_float : float = 0.0
 var value_bool : bool = false
 var value_string : String = ""
 var value_double : float = 0.0  # Precisão dupla (ocupa 2 slots)
+var value_short : int = 0
 var value_binary : String = "00000000"  # Representação binária em string
 var binary_bits : int = 8  # Quantidade de bits para o tipo BINARY
 var operator : String = ""
@@ -175,8 +176,8 @@ func load_item(a_ItemID: String) -> void:
 				value_float = value_double
 				value_bool = false
 				value_string = ""
-				# DOUBLE ocupa 4 slots horizontais
-				item_grids = [Vector2(0,0), Vector2(1,0), Vector2(2,0), Vector2(3,0)]
+				# DOUBLE ocupa 2 slots horizontais
+				item_grids = [Vector2(0,0), Vector2(1,0)]
 			"BINARY", "BIN":
 				data_type = DataType.BINARY
 				binary_bits = int(data.get("Bits", 8))
@@ -185,7 +186,14 @@ func load_item(a_ItemID: String) -> void:
 				value_float = float(value)
 				value_bool = false
 				value_string = ""
-				# BINARY ocupa 1 slot (antes era N slots)
+				item_grids = [Vector2(0,0)]
+			"SHORT_INT", "SHORT":
+				data_type = DataType.SHORT_INT
+				value_short = int(data.get("Value", 0))
+				value = value_short
+				value_float = float(value_short)
+				value_bool = false
+				value_string = ""
 				item_grids = [Vector2(0,0)]
 			_:
 				# Padrão: INT
@@ -259,8 +267,8 @@ func set_value_by_type(new_value, tipo: DataType):
 			value_float = value_double
 			value_bool = false
 			value_string = ""
-			# DOUBLE ocupa 4 slots horizontais
-			item_grids = [Vector2(0,0), Vector2(1,0), Vector2(2,0), Vector2(3,0)]
+			# DOUBLE ocupa 2 slots horizontais
+			item_grids = [Vector2(0,0), Vector2(1,0)]
 		DataType.BINARY:
 			value = int(new_value)
 			value_binary = int_to_binary(value, binary_bits)
@@ -268,6 +276,13 @@ func set_value_by_type(new_value, tipo: DataType):
 			value_bool = false
 			value_string = ""
 			# BINARY ocupa 1 slot (antes era N slots)
+			item_grids = [Vector2(0,0)]
+		DataType.SHORT_INT:
+			value_short = int(new_value)
+			value = value_short
+			value_float = float(value_short)
+			value_bool = false
+			value_string = ""
 			item_grids = [Vector2(0,0)]
 	
 	update_label_display()
@@ -289,6 +304,8 @@ func get_value_as_string() -> String:
 			return str(value_double)
 		DataType.BINARY:
 			return str(binary_to_int(value_binary))
+		DataType.SHORT_INT:
+			return str(value_short)
 		_:
 			return str(value)
 
@@ -342,8 +359,8 @@ func update_label_display():
 	elif data_type == DataType.BOOLEAN:
 		value_label.text = "true" if value_bool else "false"
 		value_label.add_theme_color_override("font_color", Color.GREEN)
-		value_label.add_theme_font_size_override("font_size", 20)
-		_resize_visual(color_rect, 1)
+		value_label.add_theme_font_size_override("font_size", 12)
+		_resize_visual(color_rect, 0.25)
 	elif data_type == DataType.STRING:
 		value_label.text = '"' + value_string + '"'
 		value_label.add_theme_color_override("font_color", Color.YELLOW)
@@ -354,7 +371,7 @@ func update_label_display():
 		value_label.text = str(value_double)
 		value_label.add_theme_color_override("font_color", Color.MAGENTA)
 		value_label.add_theme_font_size_override("font_size", 16)
-		_resize_visual(color_rect, 4)
+		_resize_visual(color_rect, 2)
 	elif data_type == DataType.BINARY:
 		# BINARY: mostra valor bit a bit (ex: "1010") em 1 slot
 		value_label.text = value_binary
@@ -368,6 +385,11 @@ func update_label_display():
 			var binary_texture = load("res://Inventory/Sprites/Item_binary.png")
 			if binary_texture:
 				icon.texture = binary_texture
+	elif data_type == DataType.SHORT_INT:
+		value_label.text = str(value_short)
+		value_label.add_theme_color_override("font_color", Color.CYAN)
+		value_label.add_theme_font_size_override("font_size", 18)
+		_resize_visual(color_rect, 0.5)
 	else:
 		value_label.text = str(value)
 		value_label.add_theme_color_override("font_color", Color.BLACK) 
@@ -377,23 +399,47 @@ func update_label_display():
 	# Força o redesenho
 	value_label.queue_redraw()
 
-func _resize_visual(color_rect, slot_count: int):
+func _resize_visual(color_rect, slot_count: float):
 	"""Redimensiona o ColorRect e a Label para cobrir múltiplos slots"""
-	var slot_size = 50  # Tamanho de cada slot em pixels
+	var slot_size = 64  # Aumentado para 64 pixels por slot
+	
+	if data_type == DataType.BOOLEAN:
+		if color_rect and color_rect is ColorRect:
+			color_rect.position = Vector2(-12, -12)
+			color_rect.size = Vector2(24, 24)
+		if value_label:
+			value_label.position = Vector2(0, 0)
+			value_label.size = Vector2(24, 24)
+			value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			value_label.add_theme_font_size_override("font_size", 14)
+		return
+	elif data_type == DataType.SHORT_INT:
+		if color_rect and color_rect is ColorRect:
+			color_rect.position = Vector2(-12, -28)
+			color_rect.size = Vector2(24, 56)
+		if value_label:
+			value_label.position = Vector2(0, 0)
+			value_label.size = Vector2(24, 56)
+			value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			value_label.add_theme_font_size_override("font_size", 16)
+		return
+
 	var total_width = slot_count * slot_size
 	
 	if color_rect and color_rect is ColorRect:
-		# Mantém margem de 5px em cada lado (slot = 50px, visual = 40px por slot)
-		color_rect.offset_left = -19
-		color_rect.offset_right = total_width - 19 - 10
-		color_rect.offset_top = -20
-		color_rect.offset_bottom = 20
+		var visual_width = max(total_width - 8, 5)
+		color_rect.position = Vector2(-28, -28)
+		color_rect.size = Vector2(visual_width, 56)
 	
 	if value_label:
-		# Label preenche o ColorRect
-		value_label.offset_left = 0
-		value_label.offset_right = total_width - 10
-		value_label.custom_minimum_size.x = total_width - 10
+		var visual_width = max(total_width - 8, 5)
+		value_label.position = Vector2(0, 0)
+		value_label.size = Vector2(visual_width, 56)
+		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		value_label.add_theme_font_size_override("font_size", 24)
 
 func _snap_to(destination):
 	var tween = get_tree().create_tween()
@@ -428,7 +474,15 @@ func get_size_bytes() -> int:
 	"""Retorna o tamanho em bytes do item (para Fase 2 - Mochila)."""
 	match data_type:
 		DataType.DOUBLE:
+			return 8
+		DataType.FLOAT:
 			return 4
+		DataType.INT:
+			return 4
+		DataType.SHORT_INT:
+			return 2
+		DataType.BOOLEAN:
+			return 1
 		DataType.BINARY:
 			if item_ID != null and item_ID != "" and DataHandler:
 				return DataHandler.get_item_bytes(item_ID)
@@ -436,7 +490,7 @@ func get_size_bytes() -> int:
 		_:
 			if item_ID != null and item_ID != "" and DataHandler:
 				return DataHandler.get_item_bytes(item_ID)
-			return 1
+			return 4
 
 func get_binary_explanation(bin_str: String) -> String:
 	"""Gera texto explicando a conversão binário → decimal (ex: 10₂ = 1·2¹ + 0·2⁰ = 2)"""

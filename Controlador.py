@@ -24,6 +24,8 @@ def processar_expressao(expressao):
         # Pre-processamento para conversores de tipo (int <-> float)
         expressao_proc = re.sub(r'([0-9\.]+)\+?to_float\+?([0-9\.]+)', r'(float(\1)+0*\2)', expressao, flags=re.IGNORECASE)
         expressao_proc = re.sub(r'([0-9\.]+)\+?to_int\+?([0-9\.]+)', r'(int(\1)+0*\2)', expressao_proc, flags=re.IGNORECASE)
+        expressao_proc = re.sub(r'([0-9\.]+)\+?to_short\+?([0-9\.]+)', r'(int(\1)+0*\2)', expressao_proc, flags=re.IGNORECASE)
+        expressao_proc = re.sub(r'([0-9\.]+)\+?to_boolean\+?([0-9\.]+)', r'(bool(\1) or bool(\2))', expressao_proc, flags=re.IGNORECASE)
         
         # Remove espaços e padroniza operadores
         expressao_limpa = expressao_proc.replace(" ", "").replace("×", "*").replace("÷", "/")
@@ -37,6 +39,8 @@ def processar_expressao(expressao):
         
         # Detecta o tipo do resultado
         tipo_resultado = detectar_tipo_python(resultado)
+        if 'to_short' in expressao.lower():
+            tipo_resultado = 'SHORT_INT'
         
         # Prepara o valor baseado no tipo
         valor_resultado = resultado
