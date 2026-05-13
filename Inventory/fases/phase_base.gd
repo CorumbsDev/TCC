@@ -202,6 +202,20 @@ func _place_item():
 		var target_type_str = converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
 		var val_to_convert = item_held.value_float if item_held.data_type in [item_held.DataType.FLOAT, item_held.DataType.DOUBLE, item_held.DataType.FP8, item_held.DataType.FP16] else float(item_held.value)
 		
+		var deg = _check_degradation(target_type_str, val_to_convert)
+		if deg.has_warning:
+			var dlg = ConfirmationDialog.new()
+			dlg.dialog_text = deg.message + "\n\nDeseja converter assim mesmo?"
+			dlg.title = "Aviso de Degradação"
+			dlg.ok_button_text = "Prosseguir"
+			dlg.cancel_button_text = "Cancelar"
+			add_child(dlg)
+			dlg.popup_centered(Vector2(450, 150))
+			var res = await _wait_for_dialog(dlg)
+			dlg.queue_free()
+			if not res:
+				return
+		
 		if target_type_str == "Int":
 			item_held.set_value_by_type(int(val_to_convert), item_held.DataType.INT)
 		elif target_type_str == "Float":
@@ -361,6 +375,20 @@ func _check_calculator():
 				result_val = val1 + val2
 			else:
 				result_val = val1 - val2
+				
+			var deg = _check_calc_degradation(result_val, is_float, is_double)
+			if deg.has_warning:
+				var dlg = ConfirmationDialog.new()
+				dlg.dialog_text = deg.message + "\n\nDeseja prosseguir com o cálculo?"
+				dlg.title = "Aviso da Calculadora"
+				dlg.ok_button_text = "Prosseguir"
+				dlg.cancel_button_text = "Cancelar"
+				add_child(dlg)
+				dlg.popup_centered(Vector2(450, 150))
+				var res = await _wait_for_dialog(dlg)
+				dlg.queue_free()
+				if not res:
+					return
 			
 			item1.queue_free()
 			item2.queue_free()
@@ -406,6 +434,33 @@ func _on_converter_type_changed(_index):
 		var target_type_str = converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
 		var val_to_convert = item.value_float if item.data_type in [item.DataType.FLOAT, item.DataType.DOUBLE, item.DataType.FP8, item.DataType.FP16] else float(item.value)
 		
+		var deg = _check_degradation(target_type_str, val_to_convert)
+		if deg.has_warning:
+			var dlg = ConfirmationDialog.new()
+			dlg.dialog_text = deg.message + "\n\nDeseja prosseguir mesmo assim?"
+			dlg.title = "Aviso de Degradação de Dados"
+			dlg.ok_button_text = "Prosseguir"
+			dlg.cancel_button_text = "Cancelar"
+			add_child(dlg)
+			dlg.popup_centered(Vector2(450, 150))
+			
+			var res = await _wait_for_dialog(dlg)
+			dlg.queue_free()
+			if not res:
+				var revert_str = "Int"
+				if item.data_type == item.DataType.FLOAT: revert_str = "Float"
+				elif item.data_type == item.DataType.DOUBLE: revert_str = "Double"
+				elif item.data_type == item.DataType.SHORT_INT: revert_str = "Short"
+				elif item.data_type == item.DataType.BOOLEAN: revert_str = "Boolean"
+				elif item.data_type == item.DataType.FP8: revert_str = "FP8"
+				elif item.data_type == item.DataType.FP16: revert_str = "FP16"
+				
+				for i in range(converter_option_btn.item_count):
+					if converter_option_btn.get_item_text(i) == revert_str:
+						converter_option_btn.select(i)
+						break
+				return
+		
 		if target_type_str == "Int":
 			item.set_value_by_type(int(val_to_convert), item.DataType.INT)
 		elif target_type_str == "Float":
@@ -426,3 +481,146 @@ func _on_converter_type_changed(_index):
 		
 		_update_bytes_label()
 		_update_hint()
+
+func _check_degradation(target_type_str: String, val_to_convert: float) -> Dictionary:
+	var result = {"has_warning": false, "message": ""}
+	if target_type_str == "Int":
+		var trunc_val = float(int(val_to_convert))
+		if trunc_val != val_to_convert:
+			result.has_warning = true
+			result.message = "Perda de precisão: A parte decimal será descartada."
+		if val_to_convert < -2147483648 or val_to_convert > 2147483647:
+			result.has_warning = true
+			result.message = "Overflow: O valor excede os limites de um Inteiro de 32 bits (-2.1B a 2.1B)."
+	elif target_type_str == "Short":
+		var trunc_val = float(int(val_to_convert))
+		if trunc_val != val_to_convert:
+			result.has_warning = true
+			result.message = "Perda de precisão: A parte decimal será descartada."
+		if val_to_convert < -32768 or val_to_convert > 32767:
+			result.has_warning = true
+			result.message = "Overflow: O valor excede os limites de um Short Inteiro de 16 bits (-32768 a 32767)."
+	elif target_type_str == "Float":
+		if abs(val_to_convert) > 3.4028235e38:
+			result.has_warning = true
+			result.message = "Overflow: O valor excede a capacidade máxima de um Float de 32 bits e se tornará Infinito."
+	elif target_type_str == "FP8":
+		if abs(val_to_convert) > 240.0:
+			result.has_warning = true
+			result.message = "Aviso: Possível Overflow ou Perda Extrema de Precisão para o formato reduzido FP8."
+		else:
+			var config = get("config")
+			var e_bits = 4
+			var m_bits = 3
+			if config != null and config.get("fp8_exp_bits") != null:
+				e_bits = config.fp8_exp_bits
+				m_bits = config.fp8_mant_bits
+			
+			var dict = _float_to_custom_fp_bits(val_to_convert, e_bits, m_bits)
+			var back_to_float = _custom_fp_bits_to_float(dict.bits, e_bits, m_bits)
+			if val_to_convert != back_to_float:
+				result.has_warning = true
+				result.message = "Perda de precisão: O formato FP8 (" + str(e_bits) + " exp, " + str(m_bits) + " mant) não possui precisão suficiente para manter o valor exato. O valor aproximado será: " + str(back_to_float)
+	elif target_type_str == "FP16":
+		if abs(val_to_convert) > 65504.0:
+			result.has_warning = true
+			result.message = "Aviso: Possível Overflow. O formato FP16 costuma suportar valores apenas até ~65504."
+		else:
+			var config = get("config")
+			var e_bits = 5
+			var m_bits = 10
+			if config != null and config.get("fp16_exp_bits") != null:
+				e_bits = config.fp16_exp_bits
+				m_bits = config.fp16_mant_bits
+			
+			var dict = _float_to_custom_fp_bits(val_to_convert, e_bits, m_bits)
+			var back_to_float = _custom_fp_bits_to_float(dict.bits, e_bits, m_bits)
+			if val_to_convert != back_to_float:
+				result.has_warning = true
+				result.message = "Perda de precisão: O formato FP16 não possui precisão suficiente para manter o valor exato. O valor aproximado será: " + str(back_to_float)
+	return result
+
+func _check_calc_degradation(result_val: float, is_float: bool, is_double: bool) -> Dictionary:
+	var res = {"has_warning": false, "message": ""}
+	if not is_float and not is_double:
+		if result_val < -2147483648 or result_val > 2147483647:
+			res.has_warning = true
+			res.message = "Overflow: O resultado da operação excedeu a capacidade de um Inteiro."
+	elif is_float and not is_double:
+		if abs(result_val) > 3.4028235e38:
+			res.has_warning = true
+			res.message = "Overflow para Infinito (Float 32-bits atingiu o limite)."
+	return res
+
+func _wait_for_dialog(dlg: ConfirmationDialog) -> bool:
+	var result = [false]
+	var ok_callable = func(): result[0] = true
+	dlg.confirmed.connect(ok_callable)
+	await dlg.visibility_changed
+	return result[0]
+
+func _float_to_custom_fp_bits(val: float, exp_bits: int, mant_bits: int) -> Dictionary:
+	var bytes = PackedByteArray()
+	bytes.resize(4)
+	bytes.encode_float(0, val)
+	var f_bits = bytes.decode_u32(0)
+	var sign = (f_bits >> 31) & 1
+	var f_exp = (f_bits >> 23) & 0xFF
+	var f_mant = f_bits & 0x7FFFFF
+	var tgt_bias = (1 << (exp_bits - 1)) - 1
+	var tgt_exp = 0
+	var tgt_mant = 0
+	if f_exp == 0xFF:
+		tgt_exp = (1 << exp_bits) - 1
+		tgt_mant = 1 if f_mant != 0 else 0
+	elif f_exp == 0:
+		tgt_exp = 0
+		tgt_mant = 0
+	else:
+		var actual_exp = f_exp - 127
+		tgt_exp = actual_exp + tgt_bias
+		if tgt_exp >= (1 << exp_bits) - 1:
+			tgt_exp = (1 << exp_bits) - 1
+			tgt_mant = 0
+		elif tgt_exp <= 0:
+			tgt_exp = 0
+			tgt_mant = 0
+		else:
+			if mant_bits <= 23:
+				tgt_mant = f_mant >> (23 - mant_bits)
+			else:
+				tgt_mant = f_mant << (mant_bits - 23)
+	var combined_bits = (sign << (exp_bits + mant_bits)) | (tgt_exp << mant_bits) | tgt_mant
+	return {"bits": combined_bits}
+
+func _custom_fp_bits_to_float(bits: int, exp_bits: int, mant_bits: int) -> float:
+	var sign = (bits >> (exp_bits + mant_bits)) & 1
+	var tgt_exp = (bits >> mant_bits) & ((1 << exp_bits) - 1)
+	var tgt_mant = bits & ((1 << mant_bits) - 1)
+	var tgt_bias = (1 << (exp_bits - 1)) - 1
+	var f_exp = 0
+	var f_mant = 0
+	if tgt_exp == ((1 << exp_bits) - 1):
+		f_exp = 0xFF
+		f_mant = 1 if tgt_mant != 0 else 0
+	elif tgt_exp == 0:
+		f_exp = 0
+		f_mant = 0
+	else:
+		var actual_exp = tgt_exp - tgt_bias
+		f_exp = actual_exp + 127
+		if f_exp <= 0:
+			f_exp = 0
+		elif f_exp >= 0xFF:
+			f_exp = 0xFF
+			f_mant = 0
+		else:
+			if mant_bits <= 23:
+				f_mant = tgt_mant << (23 - mant_bits)
+			else:
+				f_mant = tgt_mant >> (mant_bits - 23)
+	var f_bits = (sign << 31) | (f_exp << 23) | f_mant
+	var bytes = PackedByteArray()
+	bytes.resize(4)
+	bytes.encode_u32(0, f_bits)
+	return bytes.decode_float(0)
