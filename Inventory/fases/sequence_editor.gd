@@ -24,6 +24,9 @@ const SEQUENCES_DIR = "user://sequences"
 @onready var check_double: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckDouble
 @onready var check_short: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckShort
 @onready var check_bool: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckBool
+@onready var check_fp8: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP8
+@onready var check_fp16: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP16
+@onready var check_fp_cust: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFPCust
 @onready var check_calc: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckCalc
 
 var _sequences: Dictionary = {} # filename -> PhaseSequenceList
@@ -161,6 +164,9 @@ func _show_phase_editor(step: PhaseSequenceStep) -> void:
 		check_double.button_pressed = cfg.allow_double
 		check_short.button_pressed = cfg.allow_short
 		check_bool.button_pressed = cfg.allow_bool
+		check_fp8.button_pressed = cfg.allow_fp8
+		check_fp16.button_pressed = cfg.allow_fp16
+		check_fp_cust.button_pressed = cfg.allow_fp_customization
 		check_calc.button_pressed = cfg.allow_calc
 	else:
 		# Para fase binária, vamos desabilitar ou ocultar coisas por enquanto, 
@@ -344,6 +350,9 @@ func _on_bool_param_changed(_toggled: bool) -> void:
 	step.config_mochila.allow_double = check_double.button_pressed
 	step.config_mochila.allow_short = check_short.button_pressed
 	step.config_mochila.allow_bool = check_bool.button_pressed
+	step.config_mochila.allow_fp8 = check_fp8.button_pressed
+	step.config_mochila.allow_fp16 = check_fp16.button_pressed
+	step.config_mochila.allow_fp_customization = check_fp_cust.button_pressed
 	step.config_mochila.allow_calc = check_calc.button_pressed
 	
 	var parent_file = sel.get_metadata(0).parent_file
@@ -371,18 +380,20 @@ func _on_btn_export_csv_pressed() -> void:
 	var seq_item = sel if sel.get_metadata(0).type == "sequence" else sel.get_parent()
 	var seq_list: PhaseSequenceList = seq_item.get_metadata(0).data
 	
-	var csv_str = "KIND,CAPACITY,SLOTS_M,SLOTS_P,COLS,MIN,MAX,CSV_ITEMS,RND_POOL,FLOAT,DOUBLE,SHORT,BOOL,CALC\n"
+	var csv_str = "KIND,CAPACITY,SLOTS_M,SLOTS_P,COLS,MIN,MAX,CSV_ITEMS,RND_POOL,FLOAT,DOUBLE,SHORT,BOOL,FP8,FP16,CALC,FP_CUST,FP8_E,FP8_M,FP16_E,FP16_M\n"
 	for step in seq_list.steps:
 		if step.kind == PhaseSequenceStep.Kind.MOCHILA:
 			var c = step.config_mochila
 			if not c: c = PhaseConfig.new()
-			csv_str += "M,%d,%d,%d,%d,%d,%d,%s,%d,%s,%s,%s,%s,%s\n" % [
+			csv_str += "M,%d,%d,%d,%d,%d,%d,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d\n" % [
 				c.capacity_bytes, c.backpack_slot_count, c.pool_slot_count, c.pool_grid_columns,
 				c.spawn_int_min, c.spawn_int_max, c.initial_backpack_csv, c.random_pool.size(),
-				str(c.use_converter), str(c.allow_double), str(c.allow_short), str(c.allow_bool), str(c.allow_calc)
+				str(c.use_converter), str(c.allow_double), str(c.allow_short), str(c.allow_bool),
+				str(c.allow_fp8), str(c.allow_fp16), str(c.allow_calc), str(c.allow_fp_customization),
+				c.fp8_exp_bits, c.fp8_mant_bits, c.fp16_exp_bits, c.fp16_mant_bits
 			]
 		else:
-			csv_str += "B,0,0,0,0,0,0,,0,false,false,false,false,false\n"
+			csv_str += "B,0,0,0,0,0,0,,0,false,false,false,false,false,false,false,false,4,3,5,10\n"
 			
 	DisplayServer.clipboard_set(csv_str)
 	_show_dialog("Exportar CSV", "Sequência exportada para a área de transferência (Ctrl+C) com sucesso!")
@@ -400,7 +411,7 @@ func _on_btn_import_csv_pressed() -> void:
 		var line = lines[i].strip_edges()
 		if line == "": continue
 		var parts = line.split(",")
-		if parts.size() < 14: continue
+		if parts.size() < 16: continue
 		
 		var step = PhaseSequenceStep.new()
 		if parts[0] == "M":
@@ -420,7 +431,15 @@ func _on_btn_import_csv_pressed() -> void:
 			c.allow_double = (parts[10] == "true")
 			c.allow_short = (parts[11] == "true")
 			c.allow_bool = (parts[12] == "true")
-			c.allow_calc = (parts[13] == "true")
+			c.allow_fp8 = (parts[13] == "true")
+			c.allow_fp16 = (parts[14] == "true")
+			c.allow_calc = (parts[15] == "true")
+			if parts.size() >= 21:
+				c.allow_fp_customization = (parts[16] == "true")
+				c.fp8_exp_bits = int(parts[17])
+				c.fp8_mant_bits = int(parts[18])
+				c.fp16_exp_bits = int(parts[19])
+				c.fp16_mant_bits = int(parts[20])
 			step.config_mochila = c
 		else:
 			step.kind = PhaseSequenceStep.Kind.BINARIO

@@ -290,6 +290,18 @@ text = "Permitir Conversor Short (0.5 slot)"
 layout_mode = 2
 text = "Permitir Conversor Boolean (0.25 slot)"
 
+[node name="CheckFP8" type="CheckBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
+layout_mode = 2
+text = "Permitir Conversor FP8 (1 byte)"
+
+[node name="CheckFP16" type="CheckBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
+layout_mode = 2
+text = "Permitir Conversor FP16 (2 bytes)"
+
+[node name="CheckFPCust" type="CheckBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
+layout_mode = 2
+text = "Permitir customizar formato (exp/mantissa) de FP8/16"
+
 [node name="CheckCalc" type="CheckBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
 text = "Habilitar Calculadora Aritmética"
@@ -320,4 +332,7 @@ text = "Habilitar Calculadora Aritmética"
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckDouble" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckShort" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckBool" to="." method="_on_bool_param_changed"]
+[connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP8" to="." method="_on_bool_param_changed"]
+[connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP16" to="." method="_on_bool_param_changed"]
+[connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFPCust" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckCalc" to="." method="_on_bool_param_changed"]

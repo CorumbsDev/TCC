@@ -27,7 +27,14 @@ extends Resource
 @export var allow_double: bool = false
 @export var allow_short: bool = false
 @export var allow_bool: bool = false
+@export var allow_fp8: bool = false
+@export var allow_fp16: bool = false
 @export var allow_calc: bool = false
+@export var fp8_exp_bits: int = 4
+@export var fp8_mant_bits: int = 3
+@export var fp16_exp_bits: int = 5
+@export var fp16_mant_bits: int = 10
+@export var allow_fp_customization: bool = false
 
 ## Garante limites válidos (capacidade, slots e faixa de valores INT).
 func apply_constraints() -> void:
