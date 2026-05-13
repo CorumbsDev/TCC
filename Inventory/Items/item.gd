@@ -3,7 +3,7 @@ extends Node2D
 @onready var value_label: Label = $ColorRect/value_label
 
 # Enum para identificar o tipo de dado do orb
-enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR, DOUBLE, BINARY, SHORT_INT}
+enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR, DOUBLE, BINARY, SHORT_INT, FP8, FP16}
 
 var item_ID : String
 var data_type: DataType = DataType.INT  # Tipo padrão é INT
@@ -20,6 +20,9 @@ var selected = false
 var item_grids := [Vector2(0,0)]
 var grid_anchor = null
 var is_hovered = false  # Nova variável para rastrear hover
+
+var fp_exp_bits: int = -1
+var fp_mant_bits: int = -1
 
 # Signal para notificar quando o mouse entra/sai
 signal mouse_entered_item(item)
@@ -128,6 +131,14 @@ func get_item_info() -> Dictionary:
 			info.tipo = "BINARY (Binário)"
 			info.valor = value_binary
 			info.detalhes = "Binário: " + value_binary + "\nDecimal: " + str(decimal_val) + "\nBits: " + str(binary_bits) + "\nOcupa " + str(binary_bits) + " slots\n\nComo o binário funciona:\n" + explicacao
+		DataType.FP8:
+			info.tipo = "FP8 (Float 8-bit)"
+			info.valor = str(value_float)
+			info.detalhes = "Ponto flutuante 8-bit: " + str(value_float) + "\nOcupa 0.25 slots"
+		DataType.FP16:
+			info.tipo = "FP16 (Float 16-bit)"
+			info.valor = str(value_float)
+			info.detalhes = "Ponto flutuante 16-bit: " + str(value_float) + "\nOcupa 0.5 slots"
 		_:
 			info.tipo = "DESCONHECIDO"
 			info.valor = str(value)
@@ -192,6 +203,20 @@ func load_item(a_ItemID: String) -> void:
 				value_short = int(data.get("Value", 0))
 				value = value_short
 				value_float = float(value_short)
+				value_bool = false
+				value_string = ""
+				item_grids = [Vector2(0,0)]
+			"FP8":
+				data_type = DataType.FP8
+				value_float = float(data.get("Value", 0.0))
+				value = int(value_float)
+				value_bool = false
+				value_string = ""
+				item_grids = [Vector2(0,0)]
+			"FP16":
+				data_type = DataType.FP16
+				value_float = float(data.get("Value", 0.0))
+				value = int(value_float)
 				value_bool = false
 				value_string = ""
 				item_grids = [Vector2(0,0)]
@@ -284,6 +309,18 @@ func set_value_by_type(new_value, tipo: DataType):
 			value_bool = false
 			value_string = ""
 			item_grids = [Vector2(0,0)]
+		DataType.FP8:
+			value_float = float(new_value)
+			value = int(value_float)
+			value_bool = false
+			value_string = ""
+			item_grids = [Vector2(0,0)]
+		DataType.FP16:
+			value_float = float(new_value)
+			value = int(value_float)
+			value_bool = false
+			value_string = ""
+			item_grids = [Vector2(0,0)]
 	
 	update_label_display()
 
@@ -306,6 +343,8 @@ func get_value_as_string() -> String:
 			return str(binary_to_int(value_binary))
 		DataType.SHORT_INT:
 			return str(value_short)
+		DataType.FP8, DataType.FP16:
+			return str(value_float)
 		_:
 			return str(value)
 
@@ -390,6 +429,16 @@ func update_label_display():
 		value_label.add_theme_color_override("font_color", Color.CYAN)
 		value_label.add_theme_font_size_override("font_size", 18)
 		_resize_visual(color_rect, 0.5)
+	elif data_type == DataType.FP8:
+		value_label.text = str(value_float)
+		value_label.add_theme_color_override("font_color", Color.VIOLET)
+		value_label.add_theme_font_size_override("font_size", 14)
+		_resize_visual(color_rect, 0.25)
+	elif data_type == DataType.FP16:
+		value_label.text = str(value_float)
+		value_label.add_theme_color_override("font_color", Color.GOLD)
+		value_label.add_theme_font_size_override("font_size", 16)
+		_resize_visual(color_rect, 0.5)
 	else:
 		value_label.text = str(value)
 		value_label.add_theme_color_override("font_color", Color.BLACK) 
@@ -414,7 +463,7 @@ func _resize_visual(color_rect, slot_count: float):
 			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			value_label.add_theme_font_size_override("font_size", 14)
 		return
-	elif data_type == DataType.SHORT_INT:
+	elif data_type == DataType.SHORT_INT or data_type == DataType.FP16:
 		if color_rect and color_rect is ColorRect:
 			color_rect.position = Vector2(-12, -28)
 			color_rect.size = Vector2(24, 56)
@@ -424,6 +473,17 @@ func _resize_visual(color_rect, slot_count: float):
 			value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			value_label.add_theme_font_size_override("font_size", 16)
+		return
+	elif data_type == DataType.FP8:
+		if color_rect and color_rect is ColorRect:
+			color_rect.position = Vector2(-12, -12)
+			color_rect.size = Vector2(24, 24)
+		if value_label:
+			value_label.position = Vector2(0, 0)
+			value_label.size = Vector2(24, 24)
+			value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			value_label.add_theme_font_size_override("font_size", 14)
 		return
 
 	var total_width = slot_count * slot_size
@@ -481,7 +541,11 @@ func get_size_bytes() -> int:
 			return 4
 		DataType.SHORT_INT:
 			return 2
+		DataType.FP16:
+			return 2
 		DataType.BOOLEAN:
+			return 1
+		DataType.FP8:
 			return 1
 		DataType.BINARY:
 			if item_ID != null and item_ID != "" and DataHandler:

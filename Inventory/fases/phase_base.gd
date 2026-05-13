@@ -14,6 +14,7 @@ extends Control
 var backpack_grid: InventoryGrid = null
 var pool_grid: InventoryGrid = null
 var converter_slot: TextureRect = null
+var converter_option_btn: OptionButton = null
 var double_slot: TextureRect = null
 var short_slot: TextureRect = null
 var boolean_slot: TextureRect = null
@@ -132,19 +133,8 @@ func _on_slot_entered(slot):
 		return
 	if slot == converter_slot:
 		can_place = true
-		hint_label.text = "Solte o orbe aqui para convertê-lo (Int ↔ Float)."
-		_update_next_button_state()
-	elif slot == double_slot:
-		can_place = true
-		hint_label.text = "Solte o orbe aqui para convertê-lo para Double (2 slots, Rosa)."
-		_update_next_button_state()
-	elif slot == short_slot:
-		can_place = true
-		hint_label.text = "Solte o orbe aqui para convertê-lo para Short Int (0.5 slot, Ciano)."
-		_update_next_button_state()
-	elif slot == boolean_slot:
-		can_place = true
-		hint_label.text = "Solte o orbe aqui para convertê-lo para Boolean (0.25 slot, Verde)."
+		var t_type = converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
+		hint_label.text = "Solte o orbe aqui para convertê-lo para " + t_type + "."
 		_update_next_button_state()
 	elif slot == calc_slot_1 or slot == calc_slot_2:
 		if slot.item_stored == null:
@@ -209,16 +199,27 @@ func _place_item():
 		return
 		
 	if current_slot == converter_slot:
-		var atual_tipo = item_held.data_type
-		if atual_tipo == item_held.DataType.INT:
-			item_held.set_value_by_type(float(item_held.value), item_held.DataType.FLOAT)
-		elif atual_tipo == item_held.DataType.FLOAT or atual_tipo == item_held.DataType.DOUBLE:
-			item_held.set_value_by_type(int(item_held.value_float), item_held.DataType.INT)
+		var target_type_str = converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
+		var val_to_convert = item_held.value_float if item_held.data_type in [item_held.DataType.FLOAT, item_held.DataType.DOUBLE, item_held.DataType.FP8, item_held.DataType.FP16] else float(item_held.value)
+		
+		if target_type_str == "Int":
+			item_held.set_value_by_type(int(val_to_convert), item_held.DataType.INT)
+		elif target_type_str == "Float":
+			item_held.set_value_by_type(val_to_convert, item_held.DataType.FLOAT)
+		elif target_type_str == "Double":
+			item_held.set_value_by_type(val_to_convert, item_held.DataType.DOUBLE)
+		elif target_type_str == "Short":
+			item_held.set_value_by_type(int(val_to_convert), item_held.DataType.SHORT_INT)
+		elif target_type_str == "Boolean":
+			item_held.set_value_by_type(val_to_convert != 0, item_held.DataType.BOOLEAN)
+		elif target_type_str == "FP8":
+			item_held.set_value_by_type(val_to_convert, item_held.DataType.FP8)
+		elif target_type_str == "FP16":
+			item_held.set_value_by_type(val_to_convert, item_held.DataType.FP16)
 		
 		if item_held.has_method("update_label_display"):
 			item_held.update_label_display()
 		
-		# Tira do pai antigo e coloca no current_slot se necessario
 		if item_held.get_parent() != converter_slot:
 			item_held.get_parent().remove_child(item_held)
 			converter_slot.add_child(item_held)
@@ -228,63 +229,6 @@ func _place_item():
 		item_held.selected = false
 		converter_slot.item_stored = item_held
 		converter_slot.state = converter_slot.States.TAKEN
-		item_held = null
-		can_place = false
-		_update_bytes_label()
-		_update_hint()
-		return
-		
-	if current_slot == double_slot:
-		item_held.set_value_by_type(float(item_held.get_value_as_string()), item_held.DataType.DOUBLE)
-		
-		if item_held.has_method("update_label_display"):
-			item_held.update_label_display()
-		
-		if item_held.get_parent() != double_slot:
-			item_held.get_parent().remove_child(item_held)
-			double_slot.add_child(item_held)
-		
-		item_held.global_position = double_slot.global_position + Vector2(25, 25)
-		item_held.grid_anchor = double_slot
-		item_held.selected = false
-		double_slot.item_stored = item_held
-		double_slot.state = double_slot.States.TAKEN
-		item_held = null
-		can_place = false
-		_update_bytes_label()
-		_update_hint()
-		return
-		
-	if current_slot == short_slot:
-		item_held.set_value_by_type(int(item_held.value), item_held.DataType.SHORT_INT)
-		if item_held.has_method("update_label_display"):
-			item_held.update_label_display()
-		if item_held.get_parent() != short_slot:
-			item_held.get_parent().remove_child(item_held)
-			short_slot.add_child(item_held)
-		item_held.global_position = short_slot.global_position + Vector2(25, 25)
-		item_held.grid_anchor = short_slot
-		item_held.selected = false
-		short_slot.item_stored = item_held
-		short_slot.state = short_slot.States.TAKEN
-		item_held = null
-		can_place = false
-		_update_bytes_label()
-		_update_hint()
-		return
-		
-	if current_slot == boolean_slot:
-		item_held.set_value_by_type(item_held.value != 0, item_held.DataType.BOOLEAN)
-		if item_held.has_method("update_label_display"):
-			item_held.update_label_display()
-		if item_held.get_parent() != boolean_slot:
-			item_held.get_parent().remove_child(item_held)
-			boolean_slot.add_child(item_held)
-		item_held.global_position = boolean_slot.global_position + Vector2(25, 25)
-		item_held.grid_anchor = boolean_slot
-		item_held.selected = false
-		boolean_slot.item_stored = item_held
-		boolean_slot.state = boolean_slot.States.TAKEN
 		item_held = null
 		can_place = false
 		_update_bytes_label()
@@ -340,22 +284,7 @@ func _pick_item():
 	if slot == converter_slot:
 		if converter_slot:
 			converter_slot.item_stored = null
-		if double_slot:
-			double_slot.item_stored = null
-		if short_slot:
-			short_slot.item_stored = null
-		if boolean_slot:
-			boolean_slot.item_stored = null
 		converter_slot.state = converter_slot.States.FREE
-	elif slot == double_slot:
-		double_slot.state = double_slot.States.FREE
-		double_slot.item_stored = null
-	elif slot == short_slot:
-		short_slot.state = short_slot.States.FREE
-		short_slot.item_stored = null
-	elif slot == boolean_slot:
-		boolean_slot.state = boolean_slot.States.FREE
-		boolean_slot.item_stored = null
 	elif slot == inspect_slot:
 		inspect_slot.state = inspect_slot.States.FREE
 		inspect_slot.item_stored = null
@@ -414,28 +343,7 @@ func _hint_full_message() -> String:
 	return base + "\n\n" + extra
 
 func _check_calculator():
-	if double_slot != null and double_slot.item_stored != null:
-		var item = double_slot.item_stored
-		if item.data_type == item.DataType.INT or item.data_type == item.DataType.FLOAT:
-			item.set_value_by_type(float(item.value), item.DataType.DOUBLE)
-		double_slot.item_stored = null
-		item_held = item
-		item.grid_anchor = null
-		
-	if short_slot != null and short_slot.item_stored != null:
-		var item = short_slot.item_stored
-		item.set_value_by_type(int(item.value), item.DataType.SHORT_INT)
-		short_slot.item_stored = null
-		item_held = item
-		item.grid_anchor = null
-		
-	if boolean_slot != null and boolean_slot.item_stored != null:
-		var item = boolean_slot.item_stored
-		var bool_val = item.value != 0
-		item.set_value_by_type(bool_val, item.DataType.BOOLEAN)
-		boolean_slot.item_stored = null
-		item_held = item
-		item.grid_anchor = null
+	pass
 		
 	if calc_slot_1 and calc_slot_2 and calc_op_btn:
 		if calc_slot_1.item_stored != null and calc_slot_2.item_stored != null:
@@ -490,3 +398,31 @@ func _pedagogy_extra_when_full() -> String:
 func is_phase_success() -> bool:
 	# Padrão: permitir avanço. Subclasses (ex: mochila) podem sobrescrever.
 	return true
+
+func _on_converter_type_changed(_index):
+	if converter_slot and converter_slot.item_stored:
+		var item = converter_slot.item_stored
+		
+		var target_type_str = converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
+		var val_to_convert = item.value_float if item.data_type in [item.DataType.FLOAT, item.DataType.DOUBLE, item.DataType.FP8, item.DataType.FP16] else float(item.value)
+		
+		if target_type_str == "Int":
+			item.set_value_by_type(int(val_to_convert), item.DataType.INT)
+		elif target_type_str == "Float":
+			item.set_value_by_type(val_to_convert, item.DataType.FLOAT)
+		elif target_type_str == "Double":
+			item.set_value_by_type(val_to_convert, item.DataType.DOUBLE)
+		elif target_type_str == "Short":
+			item.set_value_by_type(int(val_to_convert), item.DataType.SHORT_INT)
+		elif target_type_str == "Boolean":
+			item.set_value_by_type(val_to_convert != 0, item.DataType.BOOLEAN)
+		elif target_type_str == "FP8":
+			item.set_value_by_type(val_to_convert, item.DataType.FP8)
+		elif target_type_str == "FP16":
+			item.set_value_by_type(val_to_convert, item.DataType.FP16)
+			
+		if item.has_method("update_label_display"):
+			item.update_label_display()
+		
+		_update_bytes_label()
+		_update_hint()

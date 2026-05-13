@@ -5,6 +5,7 @@ const ITEM_SCENE := preload("res://Inventory/Items/Item.tscn")
 
 @export var config: PhaseConfig
 
+var inspector_modal = null
 
 func _ready():
 	super()
@@ -82,93 +83,6 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 	pool.clear_all_items()
 	
 	if converter_slot == null:
-		var panel = PanelContainer.new()
-		var vbox = VBoxContainer.new()
-		panel.add_child(vbox)
-		
-		var lbl = Label.new()
-		lbl.text = "Int ↔ Float"
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.add_theme_font_size_override("font_size", 14)
-		vbox.add_child(lbl)
-		
-		var center = CenterContainer.new()
-		center.custom_minimum_size = Vector2(64, 64)
-		vbox.add_child(center)
-		
-		converter_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
-		converter_slot.slot_ID = 999
-		center.add_child(converter_slot)
-		
-		converter_slot.slot_entered.connect(_on_slot_entered)
-		converter_slot.slot_exited.connect(_on_slot_exited)
-		
-		# --- Double Slot Panel ---
-		var d_panel = PanelContainer.new()
-		var d_vbox = VBoxContainer.new()
-		d_panel.add_child(d_vbox)
-		
-		var d_lbl = Label.new()
-		d_lbl.text = "Para Double\n(4 slots)"
-		d_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		d_lbl.add_theme_font_size_override("font_size", 14)
-		d_vbox.add_child(d_lbl)
-		
-		var d_center = CenterContainer.new()
-		d_center.custom_minimum_size = Vector2(64, 64)
-		d_vbox.add_child(d_center)
-		
-		double_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
-		double_slot.slot_ID = 998
-		d_center.add_child(double_slot)
-		
-		double_slot.slot_entered.connect(_on_slot_entered)
-		double_slot.slot_exited.connect(_on_slot_exited)
-		
-		# --- Short Slot Panel ---
-		var s_panel = PanelContainer.new()
-		var s_vbox = VBoxContainer.new()
-		s_panel.add_child(s_vbox)
-		
-		var s_lbl = Label.new()
-		s_lbl.text = "Para Short\n(0.5 slot)"
-		s_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		s_lbl.add_theme_font_size_override("font_size", 14)
-		s_vbox.add_child(s_lbl)
-		
-		var s_center = CenterContainer.new()
-		s_center.custom_minimum_size = Vector2(64, 64)
-		s_vbox.add_child(s_center)
-		
-		short_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
-		short_slot.slot_ID = 997
-		s_center.add_child(short_slot)
-		
-		short_slot.slot_entered.connect(_on_slot_entered)
-		short_slot.slot_exited.connect(_on_slot_exited)
-		
-		# --- Boolean Slot Panel ---
-		var b_panel = PanelContainer.new()
-		var b_vbox = VBoxContainer.new()
-		b_panel.add_child(b_vbox)
-		
-		var b_lbl = Label.new()
-		b_lbl.text = "Para Bool\n(0.25 slot)"
-		b_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		b_lbl.add_theme_font_size_override("font_size", 14)
-		b_vbox.add_child(b_lbl)
-		
-		var b_center = CenterContainer.new()
-		b_center.custom_minimum_size = Vector2(64, 64)
-		b_vbox.add_child(b_center)
-		
-		boolean_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
-		boolean_slot.slot_ID = 996
-		b_center.add_child(boolean_slot)
-		
-		boolean_slot.slot_entered.connect(_on_slot_entered)
-		boolean_slot.slot_exited.connect(_on_slot_exited)
-		
 		var pool_vbox = pool_container.get_parent()
 		if pool_vbox:
 			var tools_container = pool_vbox.get_node_or_null("ConvertersContainer")
@@ -195,24 +109,53 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 				tools_container.add_child(tools_hbox)
 				
 				pool_vbox.add_child(tools_container)
-				# Mover o container para ficar imediatamente acima da grid de orbes
 				pool_vbox.move_child(tools_container, pool_container.get_index())
 			else:
 				tools_hbox = tools_container.get_node("ConvertersHBox")
-				
-			if config.allow_float: tools_hbox.add_child(panel)
-			if config.allow_double: tools_hbox.add_child(d_panel)
-			if config.allow_short: tools_hbox.add_child(s_panel)
-			if config.allow_bool: tools_hbox.add_child(b_panel)
 			
-			# Oculta o toggle se nada foi adicionado
+			var panel = PanelContainer.new()
+			var vbox = VBoxContainer.new()
+			panel.add_child(vbox)
+			
+			var hbox = HBoxContainer.new()
+			hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+			vbox.add_child(hbox)
+			
+			var lbl = Label.new()
+			lbl.text = "Para:"
+			lbl.add_theme_font_size_override("font_size", 14)
+			hbox.add_child(lbl)
+			
+			converter_option_btn = OptionButton.new()
+			converter_option_btn.add_theme_font_size_override("font_size", 14)
+			if config.use_converter: converter_option_btn.add_item("Float")
+			if config.allow_double: converter_option_btn.add_item("Double")
+			if config.allow_short: converter_option_btn.add_item("Short")
+			if config.allow_bool: converter_option_btn.add_item("Boolean")
+			if config.allow_fp8: converter_option_btn.add_item("FP8")
+			if config.allow_fp16: converter_option_btn.add_item("FP16")
+			converter_option_btn.add_item("Int") # Sempre permitir a volta pro Int
+			
+			converter_option_btn.item_selected.connect(_on_converter_type_changed)
+			hbox.add_child(converter_option_btn)
+			
+			var center = CenterContainer.new()
+			center.custom_minimum_size = Vector2(64, 64)
+			vbox.add_child(center)
+			
+			converter_slot = preload("res://Inventory/slots/slot.tscn").instantiate()
+			converter_slot.slot_ID = 999
+			center.add_child(converter_slot)
+			
+			converter_slot.slot_entered.connect(_on_slot_entered)
+			converter_slot.slot_exited.connect(_on_slot_exited)
+			
+			# Só adiciona o painel de conversão se houver mais de uma opção (Int + pelo menos 1 ativado)
+			if converter_option_btn.item_count > 1:
+				tools_hbox.add_child(panel)
+			
 			if tools_hbox.get_child_count() == 0:
 				tools_container.visible = false
-		else:
-			if config.allow_float: add_child(panel)
-			if config.allow_double: add_child(d_panel)
-			if config.allow_short: add_child(s_panel)
-			if config.allow_bool: add_child(b_panel)
 			
 	if config.allow_calc:
 		_create_calculator_ui()
@@ -338,6 +281,11 @@ func _create_calculator_ui():
 	
 	inspect_slot.slot_entered.connect(_on_slot_entered)
 	inspect_slot.slot_exited.connect(_on_slot_exited)
+	
+	var btn_inspect = Button.new()
+	btn_inspect.text = "Ver Detalhes"
+	btn_inspect.pressed.connect(_on_btn_inspect_pressed)
+	insp_vbox.add_child(btn_inspect)
 	
 	container_para_adicionar.add_child(insp_panel)
 
@@ -500,3 +448,16 @@ func is_phase_success() -> bool:
 	if not backpack_grid:
 		return false
 	return backpack_grid.total_bytes_used() >= backpack_grid.capacity_bytes
+
+func _on_btn_inspect_pressed():
+	if not inspect_slot or inspect_slot.item_stored == null:
+		_show_not_ready_modal("Coloque um orbe no slot de inspeção primeiro.")
+		return
+	var item = inspect_slot.item_stored
+	
+	if not inspector_modal:
+		var script = preload("res://Inventory/fases/inspector_modal.gd")
+		inspector_modal = script.new()
+		add_child(inspector_modal)
+	
+	inspector_modal.open(config, item)

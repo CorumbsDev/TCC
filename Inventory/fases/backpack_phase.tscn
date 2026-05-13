@@ -23,7 +23,14 @@ allow_float = false
 allow_double = false
 allow_short = false
 allow_bool = false
+allow_fp8 = false
+allow_fp16 = false
 allow_calc = false
+fp8_exp_bits = 4
+fp8_mant_bits = 3
+fp16_exp_bits = 5
+fp16_mant_bits = 10
+allow_fp_customization = false
 
 [node name="BackpackPhaseLegacy" instance=ExtResource("1_pb")]
 offset_right = 1280.0
