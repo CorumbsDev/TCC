@@ -10,7 +10,7 @@ func _on_glossary_pressed():
 	get_tree().change_scene_to_file("res://Inventory/fases/glossary_screen.tscn")
 
 func _on_gerador_pressed():
-	get_tree().change_scene_to_file("res://Inventory/fases/generator_phase.tscn")
+	get_tree().change_scene_to_file("res://Inventory/fases/sequence_editor.tscn")
 
 func _on_fase2_pressed():
 	get_tree().change_scene_to_file("res://Inventory/fases/phase2.tscn")
