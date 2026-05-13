@@ -19,6 +19,11 @@ initial_pool_items = null
 random_pool = null
 min_bytes_random_pool = 0
 use_converter = false
+allow_float = false
+allow_double = false
+allow_short = false
+allow_bool = false
+allow_calc = false
 
 [node name="PhaseBase" instance=ExtResource("1_pb")]
 script = ExtResource("2_ph")

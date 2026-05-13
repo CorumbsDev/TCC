@@ -23,6 +23,11 @@ extends Resource
 ## Metas de bytes adicionados por itens sortidos no pool (após os fixos). Se 0, usa o espaço livre na mochila após montar o desafio.
 @export var min_bytes_random_pool: int = 0
 @export var use_converter: bool = false
+@export var allow_float: bool = false
+@export var allow_double: bool = false
+@export var allow_short: bool = false
+@export var allow_bool: bool = false
+@export var allow_calc: bool = false
 
 ## Garante limites válidos (capacidade, slots e faixa de valores INT).
 func apply_constraints() -> void:

@@ -19,6 +19,11 @@ initial_pool_items = PackedStringArray("item_number_0", "item_number_1", "item_n
 random_pool = PackedStringArray()
 min_bytes_random_pool = 0
 use_converter = false
+allow_float = false
+allow_double = false
+allow_short = false
+allow_bool = false
+allow_calc = false
 
 [node name="BackpackPhaseLegacy" instance=ExtResource("1_pb")]
 offset_right = 1280.0

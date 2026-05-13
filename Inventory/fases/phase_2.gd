@@ -81,7 +81,7 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 	backpack.clear_all_items()
 	pool.clear_all_items()
 	
-	if config.use_converter and converter_slot == null:
+	if converter_slot == null:
 		var panel = PanelContainer.new()
 		var vbox = VBoxContainer.new()
 		panel.add_child(vbox)
@@ -200,17 +200,21 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 			else:
 				tools_hbox = tools_container.get_node("ConvertersHBox")
 				
-			tools_hbox.add_child(panel)
-			tools_hbox.add_child(d_panel)
-			tools_hbox.add_child(s_panel)
-			tools_hbox.add_child(b_panel)
-		else:
-			add_child(panel)
-			add_child(d_panel)
-			add_child(s_panel)
-			add_child(b_panel)
+			if config.allow_float: tools_hbox.add_child(panel)
+			if config.allow_double: tools_hbox.add_child(d_panel)
+			if config.allow_short: tools_hbox.add_child(s_panel)
+			if config.allow_bool: tools_hbox.add_child(b_panel)
 			
-	if config.use_converter:
+			# Oculta o toggle se nada foi adicionado
+			if tools_hbox.get_child_count() == 0:
+				tools_container.visible = false
+		else:
+			if config.allow_float: add_child(panel)
+			if config.allow_double: add_child(d_panel)
+			if config.allow_short: add_child(s_panel)
+			if config.allow_bool: add_child(b_panel)
+			
+	if config.allow_calc:
 		_create_calculator_ui()
 
 	for entry in config.get_backpack_entry_list():
@@ -372,15 +376,26 @@ func _make_item_from_entry(entry: String) -> Node2D:
 		push_warning("Entrada inválida: %s" % e)
 		return null
 	var type_str := parts[parts.size() - 1].to_lower()
-	if type_str != "i":
-		push_warning("Nesta fase, use apenas INT no formato X_i (ex: 3_i). Entrada inválida: %s" % e)
-		return null
 	var value_str := parts[0]
 	for pi in range(1, parts.size() - 1):
 		value_str += "_" + parts[pi]
 	var shorthand: Node2D = ITEM_SCENE.instantiate()
-	var raw := int(value_str)
-	shorthand.set_value_directly(config.clamp_int_value(raw))
+	if type_str == "i":
+		var raw := int(value_str)
+		shorthand.set_value_directly(config.clamp_int_value(raw))
+	elif type_str == "f":
+		shorthand.set_value_by_type(float(value_str), shorthand.DataType.FLOAT)
+	elif type_str == "d":
+		shorthand.set_value_by_type(float(value_str), shorthand.DataType.DOUBLE)
+	elif type_str == "s":
+		shorthand.set_value_by_type(int(value_str), shorthand.DataType.SHORT_INT)
+	elif type_str == "b":
+		var b_val = (value_str.to_lower() == "true" or value_str == "1")
+		shorthand.set_value_by_type(b_val, shorthand.DataType.BOOLEAN)
+	else:
+		push_warning("Tipo não suportado no CSV: %s" % type_str)
+		shorthand.queue_free()
+		return null
 	return shorthand
 
 
