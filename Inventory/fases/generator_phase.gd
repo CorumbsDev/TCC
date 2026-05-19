@@ -83,9 +83,15 @@ func _update_preview():
 	for i in range(num_phases):
 		var phase_label = Label.new()
 		
-		if use_binary and (i % 2 == 0):
+		if use_binary and (i % 3 == 1):
 			# Fase binária
 			phase_label.text = "Fase %d: BINÁRIO" % (i + 1)
+		elif use_binary and (i % 3 == 2):
+			# Fase caixas de tipagem
+			phase_label.text = "Fase %d: CAIXAS DE TIPAGEM (Cap: %d bytes)" % [
+				i + 1,
+				preset["capacity"]
+			]
 		else:
 			# Fase mochila
 			phase_label.text = "Fase %d: MOCHILA (Cap: %d | Slots: %d | Pool: %d | Val: %d-%d)" % [

@@ -2,6 +2,7 @@ extends Node
 
 const PATH_PHASE2 := "res://Inventory/fases/phase2.tscn"
 const PATH_BINARY := "res://Inventory/fases/binary_phase.tscn"
+const PATH_TYPE_BOX := "res://Inventory/fases/type_box_phase.tscn"
 const PATH_MENU := "res://Inventory/fases/main_menu.tscn"
 
 signal phase_advance_blocked(reason: String)
@@ -11,6 +12,7 @@ var _idx: int = -1
 var _active: bool = false
 var _pending_backpack: PhaseConfig = null
 var _pending_binary: BinaryPhaseConfig = null
+var _pending_type_box: TypeBoxPhaseConfig = null
 
 
 func is_sequence_active() -> bool:
@@ -69,6 +71,11 @@ func take_binary_config_if_any() -> BinaryPhaseConfig:
 	_pending_binary = null
 	return c
 
+func take_type_box_config_if_any() -> TypeBoxPhaseConfig:
+	var c := _pending_type_box
+	_pending_type_box = null
+	return c
+
 
 func abort_sequence() -> void:
 	_active = false
@@ -76,6 +83,7 @@ func abort_sequence() -> void:
 	_idx = -1
 	_pending_backpack = null
 	_pending_binary = null
+	_pending_type_box = null
 
 
 func _go_step(i: int) -> void:
@@ -91,6 +99,10 @@ func _go_step(i: int) -> void:
 			var bc: BinaryPhaseConfig = step.config_binario if step.config_binario else BinaryPhaseConfig.new()
 			_pending_binary = bc.duplicate(true)
 			get_tree().change_scene_to_file(PATH_BINARY)
+		PhaseSequenceStep.Kind.TYPE_BOX:
+			var tbc: TypeBoxPhaseConfig = step.config_type_box if step.config_type_box else TypeBoxPhaseConfig.new()
+			_pending_type_box = tbc.duplicate(true)
+			get_tree().change_scene_to_file(PATH_TYPE_BOX)
 
 
 func _finish_sequence_to_menu() -> void:
