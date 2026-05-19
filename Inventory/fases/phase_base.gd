@@ -216,20 +216,21 @@ func _place_item():
 			if not res:
 				return
 		
+		var final_val = deg.degraded_value
 		if target_type_str == "Int":
-			item_held.set_value_by_type(int(val_to_convert), item_held.DataType.INT)
+			item_held.set_value_by_type(int(final_val), item_held.DataType.INT)
 		elif target_type_str == "Float":
-			item_held.set_value_by_type(val_to_convert, item_held.DataType.FLOAT)
+			item_held.set_value_by_type(final_val, item_held.DataType.FLOAT)
 		elif target_type_str == "Double":
-			item_held.set_value_by_type(val_to_convert, item_held.DataType.DOUBLE)
+			item_held.set_value_by_type(final_val, item_held.DataType.DOUBLE)
 		elif target_type_str == "Short":
-			item_held.set_value_by_type(int(val_to_convert), item_held.DataType.SHORT_INT)
+			item_held.set_value_by_type(int(final_val), item_held.DataType.SHORT_INT)
 		elif target_type_str == "Boolean":
-			item_held.set_value_by_type(val_to_convert != 0, item_held.DataType.BOOLEAN)
+			item_held.set_value_by_type(final_val != 0, item_held.DataType.BOOLEAN)
 		elif target_type_str == "FP8":
-			item_held.set_value_by_type(val_to_convert, item_held.DataType.FP8)
+			item_held.set_value_by_type(final_val, item_held.DataType.FP8)
 		elif target_type_str == "FP16":
-			item_held.set_value_by_type(val_to_convert, item_held.DataType.FP16)
+			item_held.set_value_by_type(final_val, item_held.DataType.FP16)
 		
 		if item_held.has_method("update_label_display"):
 			item_held.update_label_display()
@@ -367,8 +368,10 @@ func _check_calculator():
 			var val1 = item1.value_float if item1.data_type in [item1.DataType.FLOAT, item1.DataType.DOUBLE] else float(item1.value)
 			var val2 = item2.value_float if item2.data_type in [item2.DataType.FLOAT, item2.DataType.DOUBLE] else float(item2.value)
 			
-			var is_float = (item1.data_type in [item1.DataType.FLOAT, item1.DataType.DOUBLE] or item2.data_type in [item2.DataType.FLOAT, item2.DataType.DOUBLE])
-			var is_double = (item1.data_type == item1.DataType.DOUBLE or item2.data_type == item2.DataType.DOUBLE)
+			var p1 = _get_type_priority(item1)
+			var p2 = _get_type_priority(item2)
+			var target_type = item1.data_type if p1 >= p2 else item2.data_type
+			var target_type_str = _get_type_string(target_type, item1)
 			
 			var result_val = 0.0
 			if calc_op_btn.text == "+":
@@ -376,7 +379,7 @@ func _check_calculator():
 			else:
 				result_val = val1 - val2
 				
-			var deg = _check_calc_degradation(result_val, is_float, is_double)
+			var deg = _check_degradation(target_type_str, result_val)
 			if deg.has_warning:
 				var dlg = ConfirmationDialog.new()
 				dlg.dialog_text = deg.message + "\n\nDeseja prosseguir com o cálculo?"
@@ -400,12 +403,22 @@ func _check_calculator():
 			var new_item = preload("res://Inventory/Items/Item.tscn").instantiate()
 			add_child(new_item)
 			
-			if is_double:
-				new_item.set_value_by_type(result_val, new_item.DataType.DOUBLE)
-			elif is_float:
-				new_item.set_value_by_type(result_val, new_item.DataType.FLOAT)
+			var final_val = deg.degraded_value
+			if target_type == new_item.DataType.BOOLEAN:
+				new_item.set_value_by_type(final_val != 0, target_type)
+			elif target_type in [new_item.DataType.INT, new_item.DataType.SHORT_INT]:
+				new_item.set_value_by_type(int(final_val), target_type)
 			else:
-				new_item.set_value_by_type(int(result_val), new_item.DataType.INT)
+				new_item.set_value_by_type(final_val, target_type)
+			
+			if target_type in [new_item.DataType.FP8, new_item.DataType.FP16]:
+				# Inherit the fp configuration from the phase/items
+				if item1.data_type == target_type:
+					new_item.fp_exp_bits = item1.fp_exp_bits
+					new_item.fp_mant_bits = item1.fp_mant_bits
+				elif item2.data_type == target_type:
+					new_item.fp_exp_bits = item2.fp_exp_bits
+					new_item.fp_mant_bits = item2.fp_mant_bits
 			
 			if new_item.has_method("update_label_display"):
 				new_item.update_label_display()
@@ -422,6 +435,26 @@ func _check_calculator():
 func _pedagogy_extra_when_full() -> String:
 	return ""
 
+func _get_type_priority(item) -> int:
+	var dt = item.data_type
+	if dt == item.DataType.DOUBLE: return 100
+	if dt == item.DataType.FLOAT: return 90
+	if dt == item.DataType.FP16: return 80
+	if dt == item.DataType.FP8: return 70
+	if dt == item.DataType.INT: return 60
+	if dt == item.DataType.SHORT_INT: return 50
+	if dt == item.DataType.BOOLEAN: return 40
+	return 0
+
+func _get_type_string(dt, item) -> String:
+	if dt == item.DataType.DOUBLE: return "Double"
+	if dt == item.DataType.FLOAT: return "Float"
+	if dt == item.DataType.FP16: return "FP16"
+	if dt == item.DataType.FP8: return "FP8"
+	if dt == item.DataType.INT: return "Int"
+	if dt == item.DataType.SHORT_INT: return "Short"
+	if dt == item.DataType.BOOLEAN: return "Boolean"
+	return "Float"
 
 func is_phase_success() -> bool:
 	# Padrão: permitir avanço. Subclasses (ex: mochila) podem sobrescrever.
@@ -461,20 +494,21 @@ func _on_converter_type_changed(_index):
 						break
 				return
 		
+		var final_val = deg.degraded_value
 		if target_type_str == "Int":
-			item.set_value_by_type(int(val_to_convert), item.DataType.INT)
+			item.set_value_by_type(int(final_val), item.DataType.INT)
 		elif target_type_str == "Float":
-			item.set_value_by_type(val_to_convert, item.DataType.FLOAT)
+			item.set_value_by_type(final_val, item.DataType.FLOAT)
 		elif target_type_str == "Double":
-			item.set_value_by_type(val_to_convert, item.DataType.DOUBLE)
+			item.set_value_by_type(final_val, item.DataType.DOUBLE)
 		elif target_type_str == "Short":
-			item.set_value_by_type(int(val_to_convert), item.DataType.SHORT_INT)
+			item.set_value_by_type(int(final_val), item.DataType.SHORT_INT)
 		elif target_type_str == "Boolean":
-			item.set_value_by_type(val_to_convert != 0, item.DataType.BOOLEAN)
+			item.set_value_by_type(final_val != 0, item.DataType.BOOLEAN)
 		elif target_type_str == "FP8":
-			item.set_value_by_type(val_to_convert, item.DataType.FP8)
+			item.set_value_by_type(final_val, item.DataType.FP8)
 		elif target_type_str == "FP16":
-			item.set_value_by_type(val_to_convert, item.DataType.FP16)
+			item.set_value_by_type(final_val, item.DataType.FP16)
 			
 		if item.has_method("update_label_display"):
 			item.update_label_display()
@@ -483,80 +517,91 @@ func _on_converter_type_changed(_index):
 		_update_hint()
 
 func _check_degradation(target_type_str: String, val_to_convert: float) -> Dictionary:
-	var result = {"has_warning": false, "message": ""}
+	var result = {"has_warning": false, "message": "", "degraded_value": val_to_convert}
 	if target_type_str == "Int":
 		var trunc_val = float(int(val_to_convert))
 		if trunc_val != val_to_convert:
 			result.has_warning = true
 			result.message = "Perda de precisão: A parte decimal será descartada."
-		if val_to_convert < -2147483648 or val_to_convert > 2147483647:
+		
+		if trunc_val < -2147483648:
 			result.has_warning = true
 			result.message = "Overflow: O valor excede os limites de um Inteiro de 32 bits (-2.1B a 2.1B)."
+			trunc_val = -2147483648
+		elif trunc_val > 2147483647:
+			result.has_warning = true
+			result.message = "Overflow: O valor excede os limites de um Inteiro de 32 bits (-2.1B a 2.1B)."
+			trunc_val = 2147483647
+		result.degraded_value = trunc_val
+			
 	elif target_type_str == "Short":
 		var trunc_val = float(int(val_to_convert))
 		if trunc_val != val_to_convert:
 			result.has_warning = true
 			result.message = "Perda de precisão: A parte decimal será descartada."
-		if val_to_convert < -32768 or val_to_convert > 32767:
+			
+		if trunc_val < -32768:
 			result.has_warning = true
 			result.message = "Overflow: O valor excede os limites de um Short Inteiro de 16 bits (-32768 a 32767)."
+			trunc_val = -32768
+		elif trunc_val > 32767:
+			result.has_warning = true
+			result.message = "Overflow: O valor excede os limites de um Short Inteiro de 16 bits (-32768 a 32767)."
+			trunc_val = 32767
+		result.degraded_value = trunc_val
+			
 	elif target_type_str == "Float":
-		if abs(val_to_convert) > 3.4028235e38:
+		if val_to_convert > 3.4028235e38:
 			result.has_warning = true
-			result.message = "Overflow: O valor excede a capacidade máxima de um Float de 32 bits e se tornará Infinito."
+			result.message = "Overflow: O valor excede a capacidade máxima de um Float de 32 bits e se tornará Infinito Positivo."
+			result.degraded_value = INF
+		elif val_to_convert < -3.4028235e38:
+			result.has_warning = true
+			result.message = "Overflow: O valor excede a capacidade máxima de um Float de 32 bits e se tornará Infinito Negativo."
+			result.degraded_value = -INF
+			
 	elif target_type_str == "FP8":
-		if abs(val_to_convert) > 240.0:
+		var config = get("config")
+		var e_bits = 4
+		var m_bits = 3
+		if config != null and config.get("fp8_exp_bits") != null:
+			e_bits = config.fp8_exp_bits
+			m_bits = config.fp8_mant_bits
+		
+		var dict = _float_to_custom_fp_bits(val_to_convert, e_bits, m_bits)
+		var back_to_float = _custom_fp_bits_to_float(dict.bits, e_bits, m_bits)
+		if val_to_convert != back_to_float:
 			result.has_warning = true
-			result.message = "Aviso: Possível Overflow ou Perda Extrema de Precisão para o formato reduzido FP8."
-		else:
-			var config = get("config")
-			var e_bits = 4
-			var m_bits = 3
-			if config != null and config.get("fp8_exp_bits") != null:
-				e_bits = config.fp8_exp_bits
-				m_bits = config.fp8_mant_bits
-			
-			var dict = _float_to_custom_fp_bits(val_to_convert, e_bits, m_bits)
-			var back_to_float = _custom_fp_bits_to_float(dict.bits, e_bits, m_bits)
-			if val_to_convert != back_to_float:
-				result.has_warning = true
-				result.message = "Perda de precisão: O formato FP8 (" + str(e_bits) + " exp, " + str(m_bits) + " mant) não possui precisão suficiente para manter o valor exato. O valor aproximado será: " + str(back_to_float)
+			result.message = "Perda de precisão: O formato FP8 (" + str(e_bits) + " exp, " + str(m_bits) + " mant) não possui precisão suficiente para o valor exato. Valor aproximado: " + str(back_to_float)
+		result.degraded_value = back_to_float
+		
 	elif target_type_str == "FP16":
-		if abs(val_to_convert) > 65504.0:
+		var config = get("config")
+		var e_bits = 5
+		var m_bits = 10
+		if config != null and config.get("fp16_exp_bits") != null:
+			e_bits = config.fp16_exp_bits
+			m_bits = config.fp16_mant_bits
+		
+		var dict = _float_to_custom_fp_bits(val_to_convert, e_bits, m_bits)
+		var back_to_float = _custom_fp_bits_to_float(dict.bits, e_bits, m_bits)
+		if val_to_convert != back_to_float:
 			result.has_warning = true
-			result.message = "Aviso: Possível Overflow. O formato FP16 costuma suportar valores apenas até ~65504."
-		else:
-			var config = get("config")
-			var e_bits = 5
-			var m_bits = 10
-			if config != null and config.get("fp16_exp_bits") != null:
-				e_bits = config.fp16_exp_bits
-				m_bits = config.fp16_mant_bits
-			
-			var dict = _float_to_custom_fp_bits(val_to_convert, e_bits, m_bits)
-			var back_to_float = _custom_fp_bits_to_float(dict.bits, e_bits, m_bits)
-			if val_to_convert != back_to_float:
-				result.has_warning = true
-				result.message = "Perda de precisão: O formato FP16 não possui precisão suficiente para manter o valor exato. O valor aproximado será: " + str(back_to_float)
+			result.message = "Perda de precisão: O formato FP16 não possui precisão suficiente para manter o valor exato. Valor aproximado: " + str(back_to_float)
+		result.degraded_value = back_to_float
+		
 	return result
-
-func _check_calc_degradation(result_val: float, is_float: bool, is_double: bool) -> Dictionary:
-	var res = {"has_warning": false, "message": ""}
-	if not is_float and not is_double:
-		if result_val < -2147483648 or result_val > 2147483647:
-			res.has_warning = true
-			res.message = "Overflow: O resultado da operação excedeu a capacidade de um Inteiro."
-	elif is_float and not is_double:
-		if abs(result_val) > 3.4028235e38:
-			res.has_warning = true
-			res.message = "Overflow para Infinito (Float 32-bits atingiu o limite)."
-	return res
 
 func _wait_for_dialog(dlg: ConfirmationDialog) -> bool:
 	var result = [false]
-	var ok_callable = func(): result[0] = true
-	dlg.confirmed.connect(ok_callable)
-	await dlg.visibility_changed
+	var done = [false]
+	dlg.confirmed.connect(func(): result[0] = true; done[0] = true)
+	dlg.canceled.connect(func(): done[0] = true)
+	dlg.close_requested.connect(func(): done[0] = true)
+	
+	while not done[0]:
+		await get_tree().process_frame
+		
 	return result[0]
 
 func _float_to_custom_fp_bits(val: float, exp_bits: int, mant_bits: int) -> Dictionary:
