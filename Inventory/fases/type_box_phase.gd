@@ -101,15 +101,16 @@ func _create_boxes():
 		title.custom_minimum_size = Vector2(120, 0)
 		box_container.add_child(title)
 		
-		var slot_container = HBoxContainer.new()
+		var slot_container = GridContainer.new()
+		slot_container.columns = min(config.box_slot_count, 8) # Quebra linha após 8
 		box_container.add_child(slot_container)
 		
 		# Criar slots base para cada caixa usando a configuração
 		var slots = []
 		for i in range(config.box_slot_count):
-			var slot = ColorRect.new()
-			slot.custom_minimum_size = Vector2(50, 50)
-			slot.color = Color(0.15, 0.15, 0.15, 0.8) # Fundo escuro simples
+			var slot = preload("res://Inventory/slots/slot.tscn").instantiate()
+			slot.modulate = t.color
+			slot.self_modulate = Color(1.2, 1.2, 1.2) # Realça um pouco
 			
 			# Usamos meta para identificar a caixa e o tipo
 			slot.set_meta("is_type_box", true)
@@ -153,9 +154,7 @@ func _populate_pool():
 		values_to_spawn = config.initial_raw_values
 	
 	for raw_val_str in values_to_spawn:
-		var slot = ColorRect.new()
-		slot.custom_minimum_size = Vector2(50, 50)
-		slot.color = Color(0.15, 0.15, 0.15, 0.8)
+		var slot = preload("res://Inventory/slots/slot.tscn").instantiate()
 		slot.set_meta("is_pool", true)
 		slot.set_meta("item_stored", null)
 		
@@ -165,7 +164,7 @@ func _populate_pool():
 		item.update_label_display()
 		
 		slot.add_child(item)
-		item.position = Vector2(25, 25) # center
+		item.position = Vector2(32, 32) # center
 		slot.set_meta("item_stored", item)
 		
 		pool_grid_node.add_child(slot)
@@ -174,13 +173,12 @@ func _populate_pool():
 
 func _on_box_slot_entered(slot):
 	current_slot = slot
-	if item_held and item_held.data_type == ItemRef.DataType.RAW:
+	if item_held:
 		can_place = true
-		hint_label.text = "Solte o valor aqui para converter para " + slot.get_meta("box_name") + "."
-	else:
-		can_place = false
-		if item_held:
-			hint_label.text = "Você só pode colocar valores RAW nestas caixas."
+		if item_held.data_type == ItemRef.DataType.RAW:
+			hint_label.text = "Solte o valor aqui para tipar como " + slot.get_meta("box_name") + "."
+		else:
+			hint_label.text = "Solte para converter de " + _get_type_name(item_held.data_type) + " para " + slot.get_meta("box_name") + "."
 
 func _on_pool_slot_entered(slot):
 	current_slot = slot
@@ -204,7 +202,15 @@ func _place_item():
 			
 		var target_type = current_slot.get_meta("box_type")
 		var target_name = current_slot.get_meta("box_name")
-		var val_to_convert = item_held.value_float
+		
+		# Pega o valor atualizado considerando o tipo atual
+		var val_to_convert = 0.0
+		if item_held.data_type == ItemRef.DataType.RAW:
+			val_to_convert = item_held.value_float
+		elif item_held.data_type in [ItemRef.DataType.FLOAT, ItemRef.DataType.DOUBLE, ItemRef.DataType.FP8, ItemRef.DataType.FP16]:
+			val_to_convert = item_held.value_float
+		else:
+			val_to_convert = float(item_held.value)
 		
 		# Verifica conversão
 		var deg = _check_degradation(target_name, val_to_convert)
@@ -230,7 +236,7 @@ func _place_item():
 			item_held.get_parent().remove_child(item_held)
 			current_slot.add_child(item_held)
 			
-		item_held.position = Vector2(25, 25)
+		item_held.position = Vector2(32, 32)
 		current_slot.set_meta("item_stored", item_held)
 		item_held.selected = false
 		item_held = null
@@ -254,7 +260,7 @@ func _place_item():
 			item_held.get_parent().remove_child(item_held)
 			current_slot.add_child(item_held)
 			
-		item_held.position = Vector2(25, 25)
+		item_held.position = Vector2(32, 32)
 		current_slot.set_meta("item_stored", item_held)
 		item_held.selected = false
 		item_held = null
@@ -318,3 +324,13 @@ func is_phase_success() -> bool:
 	if used > global_capacity: return false
 	if pending_raw_values > 0: return false
 	return true
+
+func _get_type_name(dt) -> String:
+	if dt == ItemRef.DataType.INT: return "Int"
+	if dt == ItemRef.DataType.SHORT_INT: return "Short"
+	if dt == ItemRef.DataType.FLOAT: return "Float"
+	if dt == ItemRef.DataType.DOUBLE: return "Double"
+	if dt == ItemRef.DataType.FP8: return "FP8"
+	if dt == ItemRef.DataType.FP16: return "FP16"
+	if dt == ItemRef.DataType.BOOLEAN: return "Boolean"
+	return "Desconhecido"
