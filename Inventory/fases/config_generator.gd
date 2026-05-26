@@ -42,6 +42,17 @@ static func generate_binary_config(left_bit: int = 1, right_bit: int = 0) -> Bin
 	config.apply_constraints()
 	return config
 
+static func generate_type_box_config(capacity: int = 8, raw_values: Array = ["250", "3.14", "1"]) -> TypeBoxPhaseConfig:
+	var config = TypeBoxPhaseConfig.new()
+	config.capacity_bytes = capacity
+	config.initial_raw_values = PackedStringArray(raw_values)
+	config.allow_int = true
+	config.allow_short = true
+	config.allow_float = true
+	config.allow_double = true
+	config.apply_constraints()
+	return config
+
 static func generate_sequence(num_phases: int, mix_types: bool = true, base_knapsack_params: Dictionary = {}) -> Array:
 	var steps: Array = []
 	var phase_count := clampi(num_phases, 1, 99)  # Permitir até 99 fases
@@ -59,11 +70,22 @@ static func generate_sequence(num_phases: int, mix_types: bool = true, base_knap
 
 	for i in range(phase_count):
 		var step = PhaseSequenceStep.new()
-		# Alternância determinística: se mix_types, alterna BINARIO/MOCHILA. Senão, sempre MOCHILA
-		var use_binary = mix_types and (i % 2 == 0)
+		var use_binary = mix_types and (i % 3 == 1)
+		var use_type_box = mix_types and (i % 3 == 2)
 		if use_binary:
 			step.kind = PhaseSequenceStep.Kind.BINARIO
 			step.config_binario = generate_binary_config(randi() % 2, randi() % 2)
+		elif use_type_box:
+			step.kind = PhaseSequenceStep.Kind.TYPE_BOX
+			# Gera valores aleatórios para a fase de caixas
+			var raw_vals = []
+			for r in range(4):
+				var is_float = randi() % 2 == 0
+				if is_float:
+					raw_vals.append(str(snapped(randf_range(1.0, 100.0), 0.01)))
+				else:
+					raw_vals.append(str(randi_range(1, 40000))) # Alguns podem precisar de int em vez de short
+			step.config_type_box = generate_type_box_config(base_knapsack_params.get("capacity", 8), raw_vals)
 		else:
 			step.kind = PhaseSequenceStep.Kind.MOCHILA
 			# Variação MÍNIMA - apenas para diferenciar um pouco

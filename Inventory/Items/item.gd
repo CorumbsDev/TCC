@@ -3,7 +3,7 @@ extends Node2D
 @onready var value_label: Label = $ColorRect/value_label
 
 # Enum para identificar o tipo de dado do orb
-enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR, DOUBLE, BINARY, SHORT_INT, FP8, FP16}
+enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR, DOUBLE, BINARY, SHORT_INT, FP8, FP16, RAW}
 
 var item_ID : String
 var data_type: DataType = DataType.INT  # Tipo padrão é INT
@@ -95,6 +95,8 @@ func get_item_info() -> Dictionary:
 				info.id = "item_double_" + str(value_double)
 			DataType.BINARY:
 				info.id = "item_binary_" + str(value)
+			DataType.RAW:
+				info.id = "item_raw_" + str(value_float)
 			_:
 				info.id = "item_unknown"
 	else:
@@ -139,6 +141,10 @@ func get_item_info() -> Dictionary:
 			info.tipo = "FP16 (Float 16-bit)"
 			info.valor = str(value_float)
 			info.detalhes = "Ponto flutuante 16-bit: " + str(value_float) + "\nOcupa 0.5 slots"
+		DataType.RAW:
+			info.tipo = "RAW (Valor Puro)"
+			info.valor = str(value_float)
+			info.detalhes = "Valor sem tipo definido: " + str(value_float) + "\nArraste para uma caixa de tipagem."
 		_:
 			info.tipo = "DESCONHECIDO"
 			info.valor = str(value)
@@ -215,6 +221,13 @@ func load_item(a_ItemID: String) -> void:
 				item_grids = [Vector2(0,0)]
 			"FP16":
 				data_type = DataType.FP16
+				value_float = float(data.get("Value", 0.0))
+				value = int(value_float)
+				value_bool = false
+				value_string = ""
+				item_grids = [Vector2(0,0)]
+			"RAW":
+				data_type = DataType.RAW
 				value_float = float(data.get("Value", 0.0))
 				value = int(value_float)
 				value_bool = false
@@ -321,6 +334,12 @@ func set_value_by_type(new_value, tipo: DataType):
 			value_bool = false
 			value_string = ""
 			item_grids = [Vector2(0,0)]
+		DataType.RAW:
+			value_float = float(new_value)
+			value = int(value_float)
+			value_bool = false
+			value_string = ""
+			item_grids = [Vector2(0,0)]
 	
 	update_label_display()
 
@@ -343,7 +362,7 @@ func get_value_as_string() -> String:
 			return str(binary_to_int(value_binary))
 		DataType.SHORT_INT:
 			return str(value_short)
-		DataType.FP8, DataType.FP16:
+		DataType.FP8, DataType.FP16, DataType.RAW:
 			return str(value_float)
 		_:
 			return str(value)
@@ -378,6 +397,12 @@ func update_label_display():
 	
 	# Referência ao ColorRect pai da label
 	var color_rect = value_label.get_parent() if value_label.get_parent() is ColorRect else null
+	
+	if color_rect:
+		if data_type == DataType.RAW:
+			color_rect.color = Color.GRAY
+		else:
+			color_rect.color = Color(0.24, 0.17, 0.08, 1)
 	
 	# Configura o texto baseado no tipo
 	if data_type == DataType.OPERATOR:
@@ -439,6 +464,11 @@ func update_label_display():
 		value_label.add_theme_color_override("font_color", Color.GOLD)
 		value_label.add_theme_font_size_override("font_size", 16)
 		_resize_visual(color_rect, 0.5)
+	elif data_type == DataType.RAW:
+		value_label.text = str(value_float)
+		value_label.add_theme_color_override("font_color", Color.WHITE)
+		value_label.add_theme_font_size_override("font_size", 20)
+		_resize_visual(color_rect, 1)
 	else:
 		value_label.text = str(value)
 		value_label.add_theme_color_override("font_color", Color.BLACK) 
@@ -547,6 +577,8 @@ func get_size_bytes() -> int:
 			return 1
 		DataType.FP8:
 			return 1
+		DataType.RAW:
+			return 0
 		DataType.BINARY:
 			if item_ID != null and item_ID != "" and DataHandler:
 				return DataHandler.get_item_bytes(item_ID)
