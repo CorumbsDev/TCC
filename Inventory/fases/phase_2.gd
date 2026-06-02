@@ -5,7 +5,8 @@ const ITEM_SCENE := preload("res://Inventory/Items/Item.tscn")
 
 @export var config: PhaseConfig
 
-var inspector_modal = null
+func _get_phase_config():
+	return config
 
 func _ready():
 	super()
@@ -455,9 +456,4 @@ func _on_btn_inspect_pressed():
 		return
 	var item = inspect_slot.item_stored
 	
-	if not inspector_modal:
-		var script = preload("res://Inventory/fases/inspector_modal.gd")
-		inspector_modal = script.new()
-		add_child(inspector_modal)
-	
-	inspector_modal.open(config, item)
+	_open_orb_inspector(item)

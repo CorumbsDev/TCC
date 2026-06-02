@@ -133,7 +133,7 @@ func _update_inspector_text():
 	if not current_item: return
 	var item = current_item
 	
-	var text = "[b]Tipo:[/b] " + item.get_item_info()["tipo"] + "\n[b]Valor Atual:[/b] " + str(item.value_float if item.data_type in [item.DataType.FLOAT, item.DataType.DOUBLE, item.DataType.FP8, item.DataType.FP16] else item.value) + "\n\n"
+	var text := OrbValueFormat.detail_bbcode(item) + "\n\n"
 	
 	if item.data_type == item.DataType.INT or item.data_type == item.DataType.SHORT_INT or item.data_type == item.DataType.BINARY:
 		var bits = 32 if item.data_type == item.DataType.INT else (16 if item.data_type == item.DataType.SHORT_INT else item.binary_bits)

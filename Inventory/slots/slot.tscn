@@ -1,14 +1,15 @@
 [gd_scene load_steps=3 format=3 uid="uid://b0uhc1jdhcm7s"]
 
-[ext_resource type="Texture2D" uid="uid://cha7v05htcb05" path="res://Inventory/Sprites/inventory_texture.png" id="1_6nf2q"]
+[ext_resource type="Texture2D" path="res://Inventory/Art/UI/slot_frame.png" id="1_frame"]
 [ext_resource type="Script" uid="uid://dkc33wci16ago" path="res://Inventory/slots/slot.gd" id="2_f3npv"]
 
 [node name="Slot" type="TextureRect"]
-custom_minimum_size = Vector2(50, 50)
-offset_right = 50.0
-offset_bottom = 50.0
-texture = ExtResource("1_6nf2q")
-expand_mode = 1
+custom_minimum_size = Vector2(64, 64)
+offset_right = 64.0
+offset_bottom = 64.0
+texture = ExtResource("1_frame")
+expand_mode = 3
+stretch_mode = 5
 script = ExtResource("2_f3npv")
 
 [node name="StatusFilter" type="ColorRect" parent="."]
@@ -18,4 +19,5 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(1, 0, 0, 0)

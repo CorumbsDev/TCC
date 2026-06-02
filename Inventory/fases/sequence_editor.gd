@@ -28,18 +28,39 @@ const SEQUENCES_DIR = "user://sequences"
 @onready var check_fp16: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP16
 @onready var check_fp_cust: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFPCust
 @onready var check_calc: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckCalc
+@onready var lbl_csv: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LblCSV
+@onready var lbl_rnd_pool: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LblRndPool
+@onready var lbl_cap: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/LblCap
+@onready var lbl_slots_m: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/LblSlotsM
+@onready var lbl_slots_p: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/LblSlotsP
+@onready var lbl_cols: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/LblCols
+@onready var grid_mochila: GridContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer
+@onready var hbox_mochila: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxMochila
+@onready var hbox_valores: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxValores
+@onready var grid_vals: GridContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2
+@onready var binary_panel: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel
+@onready var spin_bin_left: SpinBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary/SpinBinLeft
+@onready var spin_bin_right: SpinBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary/SpinBinRight
+@onready var status_label: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StatusLabel
+@onready var sep_mochila: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/Sep1
+@onready var sep_valores: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/Sep2
+@onready var sep_tools: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/Sep3
+@onready var lbl_tools: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LabelFerramentas
 
 var _sequences: Dictionary = {} # filename -> PhaseSequenceList
 var _root: TreeItem
 var _selected_item: TreeItem
 var _is_updating_ui: bool = false # impede chamadas de signals durante update UI
+var _active_phase_step: PhaseSequenceStep = null
+var _active_phase_parent_file: String = ""
+var _last_rnd_pool_size: int = -1
 
 func _ready() -> void:
 	_ensure_dir()
 	tree.columns = 1
 	_root = tree.create_item()
-	if option_type and option_type.item_count < 3:
-		option_type.add_item("Caixas de Tipagem", 2)
+	if line_edit_csv and not line_edit_csv.focus_exited.is_connected(_on_csv_focus_exited):
+		line_edit_csv.focus_exited.connect(_on_csv_focus_exited)
 	_load_all_sequences()
 	_show_empty()
 
@@ -111,6 +132,7 @@ func _create_new_sequence(file_name: String) -> void:
 
 
 func _on_tree_item_selected() -> void:
+	_flush_active_phase_editor()
 	_selected_item = tree.get_selected()
 	if not _selected_item:
 		_show_empty()
@@ -123,14 +145,20 @@ func _on_tree_item_selected() -> void:
 	_is_updating_ui = true
 	
 	if meta.type == "sequence":
+		_active_phase_step = null
+		_active_phase_parent_file = ""
 		_show_sequence_editor(meta.file)
 	elif meta.type == "phase":
+		_active_phase_parent_file = meta.parent_file
+		_active_phase_step = meta.step
 		_show_phase_editor(meta.step)
 		
 	_is_updating_ui = false
 
 
 func _show_empty() -> void:
+	_active_phase_step = null
+	_active_phase_parent_file = ""
 	empty_label.visible = true
 	sequence_editor_ui.visible = false
 	phase_editor_ui.visible = false
@@ -149,6 +177,7 @@ func _show_phase_editor(step: PhaseSequenceStep) -> void:
 	phase_editor_ui.visible = true
 	
 	option_type.selected = step.kind
+	_update_phase_editor_visibility(step)
 	
 	if step.kind == PhaseSequenceStep.Kind.MOCHILA:
 		var cfg = step.config_mochila
@@ -190,10 +219,134 @@ func _show_phase_editor(step: PhaseSequenceStep) -> void:
 		check_fp16.button_pressed = cfg.allow_fp16
 		check_calc.button_pressed = false
 		check_fp_cust.button_pressed = false
+		_last_rnd_pool_size = -1
+	elif step.kind == PhaseSequenceStep.Kind.BINARIO:
+		var bc: BinaryPhaseConfig = step.config_binario
+		if not bc:
+			bc = ConfigGenerator.generate_binary_config()
+			step.config_binario = bc
+		spin_bin_left.value = bc.fixed_left_bit
+		spin_bin_right.value = bc.fixed_right_bit
+	_last_rnd_pool_size = int(spin_rnd_pool.value) if step.kind == PhaseSequenceStep.Kind.MOCHILA else -1
+
+
+func _update_phase_editor_visibility(step: PhaseSequenceStep) -> void:
+	var is_mochila := step.kind == PhaseSequenceStep.Kind.MOCHILA
+	var is_typebox := step.kind == PhaseSequenceStep.Kind.TYPE_BOX
+	var is_bin := step.kind == PhaseSequenceStep.Kind.BINARIO
+	var show_mochila := is_mochila or is_typebox
+	var show_pool := is_mochila
+	var show_tools := is_mochila or is_typebox
+	grid_mochila.visible = show_mochila
+	hbox_mochila.visible = show_mochila
+	sep_mochila.visible = show_mochila
+	hbox_valores.visible = show_mochila
+	grid_vals.visible = is_mochila
+	sep_valores.visible = is_mochila
+	lbl_csv.visible = show_mochila
+	line_edit_csv.visible = show_mochila
+	lbl_rnd_pool.visible = show_pool
+	spin_rnd_pool.visible = show_pool
+	sep_tools.visible = show_tools
+	lbl_tools.visible = show_tools
+	check_float.visible = show_tools
+	check_double.visible = show_tools
+	check_short.visible = show_tools
+	check_bool.visible = show_tools
+	check_fp8.visible = show_tools
+	check_fp16.visible = show_tools
+	check_fp_cust.visible = is_mochila
+	check_calc.visible = is_mochila
+	binary_panel.visible = is_bin
+	if is_mochila:
+		lbl_csv.text = "Itens iniciais na mochila (ex: 1_i, 2_i, 3.14_f):"
+		line_edit_csv.placeholder_text = "1_i, 2_i, 3.14_f"
+	elif is_typebox:
+		lbl_csv.text = "Valores brutos iniciais (ex: 1.5, 2.0, 3):"
+		line_edit_csv.placeholder_text = "1.5, 2.0, 3"
 	else:
-		# Para fase binária, vamos desabilitar ou ocultar coisas por enquanto, 
-		# pois focamos na mochila, mas deixamos os defaults
-		pass
+		lbl_csv.text = "Itens forçados (não usado em fase binária):"
+
+
+func _flush_active_phase_editor() -> void:
+	if _active_phase_step == null or _active_phase_parent_file == "":
+		return
+	_apply_ui_to_step(_active_phase_step)
+	_save_sequence(_active_phase_parent_file)
+	_set_status("Salvo: " + _active_phase_parent_file)
+
+
+func _apply_ui_to_step(step: PhaseSequenceStep) -> void:
+	if step == null:
+		return
+	match step.kind:
+		PhaseSequenceStep.Kind.MOCHILA:
+			var cfg: PhaseConfig = step.config_mochila
+			if not cfg:
+				cfg = PhaseConfig.new()
+				step.config_mochila = cfg
+			cfg.capacity_bytes = int(spin_cap.value)
+			cfg.backpack_slot_count = int(spin_slots_m.value)
+			cfg.pool_slot_count = int(spin_slots_p.value)
+			cfg.pool_grid_columns = int(spin_cols.value)
+			cfg.spawn_int_min = int(spin_min.value)
+			cfg.spawn_int_max = int(spin_max.value)
+			cfg.initial_backpack_csv = line_edit_csv.text.strip_edges()
+			var pool_size := int(spin_rnd_pool.value)
+			if pool_size != _last_rnd_pool_size:
+				if pool_size > 0:
+					cfg.random_pool = ConfigGenerator._random_int_items(pool_size)
+				else:
+					cfg.random_pool.clear()
+				_last_rnd_pool_size = pool_size
+			cfg.use_converter = check_float.button_pressed
+			cfg.allow_double = check_double.button_pressed
+			cfg.allow_short = check_short.button_pressed
+			cfg.allow_bool = check_bool.button_pressed
+			cfg.allow_fp8 = check_fp8.button_pressed
+			cfg.allow_fp16 = check_fp16.button_pressed
+			cfg.allow_fp_customization = check_fp_cust.button_pressed
+			cfg.allow_calc = check_calc.button_pressed
+		PhaseSequenceStep.Kind.TYPE_BOX:
+			var cfg: TypeBoxPhaseConfig = step.config_type_box
+			if not cfg:
+				cfg = ConfigGenerator.generate_type_box_config()
+				step.config_type_box = cfg
+			cfg.capacity_bytes = int(spin_cap.value)
+			cfg.box_slot_count = int(spin_slots_m.value)
+			var vals: PackedStringArray = PackedStringArray()
+			for p in line_edit_csv.text.split(",", false):
+				var s := p.strip_edges()
+				if not s.is_empty():
+					vals.append(s)
+			cfg.initial_raw_values = vals
+			cfg.randomize_values = (int(spin_rnd_pool.value) > 0)
+			cfg.allow_float = check_float.button_pressed
+			cfg.allow_double = check_double.button_pressed
+			cfg.allow_short = check_short.button_pressed
+			cfg.allow_bool = check_bool.button_pressed
+			cfg.allow_fp8 = check_fp8.button_pressed
+			cfg.allow_fp16 = check_fp16.button_pressed
+		PhaseSequenceStep.Kind.BINARIO:
+			var bc: BinaryPhaseConfig = step.config_binario
+			if not bc:
+				bc = ConfigGenerator.generate_binary_config()
+				step.config_binario = bc
+			bc.fixed_left_bit = int(spin_bin_left.value)
+			bc.fixed_right_bit = int(spin_bin_right.value)
+
+
+func _set_status(msg: String) -> void:
+	if status_label:
+		status_label.text = msg
+
+
+func _on_binary_param_changed(_value: float) -> void:
+	if _is_updating_ui:
+		return
+	_apply_ui_to_step(_active_phase_step)
+	if _active_phase_parent_file != "":
+		_save_sequence(_active_phase_parent_file)
 
 
 func _on_btn_nova_seq_pressed() -> void:
@@ -257,19 +410,47 @@ func _on_btn_delete_pressed() -> void:
 
 
 func _on_btn_salvar_tudo_pressed() -> void:
-	if not _selected_item: return
+	_flush_active_phase_editor()
+	if not _selected_item:
+		return
 	var seq_item = _selected_item if _selected_item.get_metadata(0).type == "sequence" else _selected_item.get_parent()
 	_save_sequence(seq_item.get_metadata(0).file)
+	_set_status("Sequência salva: " + seq_item.get_metadata(0).file)
 	print("Sequência salva com sucesso!")
 
 
 func _save_sequence(file_name: String) -> void:
-	if _sequences.has(file_name):
-		ResourceSaver.save(_sequences[file_name], SEQUENCES_DIR + "/" + file_name)
+	if not _sequences.has(file_name):
+		return
+	var seq: PhaseSequenceList = _sequences[file_name]
+	var path := SEQUENCES_DIR + "/" + file_name
+	var err := ResourceSaver.save(seq, path)
+	if err != OK:
+		push_error("Erro ao salvar sequência %s: %s" % [file_name, error_string(err)])
+		_set_status("Erro ao salvar (veja Output).")
+		return
+	# Garante que o disco tem a mesma referência editada na memória
+	_sequences[file_name] = seq
+	# Mantém referência da árvore alinhada ao recurso salvo
+	for child in _root.get_children():
+		var meta = child.get_metadata(0)
+		if meta and meta.get("file") == file_name:
+			meta.data = seq
+			child.set_metadata(0, meta)
+
+
+func _on_csv_focus_exited() -> void:
+	if _is_updating_ui or _active_phase_step == null:
+		return
+	_apply_ui_to_step(_active_phase_step)
+	if _active_phase_parent_file != "":
+		_save_sequence(_active_phase_parent_file)
 
 
 func _on_file_name_changed(new_text: String) -> void:
-	if _is_updating_ui: return
+	_flush_active_phase_editor()
+	if _is_updating_ui:
+		return
 	var sel = tree.get_selected()
 	if not sel or sel.get_metadata(0).type != "sequence": return
 	
@@ -324,82 +505,35 @@ func _on_phase_type_selected(index: int) -> void:
 	var parent_file = sel.get_metadata(0).parent_file
 	_save_sequence(parent_file)
 	
+	_active_phase_parent_file = parent_file
+	_active_phase_step = step
 	_is_updating_ui = true
 	_show_phase_editor(step)
 	_is_updating_ui = false
 
 
-func _on_param_changed(value: float) -> void:
-	if _is_updating_ui: return
-	var sel = tree.get_selected()
-	if not sel or sel.get_metadata(0).type != "phase": return
-	var step: PhaseSequenceStep = sel.get_metadata(0).step
-	if step.kind == PhaseSequenceStep.Kind.MOCHILA:
-		var cfg: PhaseConfig = step.config_mochila
-		cfg.capacity_bytes = int(spin_cap.value)
-		cfg.backpack_slot_count = int(spin_slots_m.value)
-		cfg.pool_slot_count = int(spin_slots_p.value)
-		cfg.pool_grid_columns = int(spin_cols.value)
-		cfg.spawn_int_min = int(spin_min.value)
-		cfg.spawn_int_max = int(spin_max.value)
-		
-		# Simula preenchimento aleatório de tipos com random_pool
-		var pool_size = int(spin_rnd_pool.value)
-		if pool_size > 0:
-			cfg.random_pool = ConfigGenerator._random_int_items(pool_size)
-		else:
-			cfg.random_pool.clear()
-	elif step.kind == PhaseSequenceStep.Kind.TYPE_BOX:
-		var cfg: TypeBoxPhaseConfig = step.config_type_box
-		cfg.capacity_bytes = int(spin_cap.value)
-		cfg.box_slot_count = int(spin_slots_m.value)
-		cfg.randomize_values = (int(spin_rnd_pool.value) > 0)
-		
-	var parent_file = sel.get_metadata(0).parent_file
-	_save_sequence(parent_file)
+func _on_param_changed(_value: float) -> void:
+	if _is_updating_ui or _active_phase_step == null:
+		return
+	_apply_ui_to_step(_active_phase_step)
+	if _active_phase_parent_file != "":
+		_save_sequence(_active_phase_parent_file)
 
 
-func _on_text_param_changed(new_text: String) -> void:
-	if _is_updating_ui: return
-	var sel = tree.get_selected()
-	if not sel or sel.get_metadata(0).type != "phase": return
-	var step: PhaseSequenceStep = sel.get_metadata(0).step
-	if step.kind == PhaseSequenceStep.Kind.MOCHILA:
-		step.config_mochila.initial_backpack_csv = new_text
-	elif step.kind == PhaseSequenceStep.Kind.TYPE_BOX:
-		var vals = []
-		for p in new_text.split(",", false):
-			var s = p.strip_edges()
-			if not s.is_empty(): vals.append(s)
-		step.config_type_box.initial_raw_values = PackedStringArray(vals)
-	var parent_file = sel.get_metadata(0).parent_file
-	_save_sequence(parent_file)
+func _on_text_param_changed(_new_text: String) -> void:
+	if _is_updating_ui or _active_phase_step == null:
+		return
+	_apply_ui_to_step(_active_phase_step)
+	if _active_phase_parent_file != "":
+		_save_sequence(_active_phase_parent_file)
 
 
 func _on_bool_param_changed(_toggled: bool) -> void:
-	if _is_updating_ui: return
-	var sel = tree.get_selected()
-	if not sel or sel.get_metadata(0).type != "phase": return
-	var step: PhaseSequenceStep = sel.get_metadata(0).step
-	if step.kind == PhaseSequenceStep.Kind.MOCHILA:
-		step.config_mochila.use_converter = check_float.button_pressed
-		step.config_mochila.allow_double = check_double.button_pressed
-		step.config_mochila.allow_short = check_short.button_pressed
-		step.config_mochila.allow_bool = check_bool.button_pressed
-		step.config_mochila.allow_fp8 = check_fp8.button_pressed
-		step.config_mochila.allow_fp16 = check_fp16.button_pressed
-		step.config_mochila.allow_fp_customization = check_fp_cust.button_pressed
-		step.config_mochila.allow_calc = check_calc.button_pressed
-	elif step.kind == PhaseSequenceStep.Kind.TYPE_BOX:
-		step.config_type_box.allow_float = check_float.button_pressed
-		step.config_type_box.allow_double = check_double.button_pressed
-		step.config_type_box.allow_short = check_short.button_pressed
-		step.config_type_box.allow_bool = check_bool.button_pressed
-		step.config_type_box.allow_fp8 = check_fp8.button_pressed
-		step.config_type_box.allow_fp16 = check_fp16.button_pressed
-	
-	var parent_file = sel.get_metadata(0).parent_file
-	_save_sequence(parent_file)
+	if _is_updating_ui or _active_phase_step == null:
+		return
+	_apply_ui_to_step(_active_phase_step)
+	if _active_phase_parent_file != "":
+		_save_sequence(_active_phase_parent_file)
 
 func _show_dialog(title: String, text: String) -> void:
 	var dlg = AcceptDialog.new()
@@ -415,7 +549,7 @@ func _on_help_mochila_pressed() -> void:
 	_show_dialog("Mochila e Bancada", "- Capacidade: Quantos bytes a mochila suporta.\n- Slots: Quantos quadrados visíveis existem para soltar itens.\n- Bancada (Pool): A área onde os itens ficam disponíveis para escolha.")
 
 func _on_help_valores_pressed() -> void:
-	_show_dialog("Valores e Tipos", "- Int Mín/Máx: A faixa de valores aleatórios gerados para os tipos Inteiros.\n- Forçar Itens CSV: Defina exatamente o que deve aparecer. Formato: valor_tipo. Ex: 1_i (Int 1), 3.14_f (Float), 2.5_d (Double), 1_b (Bool).\n- Tipos Aleatórios Extra: Adiciona IDs aleatórios cadastrados no jogo à bancada.")
+	_show_dialog("Valores e Tipos", "- Int Mín/Máx: faixa de ints aleatórios.\n- Itens iniciais: 1_i, 3.14_f, 2.5_d, 1_b (vírgulas entre itens).\n- Exportar/Importar CSV usa | entre itens na coluna de itens (ex: 1_i|2_i|3_i).\n- Tipos aleatórios extra: quantidade de IDs sortidos na bancada.")
 
 func _on_btn_export_csv_pressed() -> void:
 	var sel = tree.get_selected()
@@ -428,9 +562,11 @@ func _on_btn_export_csv_pressed() -> void:
 		if step.kind == PhaseSequenceStep.Kind.MOCHILA:
 			var c = step.config_mochila
 			if not c: c = PhaseConfig.new()
+			var items_field := SequenceCsvCodec.items_field_from_backpack_csv(c.initial_backpack_csv)
 			csv_str += "M,%d,%d,%d,%d,%d,%d,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d\n" % [
 				c.capacity_bytes, c.backpack_slot_count, c.pool_slot_count, c.pool_grid_columns,
-				c.spawn_int_min, c.spawn_int_max, c.initial_backpack_csv, c.random_pool.size(),
+				c.spawn_int_min, c.spawn_int_max,
+				SequenceCsvCodec.escape_field(items_field), c.random_pool.size(),
 				str(c.use_converter), str(c.allow_double), str(c.allow_short), str(c.allow_bool),
 				str(c.allow_fp8), str(c.allow_fp16), str(c.allow_calc), str(c.allow_fp_customization),
 				c.fp8_exp_bits, c.fp8_mant_bits, c.fp16_exp_bits, c.fp16_mant_bits
@@ -438,15 +574,22 @@ func _on_btn_export_csv_pressed() -> void:
 		elif step.kind == PhaseSequenceStep.Kind.TYPE_BOX:
 			var c = step.config_type_box
 			if not c: c = TypeBoxPhaseConfig.new()
+			var raw_field := SequenceCsvCodec.ITEMS_SEP.join(c.initial_raw_values)
 			csv_str += "T,%d,%d,0,0,0,0,%s,%d,%s,%s,%s,%s,%s,%s,false,false,%d,%d,%d,%d\n" % [
-				c.capacity_bytes, c.box_slot_count, ",".join(c.initial_raw_values),
+				c.capacity_bytes, c.box_slot_count,
+				SequenceCsvCodec.escape_field(raw_field),
 				1 if c.randomize_values else 0,
 				str(c.allow_float), str(c.allow_double), str(c.allow_short), str(c.allow_bool),
 				str(c.allow_fp8), str(c.allow_fp16),
 				c.fp8_exp_bits, c.fp8_mant_bits, c.fp16_exp_bits, c.fp16_mant_bits
 			]
 		else:
-			csv_str += "B,0,0,0,0,0,0,,0,false,false,false,false,false,false,false,false,4,3,5,10\n"
+			var bc: BinaryPhaseConfig = step.config_binario
+			if not bc:
+				bc = ConfigGenerator.generate_binary_config()
+			csv_str += "B,%d,%d,0,0,0,0,,0,false,false,false,false,false,false,false,false,4,3,5,10\n" % [
+				bc.fixed_left_bit, bc.fixed_right_bit
+			]
 			
 	DisplayServer.clipboard_set(csv_str)
 	_show_dialog("Exportar CSV", "Sequência exportada para a área de transferência (Ctrl+C) com sucesso!")
@@ -462,9 +605,11 @@ func _on_btn_import_csv_pressed() -> void:
 	
 	for i in range(1, lines.size()):
 		var line = lines[i].strip_edges()
-		if line == "": continue
-		var parts = line.split(",")
-		if parts.size() < 16: continue
+		if line == "":
+			continue
+		var parts: PackedStringArray = SequenceCsvCodec.parse_csv_line(line)
+		if parts.size() < 8:
+			continue
 		
 		var step = PhaseSequenceStep.new()
 		if parts[0] == "M":
@@ -476,17 +621,24 @@ func _on_btn_import_csv_pressed() -> void:
 			c.pool_grid_columns = int(parts[4])
 			c.spawn_int_min = int(parts[5])
 			c.spawn_int_max = int(parts[6])
-			c.initial_backpack_csv = parts[7]
+			c.initial_backpack_csv = SequenceCsvCodec.backpack_csv_from_items_field(parts[7])
 			var rp_size = int(parts[8])
 			if rp_size > 0:
 				c.random_pool = ConfigGenerator._random_int_items(rp_size)
-			c.use_converter = (parts[9] == "true")
-			c.allow_double = (parts[10] == "true")
-			c.allow_short = (parts[11] == "true")
-			c.allow_bool = (parts[12] == "true")
-			c.allow_fp8 = (parts[13] == "true")
-			c.allow_fp16 = (parts[14] == "true")
-			c.allow_calc = (parts[15] == "true")
+			if parts.size() > 9:
+				c.use_converter = (parts[9] == "true")
+			if parts.size() > 10:
+				c.allow_double = (parts[10] == "true")
+			if parts.size() > 11:
+				c.allow_short = (parts[11] == "true")
+			if parts.size() > 12:
+				c.allow_bool = (parts[12] == "true")
+			if parts.size() > 13:
+				c.allow_fp8 = (parts[13] == "true")
+			if parts.size() > 14:
+				c.allow_fp16 = (parts[14] == "true")
+			if parts.size() > 15:
+				c.allow_calc = (parts[15] == "true")
 			if parts.size() >= 21:
 				c.allow_fp_customization = (parts[16] == "true")
 				c.fp8_exp_bits = int(parts[17])
@@ -499,20 +651,26 @@ func _on_btn_import_csv_pressed() -> void:
 			var c = TypeBoxPhaseConfig.new()
 			c.capacity_bytes = int(parts[1])
 			c.box_slot_count = int(parts[2])
-			
-			var vals = []
-			for p in parts[7].split(",", false):
-				var s = p.strip_edges()
-				if not s.is_empty(): vals.append(s)
-			c.initial_raw_values = PackedStringArray(vals)
+			var vals: PackedStringArray = PackedStringArray()
+			var raw_field := SequenceCsvCodec.backpack_csv_from_items_field(parts[7])
+			for p in raw_field.split(",", false):
+				var s := p.strip_edges()
+				if not s.is_empty():
+					vals.append(s)
+			c.initial_raw_values = vals
 			c.randomize_values = (int(parts[8]) > 0)
-			
-			c.allow_float = (parts[9] == "true")
-			c.allow_double = (parts[10] == "true")
-			c.allow_short = (parts[11] == "true")
-			c.allow_bool = (parts[12] == "true")
-			c.allow_fp8 = (parts[13] == "true")
-			c.allow_fp16 = (parts[14] == "true")
+			if parts.size() > 9:
+				c.allow_float = (parts[9] == "true")
+			if parts.size() > 10:
+				c.allow_double = (parts[10] == "true")
+			if parts.size() > 11:
+				c.allow_short = (parts[11] == "true")
+			if parts.size() > 12:
+				c.allow_bool = (parts[12] == "true")
+			if parts.size() > 13:
+				c.allow_fp8 = (parts[13] == "true")
+			if parts.size() > 14:
+				c.allow_fp16 = (parts[14] == "true")
 			if parts.size() >= 21:
 				c.fp8_exp_bits = int(parts[17])
 				c.fp8_mant_bits = int(parts[18])
@@ -521,7 +679,10 @@ func _on_btn_import_csv_pressed() -> void:
 			step.config_type_box = c
 		else:
 			step.kind = PhaseSequenceStep.Kind.BINARIO
-			step.config_binario = ConfigGenerator.generate_binary_config()
+			var bc := BinaryPhaseConfig.new()
+			bc.fixed_left_bit = int(parts[1]) if parts.size() > 1 else 1
+			bc.fixed_right_bit = int(parts[2]) if parts.size() > 2 else 0
+			step.config_binario = bc
 		
 		seq_list.steps.append(step)
 	
@@ -540,16 +701,19 @@ func _on_btn_import_csv_pressed() -> void:
 
 
 func _on_btn_jogar_pressed() -> void:
+	_flush_active_phase_editor()
 	var sel = tree.get_selected()
-	if not sel: return
+	if not sel:
+		return
 	var seq_item = sel if sel.get_metadata(0).type == "sequence" else sel.get_parent()
-	var seq_list: PhaseSequenceList = seq_item.get_metadata(0).data
+	var file_name: String = seq_item.get_metadata(0).file
+	var seq_list: PhaseSequenceList = _sequences.get(file_name, seq_item.get_metadata(0).data)
 	
 	var steps = seq_list.to_runtime_array()
-	if steps.is_empty(): return
+	if steps.is_empty():
+		return
 	
-	# Salva só pra garantir
-	_save_sequence(seq_item.get_metadata(0).file)
+	_save_sequence(file_name)
 	
 	PhaseRunner.begin_with_steps(steps)
 

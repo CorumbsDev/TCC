@@ -61,6 +61,18 @@ func _ready():
 	_update_bits_info_label()
 	_refresh_challenge_ui()
 	call_deferred("_try_show_intro")
+	call_deferred("_relayout_all_bits")
+
+
+func _relayout_all_bits() -> void:
+	for slot in left_slots:
+		if slot.item_stored != null and is_instance_valid(slot.item_stored):
+			if slot.item_stored.has_method("install_in_slot"):
+				slot.item_stored.install_in_slot(slot)
+	for slot in target_slots:
+		if slot.item_stored != null and is_instance_valid(slot.item_stored):
+			if slot.item_stored.has_method("install_in_slot"):
+				slot.item_stored.install_in_slot(slot)
 
 
 func _try_show_intro() -> void:
@@ -81,12 +93,14 @@ func _spawn_bit_at_slot(slot_idx: int, bit_value: int) -> void:
 	var slot = left_slots[slot_idx]
 	if slot.item_stored != null:
 		return
-	var item = item_scene.instantiate()
-	slot.add_child(item)
-	item.position = Vector2(25, 25)
-	var id = "item_binary_1" if bit_value == 1 else "item_binary_0"
+	var item: Node2D = item_scene.instantiate()
+	var id := "item_binary_1" if bit_value == 1 else "item_binary_0"
 	item.load_item(id)
-	item.grid_anchor = slot
+	if item.has_method("install_in_slot"):
+		item.install_in_slot(slot)
+	else:
+		slot.add_child(item)
+		item.position = slot.size * 0.5
 	slot.state = slot.States.TAKEN
 	slot.item_stored = item
 	slot.set_item(item)
@@ -309,16 +323,14 @@ func _try_place_item() -> void:
 	if not can_place or current_slot == null:
 		return
 	var placing = item_held
-	placing.get_parent().remove_child(placing)
-	if current_slot in left_slots:
-		current_slot.add_child(placing)
-		placing.position = Vector2(25, 25)
-	else:
-		current_slot.add_child(placing)
-		placing.position = Vector2(25, 25)
-	placing._snap_to(current_slot.global_position + Vector2(25, 25))
-	placing.grid_anchor = current_slot
 	placing.selected = false
+	if placing.has_method("install_in_slot"):
+		placing.install_in_slot(current_slot)
+	else:
+		placing.get_parent().remove_child(placing)
+		current_slot.add_child(placing)
+		placing.position = current_slot.size * 0.5
+		placing.grid_anchor = current_slot
 	current_slot.item_stored = placing
 	current_slot.state = current_slot.States.TAKEN
 	current_slot.set_item(placing)

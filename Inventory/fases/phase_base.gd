@@ -26,6 +26,8 @@ var inspect_slot: TextureRect = null
 var item_held = null
 var current_slot = null
 var can_place := false
+var inspector_modal = null
+var _orb_hover: Node = null
 
 
 func _ready():
@@ -84,6 +86,110 @@ func setup_grids(backpack: InventoryGrid, pool: InventoryGrid):
 	pool_grid.item_changed.connect(_on_slot_item_changed)
 	_update_bytes_label()
 	_update_hint()
+	call_deferred("_apply_panel_art")
+	call_deferred("_wire_all_orbs")
+
+
+func _get_phase_config():
+	return null
+
+
+func _apply_panel_art() -> void:
+	var bp := get_node_or_null("HBox/BackpackPanel")
+	var bn := get_node_or_null("HBox/BancadaPanel")
+	if bp is Panel:
+		PanelArtLoader.apply_panel_style(bp)
+	if bn is Panel:
+		PanelArtLoader.apply_panel_style(bn)
+
+
+func _wire_all_orbs() -> void:
+	for grid in [backpack_grid, pool_grid]:
+		if grid == null:
+			continue
+		for slot in grid.slots_array:
+			for it in slot.items_stored:
+				_wire_orb(it)
+			if not slot.item_changed.is_connected(_on_orb_slot_changed):
+				slot.item_changed.connect(_on_orb_slot_changed)
+
+
+func _on_orb_slot_changed(slot) -> void:
+	for it in slot.items_stored:
+		_wire_orb(it)
+
+
+func _wire_orb(item: Node) -> void:
+	if item == null or not is_instance_valid(item):
+		return
+	if not item.has_signal("mouse_entered_item"):
+		return
+	if not item.mouse_entered_item.is_connected(_on_orb_hover_entered):
+		item.mouse_entered_item.connect(_on_orb_hover_entered)
+	if not item.mouse_exited_item.is_connected(_on_orb_hover_exited):
+		item.mouse_exited_item.connect(_on_orb_hover_exited)
+
+
+func _on_orb_hover_entered(item: Node) -> void:
+	_orb_hover = item
+	if hint_label:
+		var lines: PackedStringArray = OrbValueFormat.detail_lines(item)
+		if lines.size() > 0:
+			hint_label.text = lines[0] + "  |  duplo-clique: fixar detalhes  |  direito: inspetor"
+	OrbUI.show_detail(item, get_global_mouse_position())
+
+
+func _on_orb_hover_exited(item: Node) -> void:
+	if _orb_hover == item:
+		_orb_hover = null
+		OrbUI.hide_detail(false)
+		_update_hint()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton and event.pressed):
+		return
+	var orb := _orb_under_mouse()
+	if orb == null:
+		return
+	if event.button_index == MOUSE_BUTTON_RIGHT:
+		if _get_phase_config() != null:
+			_open_orb_inspector(orb)
+		else:
+			OrbUI.show_detail(orb, event.global_position, true)
+		get_viewport().set_input_as_handled()
+	elif event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
+		OrbUI.show_detail(orb, event.global_position, true)
+		get_viewport().set_input_as_handled()
+
+
+func _orb_under_mouse() -> Node:
+	for grid in [backpack_grid, pool_grid]:
+		if grid == null:
+			continue
+		for slot in grid.slots_array:
+			for it in slot.items_stored:
+				if it != null and it.has_method("get_item_rect"):
+					var r: Rect2 = it.get_item_rect()
+					var global_r := Rect2(it.global_position + r.position, r.size)
+					if global_r.has_point(get_global_mouse_position()):
+						return it
+	if item_held != null and item_held.has_method("get_item_rect"):
+		var r2: Rect2 = item_held.get_item_rect()
+		var gr := Rect2(item_held.global_position + r2.position, r2.size)
+		if gr.has_point(get_global_mouse_position()):
+			return item_held
+	return null
+
+
+func _open_orb_inspector(item: Node) -> void:
+	var cfg = _get_phase_config()
+	if cfg == null or item == null:
+		return
+	if not inspector_modal:
+		inspector_modal = preload("res://Inventory/fases/inspector_modal.gd").new()
+		add_child(inspector_modal)
+	inspector_modal.open(cfg, item)
 
 
 func _on_voltar_pressed():
@@ -239,7 +345,10 @@ func _place_item():
 			item_held.get_parent().remove_child(item_held)
 			converter_slot.add_child(item_held)
 		
-		item_held.global_position = converter_slot.global_position + Vector2(25, 25)
+		if item_held.has_method("snap_to_slot"):
+			item_held.snap_to_slot(converter_slot)
+		else:
+			item_held.position = converter_slot.size * 0.5
 		item_held.grid_anchor = converter_slot
 		item_held.selected = false
 		converter_slot.item_stored = item_held
@@ -264,7 +373,10 @@ func _place_item():
 				if color_rect:
 					item_held._resize_visual(color_rect, 1)
 		
-		item_held.global_position = current_slot.global_position + Vector2(25, 25)
+		if item_held.has_method("snap_to_slot"):
+			item_held.snap_to_slot(current_slot)
+		else:
+			item_held.position = current_slot.size * 0.5
 		item_held.grid_anchor = current_slot
 		item_held.selected = false
 		current_slot.item_stored = item_held
@@ -318,6 +430,7 @@ func _pick_item():
 		backpack_grid.remove_item(item_held)
 	elif pool_grid and slot in pool_grid.slots_array:
 		pool_grid.remove_item(item_held)
+	_wire_orb(item_held)
 	_update_bytes_label()
 	_update_hint()
 
@@ -426,6 +539,7 @@ func _check_calculator():
 			new_item.selected = true
 			item_held = new_item
 			item_held.global_position = get_global_mouse_position()
+			_wire_orb(item_held)
 			
 			var tween = create_tween()
 			new_item.scale = Vector2(0.2, 0.2)

@@ -37,6 +37,14 @@ func _ready():
 	
 	for i in range(64):
 		create_slot()
+	call_deferred("_recenter_all_slot_items")
+
+
+func _recenter_all_slot_items() -> void:
+	for slot in grid_array:
+		for it in slot.items_stored:
+			if it != null and is_instance_valid(it) and it.has_method("snap_to_slot"):
+				it.snap_to_slot(slot)
 
 func connect_items_hover_signals():
 	"""Conecta os sinais de hover de todos os itens existentes"""
@@ -85,6 +93,22 @@ func create_slot():
 func _on_item_changed(slot):
 	print("Item mudou no slot:", slot.slot_ID)
 	check_combinations()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton and event.pressed and event.double_click):
+		return
+	for slot in grid_array:
+		if slot.item_stored == null:
+			continue
+		var it = slot.item_stored
+		if it.has_method("get_item_rect"):
+			var r: Rect2 = it.get_item_rect()
+			var gr := Rect2(it.global_position + r.position, r.size)
+			if gr.has_point(event.global_position):
+				OrbUI.show_detail(it, event.global_position, true)
+				get_viewport().set_input_as_handled()
+				return
+
 
 @warning_ignore("unused_parameter")
 func _process(delta):
@@ -197,13 +221,13 @@ func place_item():
 	# Salva referência ao item sendo colocado (a cascata de expressão pode alterar item_held)
 	var placing_item = item_held
 	
-	placing_item.get_parent().remove_child(placing_item)
-	grid_container.add_child(placing_item)
-	placing_item.global_position = get_global_mouse_position()
-	
-	var calculated_grid_id = current_slot.slot_ID + int(icon_anchor.x) * col_count + int(icon_anchor.y)
-	placing_item._snap_to(grid_array[calculated_grid_id].global_position)
-	placing_item.grid_anchor = current_slot
+	var calculated_grid_id: int = current_slot.slot_ID + int(icon_anchor.x) * col_count + int(icon_anchor.y)
+	var anchor_slot = grid_array[calculated_grid_id]
+	placing_item.grid_anchor = anchor_slot
+	if placing_item.get_parent() != anchor_slot:
+		placing_item.get_parent().remove_child(placing_item)
+		anchor_slot.add_child(placing_item)
+	placing_item.snap_to_slot(anchor_slot)
 	
 	for grid in placing_item.item_grids:
 		var grid_to_check = current_slot.slot_ID + grid[0] + grid[1] * col_count
@@ -641,10 +665,12 @@ func debug_slots_expressao():
 func _on_item_mouse_entered(item):
 	"""Chamado quando o mouse entra em um item"""
 	show_item_info(item)
+	OrbUI.show_detail(item, get_global_mouse_position())
 
 @warning_ignore("unused_parameter")
 func _on_item_mouse_exited(item):
 	"""Chamado quando o mouse sai de um item"""
+	OrbUI.hide_detail(false)
 	clear_info_panel()
 
 func show_item_info(item):
@@ -661,8 +687,13 @@ func show_item_info(item):
 		info_type_label.text = "Tipo: " + tipo_texto
 	
 	if info_value_label:
-		var valor_texto = info.get("valor", "-")
-		info_value_label.text = "Valor: " + valor_texto
+		var valor_texto: String = OrbValueFormat.full_value_string(item)
+		if OrbValueFormat.should_compact(item):
+			info_value_label.text = "No orbe: %s  |  Exato: %s" % [
+				OrbValueFormat.compact_label_string(item), valor_texto
+			]
+		else:
+			info_value_label.text = "Valor: " + valor_texto
 	
 	if info_id_label:
 		var id_texto = info.get("id", "")
@@ -671,8 +702,9 @@ func show_item_info(item):
 		info_id_label.text = "ID: " + str(id_texto)
 	
 	if info_details_label:
-		var detalhes_texto = info.get("detalhes", "-")
-		info_details_label.text = "Detalhes:\n" + detalhes_texto
+		info_details_label.text = "Python: " + OrbValueFormat.python_repr_string(item)
+		if OrbValueFormat.should_compact(item):
+			info_details_label.text += "\n\n(duplo-clique no orbe para fixar o painel flutuante)"
 	
 	# Mostra o painel
 	if info_panel:

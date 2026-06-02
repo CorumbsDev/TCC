@@ -47,7 +47,6 @@ func _fill_initial_items():
 		var slot = slots_array[i]
 		var item = preload("res://Inventory/Items/Item.tscn").instantiate()
 		item.load_item(item_id)
-		grid_container.add_child(item)
 		for offset in item.item_grids:
 			var idx = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
 			if idx >= 0 and idx < slots_array.size():
@@ -58,53 +57,21 @@ func _fill_initial_items():
 				elif target_slot.get_used_bytes() > 0:
 					target_slot.state = target_slot.States.PARTIAL
 				target_slot.set_color(target_slot.state)
-		call_deferred("_position_item", item, slot)
+		_attach_item_to_slot(item, slot)
 
 
-func _position_item(item, slot):
-	await get_tree().process_frame
-	if is_instance_valid(item) and is_instance_valid(slot):
-		var base_pos = slot.global_position + Vector2(32, 32)
-		
-		var current_grid = [null, null, null, null]
-		var my_pos = 0
-		
-		for it in slot.items_stored:
-			var sz = it.get_size_bytes() if it.has_method("get_size_bytes") else 4
-			var pos_found = 0
-			if sz >= 4:
-				current_grid[0] = it; current_grid[1] = it; current_grid[2] = it; current_grid[3] = it
-				pos_found = 0
-			elif sz == 2:
-				if current_grid[0] == null and current_grid[1] == null:
-					current_grid[0] = it; current_grid[1] = it
-					pos_found = 0
-				elif current_grid[2] == null and current_grid[3] == null:
-					current_grid[2] = it; current_grid[3] = it
-					pos_found = 2
-			elif sz == 1:
-				for i in range(4):
-					if current_grid[i] == null:
-						current_grid[i] = it
-						pos_found = i
-						break
-			if it == item:
-				my_pos = pos_found
-				break
-				
-		var offset = Vector2(0, 0)
-		var item_bytes = item.get_size_bytes() if item.has_method("get_size_bytes") else 4
-		
-		if item_bytes == 1:
-			if my_pos == 0: offset = Vector2(-16, -16)
-			elif my_pos == 1: offset = Vector2(-16, 16)
-			elif my_pos == 2: offset = Vector2(16, -16)
-			elif my_pos == 3: offset = Vector2(16, 16)
-		elif item_bytes == 2:
-			if my_pos == 0: offset = Vector2(-16, 0)
-			else: offset = Vector2(16, 0)
-			
-		item.global_position = base_pos + offset
+func _attach_item_to_slot(item: Node, slot: TextureRect) -> void:
+	if not is_instance_valid(item) or not is_instance_valid(slot):
+		return
+	if item.get_parent() != slot:
+		if item.get_parent():
+			item.get_parent().remove_child(item)
+		slot.add_child(item)
+	item.z_index = 2
+	if item.has_method("position_in_slot"):
+		item.position = item.position_in_slot(slot)
+	else:
+		item.position = slot.size * 0.5
 
 
 func total_bytes_used() -> int:
@@ -192,17 +159,14 @@ func place_item(item, slot):
 			target_slot.state = target_slot.States.PARTIAL
 		target_slot.set_color(target_slot.state)
 	item.grid_anchor = slot
-	var parent = item.get_parent()
-	if parent != grid_container:
-		if parent:
-			parent.remove_child(item)
-		grid_container.add_child(item)
-	_position_item(item, slot)
+	_attach_item_to_slot(item, slot)
 
 
 func remove_item(item):
 	for slot in slots_array:
 		if slot.items_stored.has(item):
+			if item.get_parent() == slot:
+				slot.remove_child(item)
 			slot.remove_item(item)
 			if slot.get_used_bytes() == 0:
 				slot.state = slot.States.FREE
@@ -217,9 +181,10 @@ func clear_all_items():
 		return
 	for slot in slots_array:
 		for item in slot.items_stored.duplicate():
-			if item.get_parent() == grid_container:
-				grid_container.remove_child(item)
-			item.queue_free()
+			if is_instance_valid(item) and item.get_parent():
+				item.get_parent().remove_child(item)
+			if is_instance_valid(item):
+				item.queue_free()
 		slot.clear_items()
 		slot.state = slot.States.FREE
 		slot.set_color(slot.state)

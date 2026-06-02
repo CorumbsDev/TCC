@@ -150,11 +150,13 @@ text = "Tipo de Fase:"
 
 [node name="OptionType" type="OptionButton" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/PhaseTypeHBox"]
 layout_mode = 2
-item_count = 2
+item_count = 3
 popup/item_0/text = "Mochila (Knapsack)"
 popup/item_0/id = 0
 popup/item_1/text = "Binário"
 popup/item_1/id = 1
+popup/item_2/text = "Caixas de Tipagem"
+popup/item_2/id = 2
 
 [node name="Sep1" type="HSeparator" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
@@ -256,6 +258,37 @@ text = "Forçar Itens (CSV, ex: '1_i,3.14_f'):"
 
 [node name="LineEditCSV" type="LineEdit" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
+placeholder_text = "1_i, 2_i, 3.14_f"
+
+[node name="BinaryPanel" type="VBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
+visible = false
+layout_mode = 2
+
+[node name="LabelBinary" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel"]
+layout_mode = 2
+text = "Fase binária: o jogador completa o bit do meio (ex: 1 _ 0)."
+autowrap_mode = 3
+
+[node name="GridBinary" type="GridContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel"]
+layout_mode = 2
+columns = 4
+
+[node name="LblBinLeft" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary"]
+layout_mode = 2
+text = "Bit fixo esquerda:"
+
+[node name="SpinBinLeft" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary"]
+layout_mode = 2
+max_value = 1.0
+value = 1.0
+
+[node name="LblBinRight" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary"]
+layout_mode = 2
+text = "Bit fixo direita:"
+
+[node name="SpinBinRight" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary"]
+layout_mode = 2
+max_value = 1.0
 
 [node name="LblRndPool" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
@@ -306,6 +339,11 @@ text = "Permitir customizar formato (exp/mantissa) de FP8/16"
 layout_mode = 2
 text = "Habilitar Calculadora Aritmética"
 
+[node name="StatusLabel" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.85, 0.55, 1)
+text = "Alterações são salvas ao trocar de fase ou ao clicar em Salvar."
+
 [connection signal="pressed" from="Panel/VBoxContainer/Header/BtnExportarCSV" to="." method="_on_btn_export_csv_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Header/BtnImportarCSV" to="." method="_on_btn_import_csv_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Header/BtnSalvarTudo" to="." method="_on_btn_salvar_tudo_pressed"]
@@ -326,6 +364,8 @@ text = "Habilitar Calculadora Aritmética"
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/SpinCols" to="." method="_on_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2/SpinMin" to="." method="_on_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2/SpinMax" to="." method="_on_param_changed"]
+[connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary/SpinBinLeft" to="." method="_on_binary_param_changed"]
+[connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary/SpinBinRight" to="." method="_on_binary_param_changed"]
 [connection signal="text_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LineEditCSV" to="." method="_on_text_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/SpinRndPool" to="." method="_on_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFloat" to="." method="_on_bool_param_changed"]

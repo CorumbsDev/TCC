@@ -24,6 +24,10 @@ var is_hovered = false  # Nova variável para rastrear hover
 var fp_exp_bits: int = -1
 var fp_mant_bits: int = -1
 
+## Tamanho visual de um slot na grade (deve bater com slot.gd).
+const SLOT_PX := 64
+const ORB_SLOT_MARGIN := 12
+
 # Signal para notificar quando o mouse entra/sai
 signal mouse_entered_item(item)
 signal mouse_exited_item(item)
@@ -59,14 +63,14 @@ func check_mouse_hover():
 			mouse_exited_item.emit(self)
 
 func get_item_rect() -> Rect2:
-	"""Retorna o retângulo do item para detecção de hover"""
+	"""Retorna o retângulo do item para detecção de hover / clique."""
+	var icon: TextureRect = get_node_or_null("Icon") as TextureRect
+	if icon and icon.size.x > 1.0:
+		return Rect2(icon.position, icon.size)
 	if value_label:
-		var label_size = value_label.size
-		var label_pos = value_label.global_position - global_position
-		return Rect2(label_pos, label_size)
-	else:
-		# Fallback: retângulo padrão
-		return Rect2(Vector2(-20, -20), Vector2(40, 40))
+		var label_pos: Vector2 = value_label.global_position - global_position
+		return Rect2(label_pos, value_label.size)
+	return Rect2(Vector2(-SLOT_PX * 0.5, -SLOT_PX * 0.5), Vector2(SLOT_PX, SLOT_PX))
 
 func get_item_info() -> Dictionary:
 	"""Retorna um dicionário com todas as informações do item"""
@@ -102,15 +106,16 @@ func get_item_info() -> Dictionary:
 	else:
 		info.id = item_ID
 	
+	var full_val: String = OrbValueFormat.full_value_string(self)
 	match data_type:
 		DataType.INT:
 			info.tipo = "INT (Inteiro)"
-			info.valor = str(value)
-			info.detalhes = "Número inteiro: " + str(value)
+			info.valor = full_val
+			info.detalhes = "Número inteiro: " + full_val
 		DataType.FLOAT:
 			info.tipo = "FLOAT (Decimal)"
-			info.valor = str(value_float)
-			info.detalhes = "Número decimal: " + str(value_float)
+			info.valor = full_val
+			info.detalhes = "Número decimal: " + full_val
 		DataType.BOOLEAN:
 			info.tipo = "BOOLEAN (Booleano)"
 			info.valor = "true" if value_bool else "false"
@@ -125,8 +130,8 @@ func get_item_info() -> Dictionary:
 			info.detalhes = "Operador: " + operator
 		DataType.DOUBLE:
 			info.tipo = "DOUBLE (Precisão Dupla)"
-			info.valor = str(value_double)
-			info.detalhes = "Valor double: " + str(value_double) + "\nOcupa 2 slots"
+			info.valor = full_val
+			info.detalhes = "Valor double: " + full_val + "\nOcupa 2 slots"
 		DataType.BINARY:
 			var decimal_val = binary_to_int(value_binary)
 			var explicacao = get_binary_explanation(value_binary)
@@ -135,16 +140,16 @@ func get_item_info() -> Dictionary:
 			info.detalhes = "Binário: " + value_binary + "\nDecimal: " + str(decimal_val) + "\nBits: " + str(binary_bits) + "\nOcupa " + str(binary_bits) + " slots\n\nComo o binário funciona:\n" + explicacao
 		DataType.FP8:
 			info.tipo = "FP8 (Float 8-bit)"
-			info.valor = str(value_float)
-			info.detalhes = "Ponto flutuante 8-bit: " + str(value_float) + "\nOcupa 0.25 slots"
+			info.valor = full_val
+			info.detalhes = "Ponto flutuante 8-bit: " + full_val + "\nOcupa 0.25 slots"
 		DataType.FP16:
 			info.tipo = "FP16 (Float 16-bit)"
-			info.valor = str(value_float)
-			info.detalhes = "Ponto flutuante 16-bit: " + str(value_float) + "\nOcupa 0.5 slots"
+			info.valor = full_val
+			info.detalhes = "Ponto flutuante 16-bit: " + full_val + "\nOcupa 0.5 slots"
 		DataType.RAW:
 			info.tipo = "RAW (Valor Puro)"
-			info.valor = str(value_float)
-			info.detalhes = "Valor sem tipo definido: " + str(value_float) + "\nArraste para uma caixa de tipagem."
+			info.valor = full_val
+			info.detalhes = "Valor sem tipo definido: " + full_val + "\nArraste para uma caixa de tipagem."
 		_:
 			info.tipo = "DESCONHECIDO"
 			info.valor = str(value)
@@ -344,28 +349,8 @@ func set_value_by_type(new_value, tipo: DataType):
 	update_label_display()
 
 func get_value_as_string() -> String:
-	"""Retorna o valor como string baseado no tipo"""
-	match data_type:
-		DataType.INT:
-			return str(value)
-		DataType.FLOAT:
-			return str(value_float)
-		DataType.BOOLEAN:
-			return "true" if value_bool else "false"
-		DataType.STRING:
-			return value_string
-		DataType.OPERATOR:
-			return operator
-		DataType.DOUBLE:
-			return str(value_double)
-		DataType.BINARY:
-			return str(binary_to_int(value_binary))
-		DataType.SHORT_INT:
-			return str(value_short)
-		DataType.FP8, DataType.FP16, DataType.RAW:
-			return str(value_float)
-		_:
-			return str(value)
+	"""Valor completo (console / lógica), não a versão compacta do rótulo."""
+	return OrbValueFormat.full_value_string(self)
 
 func set_operator_directly(new_operator: String):
 	"""Define o operador diretamente"""
@@ -400,143 +385,264 @@ func update_label_display():
 	
 	if color_rect:
 		if data_type == DataType.RAW:
-			color_rect.color = Color.GRAY
+			color_rect.color = Color(0.5, 0.5, 0.5, 1)
 		else:
 			color_rect.color = Color(0.24, 0.17, 0.08, 1)
+		color_rect.z_index = -1
 	
-	# Configura o texto baseado no tipo
-	if data_type == DataType.OPERATOR:
-		value_label.text = operator
-		value_label.add_theme_color_override("font_color", Color.ORANGE)
-		value_label.add_theme_font_size_override("font_size", 24)
-		_resize_visual(color_rect, 1)
-	elif data_type == DataType.INT:
-		value_label.text = str(value)
-		value_label.add_theme_color_override("font_color", Color.BLUE)
-		value_label.add_theme_font_size_override("font_size", 20)
-		_resize_visual(color_rect, 1)
-	elif data_type == DataType.FLOAT:
-		value_label.text = str(value_float)
-		value_label.add_theme_color_override("font_color", Color.RED)
-		value_label.add_theme_font_size_override("font_size", 20)
-		_resize_visual(color_rect, 1)
-	elif data_type == DataType.BOOLEAN:
-		value_label.text = "true" if value_bool else "false"
-		value_label.add_theme_color_override("font_color", Color.GREEN)
-		value_label.add_theme_font_size_override("font_size", 12)
-		_resize_visual(color_rect, 0.25)
-	elif data_type == DataType.STRING:
-		value_label.text = '"' + value_string + '"'
-		value_label.add_theme_color_override("font_color", Color.YELLOW)
-		value_label.add_theme_font_size_override("font_size", 18)
-		_resize_visual(color_rect, 1)
-	elif data_type == DataType.DOUBLE:
-		# DOUBLE: mostra valor com precisão, ocupa 4 slots
-		value_label.text = str(value_double)
-		value_label.add_theme_color_override("font_color", Color.MAGENTA)
-		value_label.add_theme_font_size_override("font_size", 16)
-		_resize_visual(color_rect, 2)
-	elif data_type == DataType.BINARY:
-		# BINARY: mostra valor bit a bit (ex: "1010") em 1 slot
-		value_label.text = value_binary
-		value_label.add_theme_color_override("font_color", Color.LIME)
-		value_label.add_theme_font_size_override("font_size", 14)
-		_resize_visual(color_rect, 1) # Sempre 1 slot
-		
-		# Tenta carregar sprite específico se existir
-		var icon = get_node_or_null("Icon")
-		if icon:
-			var binary_texture = load("res://Inventory/Sprites/Item_binary.png")
-			if binary_texture:
-				icon.texture = binary_texture
-	elif data_type == DataType.SHORT_INT:
-		value_label.text = str(value_short)
-		value_label.add_theme_color_override("font_color", Color.CYAN)
-		value_label.add_theme_font_size_override("font_size", 18)
-		_resize_visual(color_rect, 0.5)
-	elif data_type == DataType.FP8:
-		value_label.text = str(value_float)
-		value_label.add_theme_color_override("font_color", Color.VIOLET)
-		value_label.add_theme_font_size_override("font_size", 14)
-		_resize_visual(color_rect, 0.25)
-	elif data_type == DataType.FP16:
-		value_label.text = str(value_float)
-		value_label.add_theme_color_override("font_color", Color.GOLD)
-		value_label.add_theme_font_size_override("font_size", 16)
-		_resize_visual(color_rect, 0.5)
-	elif data_type == DataType.RAW:
-		value_label.text = str(value_float)
-		value_label.add_theme_color_override("font_color", Color.WHITE)
-		value_label.add_theme_font_size_override("font_size", 20)
-		_resize_visual(color_rect, 1)
-	else:
-		value_label.text = str(value)
-		value_label.add_theme_color_override("font_color", Color.BLACK) 
-		value_label.add_theme_font_size_override("font_size", 20)
-		_resize_visual(color_rect, 1)
-	
-	# Força o redesenho
-	value_label.queue_redraw()
-
-func _resize_visual(color_rect, slot_count: float):
-	"""Redimensiona o ColorRect e a Label para cobrir múltiplos slots"""
-	var slot_size = 64  # Aumentado para 64 pixels por slot
-	
-	if data_type == DataType.BOOLEAN:
-		if color_rect and color_rect is ColorRect:
-			color_rect.position = Vector2(-12, -12)
-			color_rect.size = Vector2(24, 24)
-		if value_label:
-			value_label.position = Vector2(0, 0)
-			value_label.size = Vector2(24, 24)
-			value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			value_label.add_theme_font_size_override("font_size", 14)
-		return
-	elif data_type == DataType.SHORT_INT or data_type == DataType.FP16:
-		if color_rect and color_rect is ColorRect:
-			color_rect.position = Vector2(-12, -28)
-			color_rect.size = Vector2(24, 56)
-		if value_label:
-			value_label.position = Vector2(0, 0)
-			value_label.size = Vector2(24, 56)
-			value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var slot_scale := 1.0
+	match data_type:
+		DataType.OPERATOR:
+			value_label.add_theme_color_override("font_color", Color(1, 0.85, 0.35, 1))
+			var op_fs: int = 22 if operator.length() <= 2 else 13
+			value_label.add_theme_font_size_override("font_size", op_fs)
+			value_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		DataType.INT:
+			value_label.add_theme_color_override("font_color", Color.BLUE)
+			value_label.add_theme_font_size_override("font_size", 20)
+		DataType.FLOAT:
+			value_label.add_theme_color_override("font_color", Color.RED)
+			value_label.add_theme_font_size_override("font_size", 20)
+		DataType.BOOLEAN:
+			value_label.add_theme_color_override("font_color", Color.GREEN)
+			value_label.add_theme_font_size_override("font_size", 12)
+			slot_scale = 0.25
+		DataType.STRING:
+			value_label.add_theme_color_override("font_color", Color.YELLOW)
+			value_label.add_theme_font_size_override("font_size", 18)
+		DataType.DOUBLE:
+			value_label.add_theme_color_override("font_color", Color.MAGENTA)
 			value_label.add_theme_font_size_override("font_size", 16)
-		return
-	elif data_type == DataType.FP8:
-		if color_rect and color_rect is ColorRect:
-			color_rect.position = Vector2(-12, -12)
-			color_rect.size = Vector2(24, 24)
-		if value_label:
-			value_label.position = Vector2(0, 0)
-			value_label.size = Vector2(24, 24)
-			value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			slot_scale = 2.0
+		DataType.BINARY:
+			value_label.add_theme_color_override("font_color", Color.LIME)
 			value_label.add_theme_font_size_override("font_size", 14)
-		return
+		DataType.SHORT_INT:
+			value_label.add_theme_color_override("font_color", Color.CYAN)
+			value_label.add_theme_font_size_override("font_size", 18)
+			slot_scale = 0.5
+		DataType.FP8:
+			value_label.add_theme_color_override("font_color", Color.VIOLET)
+			value_label.add_theme_font_size_override("font_size", 14)
+			slot_scale = 0.25
+		DataType.FP16:
+			value_label.add_theme_color_override("font_color", Color.GOLD)
+			value_label.add_theme_font_size_override("font_size", 16)
+			slot_scale = 0.5
+		DataType.RAW:
+			value_label.add_theme_color_override("font_color", Color.WHITE)
+			value_label.add_theme_font_size_override("font_size", 20)
+		_:
+			value_label.add_theme_color_override("font_color", Color.BLACK)
+			value_label.add_theme_font_size_override("font_size", 20)
+	if data_type == DataType.OPERATOR:
+		value_label.text = operator_display_label()
+	elif data_type == DataType.BINARY:
+		value_label.text = value_binary
+	else:
+		value_label.text = OrbValueFormat.compact_label_string(self)
+	var has_orb_art := false
+	_resize_visual(color_rect, slot_scale)
+	has_orb_art = _apply_orb_sprite(slot_scale)
+	if has_orb_art and value_label:
+		value_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+		value_label.add_theme_constant_override("outline_size", 4)
+	if OrbValueFormat.should_compact(self):
+		value_label.tooltip_text = "Valor exato: " + OrbValueFormat.full_value_string(self)
+	else:
+		value_label.tooltip_text = ""
+	if data_type == DataType.OPERATOR:
+		value_label.tooltip_text = "Operador: " + operator
+	value_label.queue_redraw()
+	call_deferred("_ensure_centered_in_slot_parent")
 
-	var total_width = slot_count * slot_size
-	
-	if color_rect and color_rect is ColorRect:
-		var visual_width = max(total_width - 8, 5)
-		color_rect.position = Vector2(-28, -28)
-		color_rect.size = Vector2(visual_width, 56)
-	
+
+func operator_display_label() -> String:
+	match operator:
+		"+": return "+"
+		"++": return "++"
+		"to_int": return "int"
+		"to_float": return "flt"
+		"to_short": return "sh"
+		"to_boolean", "to_bool": return "bool"
+	if operator.begins_with("to_") and operator.length() > 3:
+		return operator.substr(3)
+	if operator.length() <= 5:
+		return operator
+	return operator.substr(0, 5)
+
+
+func _ensure_centered_in_slot_parent() -> void:
+	var p := get_parent()
+	if p is TextureRect and p.is_in_group("slot"):
+		position = position_in_slot(p)
+
+
+func _slot_item_count(slot: TextureRect) -> int:
+	var n := 0
+	for it in slot.items_stored:
+		if it != null:
+			n += 1
+	return n
+
+func _apply_orb_sprite(slot_count: float = 1.0) -> bool:
+	var icon: TextureRect = get_node_or_null("Icon") as TextureRect
+	if icon == null:
+		return false
+	var path := ""
+	match data_type:
+		DataType.INT:
+			path = "res://Inventory/Art/Orbs/orb_int.png"
+		DataType.FLOAT:
+			path = "res://Inventory/Art/Orbs/orb_float.png"
+		DataType.DOUBLE:
+			path = "res://Inventory/Art/Orbs/orb_double.png"
+		DataType.BOOLEAN:
+			path = "res://Inventory/Art/Orbs/orb_bool.png"
+		DataType.BINARY:
+			path = "res://Inventory/Art/Orbs/orb_binary.png"
+		DataType.OPERATOR:
+			path = "res://Inventory/Art/Orbs/orb_operator.png"
+		DataType.RAW:
+			path = "res://Inventory/Art/Orbs/orb_raw.png"
+		DataType.SHORT_INT, DataType.FP8, DataType.FP16:
+			path = "res://Inventory/Art/Orbs/orb_float.png"
+	var tex: Texture2D = null
+	if not path.is_empty() and ResourceLoader.exists(path):
+		tex = load(path) as Texture2D
+	elif data_type == DataType.BINARY and ResourceLoader.exists("res://Inventory/Sprites/Item_binary.png"):
+		tex = load("res://Inventory/Sprites/Item_binary.png") as Texture2D
+	icon.texture = tex
+	_fit_icon_rect(icon, slot_count)
+	var color_rect = value_label.get_parent() if value_label and value_label.get_parent() is ColorRect else null
+	if color_rect:
+		if tex:
+			color_rect.color = Color(0, 0, 0, 0)
+		elif data_type == DataType.RAW:
+			color_rect.color = Color(0.5, 0.5, 0.5, 1)
+		else:
+			color_rect.color = Color(0.24, 0.17, 0.08, 1)
+	return tex != null
+
+
+func _fit_icon_rect(icon: TextureRect, slot_count: float) -> void:
+	var w_slots: float = maxf(slot_count, 0.25)
+	var side: float = SLOT_PX * w_slots - ORB_SLOT_MARGIN * 2.0
+	side = clampf(side, 18.0, SLOT_PX * 4.0)
+	var half: float = side * 0.5
+	icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	icon.offset_left = -half
+	icon.offset_top = -half
+	icon.offset_right = half
+	icon.offset_bottom = half
+	icon.custom_minimum_size = Vector2(side, side)
+	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.z_index = 0
 	if value_label:
-		var visual_width = max(total_width - 8, 5)
-		value_label.position = Vector2(0, 0)
-		value_label.size = Vector2(visual_width, 56)
+		value_label.z_index = 1
+		value_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+		value_label.add_theme_constant_override("outline_size", 3)
+
+
+func _resize_visual(color_rect, slot_count: float) -> void:
+	var side: float = clampf(SLOT_PX * maxf(slot_count, 0.25) - ORB_SLOT_MARGIN * 2.0, 18.0, SLOT_PX * 4.0)
+	var half: float = side * 0.5
+
+	if data_type == DataType.BOOLEAN or data_type == DataType.FP8:
+		side = SLOT_PX * 0.5 - 4.0
+		half = side * 0.5
+	elif data_type == DataType.SHORT_INT or data_type == DataType.FP16:
+		side = SLOT_PX * 0.5 - 4.0
+		half = side * 0.5
+	elif data_type == DataType.OPERATOR:
+		side = SLOT_PX - ORB_SLOT_MARGIN * 2.0
+		half = side * 0.5
+
+	if color_rect and color_rect is ColorRect:
+		color_rect.position = Vector2(-half, -half)
+		color_rect.size = Vector2(side, side)
+
+	if value_label:
+		value_label.position = Vector2(-half, -half)
+		value_label.size = Vector2(side, side)
 		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		value_label.add_theme_font_size_override("font_size", 24)
+		var fs: int = 14 if side < 36.0 else (16 if side < 52.0 else 20)
+		value_label.add_theme_font_size_override("font_size", fs)
 
-func _snap_to(destination):
-	var tween = get_tree().create_tween()
-	# Offset fixo baseado no centro de 1 slot (50x50)
-	# Não usa value_label.size pois itens multi-slot teriam offset errado
-	destination += Vector2(20, 10)
-	tween.tween_property(self, "global_position", destination, 0.15).set_trans(Tween.TRANS_SINE)
+## Posição local para centralizar o orbe dentro do slot (pai = slot TextureRect).
+func position_in_slot(slot: TextureRect) -> Vector2:
+	if slot == null:
+		return Vector2.ZERO
+	var center: Vector2 = slot.size * 0.5
+	# Inventário / operador / item único no slot: sempre no centro visual.
+	if data_type == DataType.OPERATOR or _slot_item_count(slot) <= 1:
+		return center
+	var item_bytes: int = get_size_bytes() if has_method("get_size_bytes") else 4
+	if item_bytes >= 4:
+		return center
+	var current_grid: Array = [null, null, null, null]
+	var my_pos: int = 0
+	for it in slot.items_stored:
+		var sz: int = it.get_size_bytes() if it.has_method("get_size_bytes") else 4
+		var pos_found: int = 0
+		if sz >= 4:
+			current_grid[0] = it
+			current_grid[1] = it
+			current_grid[2] = it
+			current_grid[3] = it
+			pos_found = 0
+		elif sz == 2:
+			if current_grid[0] == null and current_grid[1] == null:
+				current_grid[0] = it
+				current_grid[1] = it
+				pos_found = 0
+			elif current_grid[2] == null and current_grid[3] == null:
+				current_grid[2] = it
+				current_grid[3] = it
+				pos_found = 2
+		elif sz == 1:
+			for i in range(4):
+				if current_grid[i] == null:
+					current_grid[i] = it
+					pos_found = i
+					break
+		if it == self:
+			my_pos = pos_found
+			break
+	var quarter: float = slot.size.x * 0.25
+	var offset := Vector2.ZERO
+	if item_bytes == 1:
+		match my_pos:
+			0: offset = Vector2(-quarter, -quarter)
+			1: offset = Vector2(-quarter, quarter)
+			2: offset = Vector2(quarter, -quarter)
+			3: offset = Vector2(quarter, quarter)
+	elif item_bytes == 2:
+		offset = Vector2(-quarter, 0) if my_pos == 0 else Vector2(quarter, 0)
+	return center + offset
+
+
+func snap_to_slot(slot: TextureRect) -> void:
+	if slot == null:
+		return
+	if get_parent() != slot:
+		var p := get_parent()
+		if p:
+			p.remove_child(self)
+		slot.add_child(self)
+	selected = false
+	var target: Vector2 = position_in_slot(slot)
+	var tween := create_tween()
+	tween.tween_property(self, "position", target, 0.12).set_trans(Tween.TRANS_SINE)
+
+
+func _snap_to(_destination_global: Vector2) -> void:
+	# Legado: inventário livre chama com global do slot; preferir snap_to_slot.
+	if grid_anchor != null and grid_anchor is TextureRect:
+		snap_to_slot(grid_anchor)
+		return
 	selected = false
 
 # ===== Funções auxiliares para BINARY =====
