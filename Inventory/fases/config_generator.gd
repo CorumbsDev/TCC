@@ -42,6 +42,27 @@ static func generate_binary_config(left_bit: int = 1, right_bit: int = 0) -> Bin
 	config.apply_constraints()
 	return config
 
+static func generate_raw_knapsack_config(
+	capacity: int = 8,
+	backpack_slots: int = 8,
+	pool_slots: int = 10,
+	grid_cols: int = 4,
+	raw_values: Array = ["7", "3.14", "42"]
+) -> RawKnapsackPhaseConfig:
+	var config := RawKnapsackPhaseConfig.new()
+	config.capacity_bytes = clampi(capacity, 1, 4096)
+	config.backpack_slot_count = clampi(backpack_slots, 1, 512)
+	config.pool_slot_count = clampi(pool_slots, 4, 64)
+	config.grid_columns = clampi(grid_cols, 2, 8)
+	config.pool_grid_columns = 5
+	config.initial_raw_values = PackedStringArray(raw_values)
+	config.allow_int = true
+	config.allow_float = true
+	config.allow_short = false
+	config.apply_constraints()
+	return config
+
+
 static func generate_type_box_config(capacity: int = 8, raw_values: Array = ["250", "3.14", "1"]) -> TypeBoxPhaseConfig:
 	var config = TypeBoxPhaseConfig.new()
 	config.capacity_bytes = capacity

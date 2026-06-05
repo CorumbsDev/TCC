@@ -14,6 +14,8 @@ var _mark_on_close: bool = false
 
 func _ready():
 	btn_ok.pressed.connect(_on_ok)
+	OrbHoverBar.apply_info_label(title_label, 18)
+	OrbHoverBar.apply_info_richtext(body_label)
 	visible = false
 
 

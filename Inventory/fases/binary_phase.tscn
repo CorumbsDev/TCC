@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://flpmsau4qpiq"]
+[gd_scene load_steps=5 format=3 uid="uid://flpmsau4qpiq"]
 
 [ext_resource type="Script" uid="uid://ddmhud65ipxev" path="res://Inventory/fases/binary_phase.gd" id="1_0j8i7"]
 [ext_resource type="PackedScene" uid="uid://b0uhc1jdhcm7s" path="res://Inventory/slots/slot.tscn" id="2_y8gdq"]
+[ext_resource type="Script" path="res://Inventory/ui/orb_hover_bar.gd" id="3_hover"]
+[ext_resource type="Script" path="res://Inventory/ui/phase_info_bar.gd" id="4_info"]
 
 [node name="BinaryPhase" type="Control"]
 layout_mode = 3
@@ -55,17 +57,33 @@ size_flags_horizontal = 3
 
 [node name="MarginContainer" type="MarginContainer" parent="HBox/LeftPanel"]
 layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
 
 [node name="VBox" type="VBoxContainer" parent="HBox/LeftPanel/MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 15
 
-[node name="Label" type="Label" parent="HBox/LeftPanel/MarginContainer/VBox"]
+[node name="PhaseInfoBar" type="PanelContainer" parent="HBox/LeftPanel/MarginContainer/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+size_flags_horizontal = 3
+script = ExtResource("4_info")
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/LeftPanel/MarginContainer/VBox/PhaseInfoBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 2
+
+[node name="Label" type="Label" parent="HBox/LeftPanel/MarginContainer/VBox/PhaseInfoBar/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "1) Clique em 0 ou 1.
 2) Arraste o orb até o espaço em branco."
-horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="GridContainer" type="GridContainer" parent="HBox/LeftPanel/MarginContainer/VBox"]
@@ -81,16 +99,53 @@ size_flags_horizontal = 3
 
 [node name="MarginContainer" type="MarginContainer" parent="HBox/RightPanel"]
 layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
 
 [node name="VBox" type="VBoxContainer" parent="HBox/RightPanel/MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="Label" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
+[node name="IntroInfoBar" type="PanelContainer" parent="HBox/RightPanel/MarginContainer/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+size_flags_horizontal = 3
+script = ExtResource("4_info")
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/RightPanel/MarginContainer/VBox/IntroInfoBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 2
+
+[node name="Label" type="Label" parent="HBox/RightPanel/MarginContainer/VBox/IntroInfoBar/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "Complete o binário: arraste 0 ou 1 para o espaço central."
-horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="OrbHoverBar" type="PanelContainer" parent="HBox/RightPanel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("3_hover")
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/RightPanel/MarginContainer/VBox/OrbHoverBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 2
+
+[node name="OrbHoverLabel" type="Label" parent="HBox/RightPanel/MarginContainer/VBox/OrbHoverBar/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.82, 0.88, 0.94, 1)
+theme_override_font_sizes/font_size = 13
+text = "Passe o mouse em um orbe para ver tipo e valor."
 autowrap_mode = 3
 
 [node name="BinaryDisplay" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
@@ -126,15 +181,28 @@ text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ResultLabel" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
+[node name="FeedbackInfoBar" type="PanelContainer" parent="HBox/RightPanel/MarginContainer/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+size_flags_horizontal = 3
+script = ExtResource("4_info")
+
+[node name="MarginContainer" type="MarginContainer" parent="HBox/RightPanel/MarginContainer/VBox/FeedbackInfoBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBox/RightPanel/MarginContainer/VBox/FeedbackInfoBar/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="ResultLabel" type="Label" parent="HBox/RightPanel/MarginContainer/VBox/FeedbackInfoBar/MarginContainer/VBoxContainer"]
+layout_mode = 2
 text = "Depois de soltar o orb, veja abaixo a conversão de binário para decimal."
-horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="ExplanationLabel" type="Label" parent="HBox/RightPanel/MarginContainer/VBox"]
+[node name="ExplanationLabel" type="Label" parent="HBox/RightPanel/MarginContainer/VBox/FeedbackInfoBar/MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
-horizontal_alignment = 1
 autowrap_mode = 3

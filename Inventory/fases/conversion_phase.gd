@@ -9,13 +9,14 @@ extends Control
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
 @onready var left_grid = $HBox/LeftPanel/MarginContainer/VBox/GridContainer
 @onready var targets_row = $HBox/RightPanel/MarginContainer/VBox/TargetsRow
-@onready var goal_label = $HBox/RightPanel/MarginContainer/VBox/GoalLabel
+@onready var goal_label = $HBox/RightPanel/MarginContainer/VBox/PhaseInfoBar/MarginContainer/VBoxContainer/GoalLabel
 @onready var progress_label = $HBox/RightPanel/MarginContainer/VBox/ProgressLabel
-@onready var result_label = $HBox/RightPanel/MarginContainer/VBox/ResultLabel
-@onready var explanation_label = $HBox/RightPanel/MarginContainer/VBox/ExplanationLabel
+@onready var result_label = $HBox/RightPanel/MarginContainer/VBox/PhaseInfoBar/MarginContainer/VBoxContainer/ResultLabel
+@onready var explanation_label = $HBox/RightPanel/MarginContainer/VBox/PhaseInfoBar/MarginContainer/VBoxContainer/ExplanationLabel
 @onready var btn_voltar = $TopBar/BtnVoltar
 @onready var btn_help = $TopBar/BtnHelp
 @onready var bits_info_label: Label = $TopBar/BitsInfoLabel
+@onready var orb_hover_bar: OrbHoverBar = $HBox/RightPanel/MarginContainer/VBox/OrbHoverBar
 
 var left_slots: Array = []
 var target_slots: Array = []
@@ -31,6 +32,7 @@ var _configured_num_bits := 0
 func _ready():
 	btn_voltar.pressed.connect(_on_voltar_pressed)
 	btn_help.pressed.connect(_on_help_pressed)
+	_apply_phase_panels()
 	if challenge_decimals.is_empty():
 		challenge_decimals = [5, 3, 6]
 	_normalize_challenges()
@@ -62,6 +64,7 @@ func _ready():
 	_refresh_challenge_ui()
 	call_deferred("_try_show_intro")
 	call_deferred("_relayout_all_bits")
+	call_deferred("_wire_bits_hover")
 
 
 func _relayout_all_bits() -> void:
@@ -73,6 +76,15 @@ func _relayout_all_bits() -> void:
 		if slot.item_stored != null and is_instance_valid(slot.item_stored):
 			if slot.item_stored.has_method("install_in_slot"):
 				slot.item_stored.install_in_slot(slot)
+
+
+func _apply_phase_panels() -> void:
+	var left := get_node_or_null("HBox/LeftPanel") as Control
+	var right := get_node_or_null("HBox/RightPanel") as Control
+	if left:
+		PanelArtLoader.apply_phase_panel(left)
+	if right:
+		PanelArtLoader.apply_phase_panel(right)
 
 
 func _try_show_intro() -> void:
@@ -104,6 +116,16 @@ func _spawn_bit_at_slot(slot_idx: int, bit_value: int) -> void:
 	slot.state = slot.States.TAKEN
 	slot.item_stored = item
 	slot.set_item(item)
+	item.grid_anchor = slot
+	if orb_hover_bar:
+		orb_hover_bar.wire_orb(item)
+
+
+func _wire_bits_hover() -> void:
+	if orb_hover_bar == null:
+		return
+	orb_hover_bar.wire_slot_items(left_slots)
+	orb_hover_bar.wire_slot_items(target_slots)
 
 
 func _on_slot_entered(s):
@@ -334,6 +356,9 @@ func _try_place_item() -> void:
 	current_slot.item_stored = placing
 	current_slot.state = current_slot.States.TAKEN
 	current_slot.set_item(placing)
+	placing.grid_anchor = current_slot
+	if orb_hover_bar:
+		orb_hover_bar.wire_orb(placing)
 	item_held = null
 	can_place = false
 	_refill_pool_if_empty()

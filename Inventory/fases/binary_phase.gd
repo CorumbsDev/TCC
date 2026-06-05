@@ -9,8 +9,8 @@ extends Control
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
 @onready var left_grid = $HBox/LeftPanel/MarginContainer/VBox/GridContainer
 @onready var target_slot = $HBox/RightPanel/MarginContainer/VBox/BinaryRow/TargetSlot
-@onready var result_label = $HBox/RightPanel/MarginContainer/VBox/ResultLabel
-@onready var explanation_label = $HBox/RightPanel/MarginContainer/VBox/ExplanationLabel
+@onready var result_label = $HBox/RightPanel/MarginContainer/VBox/FeedbackInfoBar/MarginContainer/VBoxContainer/ResultLabel
+@onready var explanation_label = $HBox/RightPanel/MarginContainer/VBox/FeedbackInfoBar/MarginContainer/VBoxContainer/ExplanationLabel
 @onready var binary_display = $HBox/RightPanel/MarginContainer/VBox/BinaryDisplay
 @onready var btn_voltar = $TopBar/BtnVoltar
 @onready var btn_help = $TopBar/BtnHelp
@@ -18,6 +18,7 @@ extends Control
 @onready var title_label = $TopBar/Title
 @onready var left_digit_label = $HBox/RightPanel/MarginContainer/VBox/BinaryRow/LeftDigit
 @onready var right_digit_label = $HBox/RightPanel/MarginContainer/VBox/BinaryRow/RightDigit
+@onready var orb_hover_bar: OrbHoverBar = $HBox/RightPanel/MarginContainer/VBox/OrbHoverBar
 
 var left_slots := []
 var item_held = null
@@ -52,6 +53,7 @@ func _ready():
 	btn_help.pressed.connect(_on_help_pressed)
 	btn_proxima.visible = PhaseRunner.should_show_next_button()
 	btn_proxima.pressed.connect(_on_proxima_pressed)
+	_apply_phase_panels()
 	# Cria 2 slots à esquerda (inventário de bits)
 	for i in range(2):
 		var s = slot_scene.instantiate()
@@ -70,6 +72,7 @@ func _ready():
 	_update_binary_display(null)
 	call_deferred("_try_show_intro")
 	call_deferred("_relayout_all_bits")
+	call_deferred("_wire_bits_hover")
 
 
 func _relayout_all_bits() -> void:
@@ -80,6 +83,15 @@ func _relayout_all_bits() -> void:
 	if target_slot.item_stored != null and is_instance_valid(target_slot.item_stored):
 		if target_slot.item_stored.has_method("install_in_slot"):
 			target_slot.item_stored.install_in_slot(target_slot)
+
+
+func _apply_phase_panels() -> void:
+	var left := get_node_or_null("HBox/LeftPanel") as Control
+	var right := get_node_or_null("HBox/RightPanel") as Control
+	if left:
+		PanelArtLoader.apply_phase_panel(left)
+	if right:
+		PanelArtLoader.apply_phase_panel(right)
 
 
 func _try_show_intro() -> void:
@@ -106,6 +118,16 @@ func _spawn_bit_at_slot(slot_idx: int, bit_value: int) -> void:
 	slot.state = slot.States.TAKEN
 	slot.item_stored = item
 	slot.set_item(item)
+	item.grid_anchor = slot
+	if orb_hover_bar:
+		orb_hover_bar.wire_orb(item)
+
+func _wire_bits_hover() -> void:
+	if orb_hover_bar == null:
+		return
+	orb_hover_bar.wire_slot_items(left_slots)
+	if target_slot.item_stored != null:
+		orb_hover_bar.wire_orb(target_slot.item_stored)
 
 func _on_voltar_pressed():
 	PhaseRunner.abort_sequence()
@@ -218,6 +240,9 @@ func _try_place_item():
 	current_slot.item_stored = placing
 	current_slot.state = current_slot.States.TAKEN
 	current_slot.set_item(placing)
+	placing.grid_anchor = current_slot
+	if orb_hover_bar:
+		orb_hover_bar.wire_orb(placing)
 	item_held = null
 	can_place = false
 	if current_slot == target_slot:

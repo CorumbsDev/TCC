@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://tutoverlay001"]
+[gd_scene load_steps=3 format=3 uid="uid://tutoverlay001"]
 
 [ext_resource type="Script" path="res://Inventory/ui/tutorial_overlay.gd" id="1"]
+[ext_resource type="Script" path="res://Inventory/ui/phase_info_bar.gd" id="2_info"]
 
 [node name="TutorialOverlay" type="CanvasLayer"]
 layer = 100
@@ -21,13 +22,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="Panel" parent="CenterContainer"]
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
 custom_minimum_size = Vector2(520, 320)
+script = ExtResource("2_info")
 
 [node name="Margin" type="MarginContainer" parent="CenterContainer/Panel"]
-layout_mode = 0
-offset_right = 520.0
-offset_bottom = 320.0
+layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 16
@@ -39,7 +39,6 @@ theme_override_constants/separation = 12
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/Panel/Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
 text = "Título"
 
 [node name="RichTextLabel" type="RichTextLabel" parent="CenterContainer/Panel/Margin/VBox"]

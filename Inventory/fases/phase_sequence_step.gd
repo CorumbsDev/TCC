@@ -1,7 +1,7 @@
 class_name PhaseSequenceStep
 extends Resource
 
-enum Kind { MOCHILA, BINARIO, TYPE_BOX }
+enum Kind { MOCHILA, BINARIO, TYPE_BOX, RAW_MOCHILA }
 
 ## Tipo de fase na sequência.
 @export var kind: Kind = Kind.MOCHILA
@@ -11,3 +11,5 @@ enum Kind { MOCHILA, BINARIO, TYPE_BOX }
 @export var config_binario: BinaryPhaseConfig
 ## Preencher quando kind == TYPE_BOX
 @export var config_type_box: TypeBoxPhaseConfig
+## Preencher quando kind == RAW_MOCHILA (mochila + orbes RAW para tipar).
+@export var config_raw_mochila: RawKnapsackPhaseConfig

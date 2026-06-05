@@ -3,6 +3,7 @@ extends Node
 const PATH_PHASE2 := "res://Inventory/fases/phase2.tscn"
 const PATH_BINARY := "res://Inventory/fases/binary_phase.tscn"
 const PATH_TYPE_BOX := "res://Inventory/fases/type_box_phase.tscn"
+const PATH_RAW_MOCHILA := "res://Inventory/fases/raw_knapsack_phase.tscn"
 const PATH_MENU := "res://Inventory/fases/main_menu.tscn"
 
 signal phase_advance_blocked(reason: String)
@@ -13,6 +14,7 @@ var _active: bool = false
 var _pending_backpack: PhaseConfig = null
 var _pending_binary: BinaryPhaseConfig = null
 var _pending_type_box: TypeBoxPhaseConfig = null
+var _pending_raw_mochila: RawKnapsackPhaseConfig = null
 
 
 func is_sequence_active() -> bool:
@@ -77,6 +79,12 @@ func take_type_box_config_if_any() -> TypeBoxPhaseConfig:
 	return c
 
 
+func take_raw_knapsack_config_if_any() -> RawKnapsackPhaseConfig:
+	var c := _pending_raw_mochila
+	_pending_raw_mochila = null
+	return c
+
+
 func abort_sequence() -> void:
 	_active = false
 	_steps.clear()
@@ -84,6 +92,7 @@ func abort_sequence() -> void:
 	_pending_backpack = null
 	_pending_binary = null
 	_pending_type_box = null
+	_pending_raw_mochila = null
 
 
 func _go_step(i: int) -> void:
@@ -103,6 +112,10 @@ func _go_step(i: int) -> void:
 			var tbc: TypeBoxPhaseConfig = step.config_type_box if step.config_type_box else TypeBoxPhaseConfig.new()
 			_pending_type_box = tbc.duplicate(true)
 			get_tree().change_scene_to_file(PATH_TYPE_BOX)
+		PhaseSequenceStep.Kind.RAW_MOCHILA:
+			var rkc: RawKnapsackPhaseConfig = step.config_raw_mochila if step.config_raw_mochila else RawKnapsackPhaseConfig.new()
+			_pending_raw_mochila = rkc.duplicate(true)
+			get_tree().change_scene_to_file(PATH_RAW_MOCHILA)
 
 
 func _finish_sequence_to_menu() -> void:

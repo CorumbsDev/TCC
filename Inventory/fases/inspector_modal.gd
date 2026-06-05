@@ -180,7 +180,7 @@ func _float_to_custom_fp_bits(val: float, exp_bits: int, mant_bits: int) -> Dict
 	bytes.encode_float(0, val)
 	var f_bits = bytes.decode_u32(0)
 	
-	var sign = (f_bits >> 31) & 1
+	var sign_bit = (f_bits >> 31) & 1
 	var f_exp = (f_bits >> 23) & 0xFF
 	var f_mant = f_bits & 0x7FFFFF
 	
@@ -209,11 +209,11 @@ func _float_to_custom_fp_bits(val: float, exp_bits: int, mant_bits: int) -> Dict
 			else:
 				tgt_mant = f_mant << (mant_bits - 23)
 			
-	var combined_bits = (sign << (exp_bits + mant_bits)) | (tgt_exp << mant_bits) | tgt_mant
-	return {"sign": sign, "exp": tgt_exp, "mant": tgt_mant, "bits": combined_bits}
+	var combined_bits = (sign_bit << (exp_bits + mant_bits)) | (tgt_exp << mant_bits) | tgt_mant
+	return {"sign": sign_bit, "exp": tgt_exp, "mant": tgt_mant, "bits": combined_bits}
 
 func _custom_fp_bits_to_float(bits: int, exp_bits: int, mant_bits: int) -> float:
-	var sign = (bits >> (exp_bits + mant_bits)) & 1
+	var sign_bit = (bits >> (exp_bits + mant_bits)) & 1
 	var tgt_exp = (bits >> mant_bits) & ((1 << exp_bits) - 1)
 	var tgt_mant = bits & ((1 << mant_bits) - 1)
 	
@@ -242,7 +242,7 @@ func _custom_fp_bits_to_float(bits: int, exp_bits: int, mant_bits: int) -> float
 			else:
 				f_mant = tgt_mant >> (mant_bits - 23)
 	
-	var f_bits = (sign << 31) | (f_exp << 23) | f_mant
+	var f_bits = (sign_bit << 31) | (f_exp << 23) | f_mant
 	var bytes = PackedByteArray()
 	bytes.resize(4)
 	bytes.encode_u32(0, f_bits)
@@ -253,10 +253,10 @@ func _double_to_fp_bits(val: float) -> Dictionary:
 	bytes.resize(8)
 	bytes.encode_double(0, val)
 	var f_bits = bytes.decode_u64(0)
-	var sign = (f_bits >> 63) & 1
+	var sign_bit = (f_bits >> 63) & 1
 	var f_exp = (f_bits >> 52) & 0x7FF
 	var f_mant = f_bits & 0xFFFFFFFFFFFFF
-	return {"sign": sign, "exp": f_exp, "mant": f_mant}
+	return {"sign": sign_bit, "exp": f_exp, "mant": f_mant}
 
 func _format_fp_text(dict: Dictionary, exp_bits: int, mant_bits: int) -> String:
 	var s_str = "1" if dict.sign != 0 else "0"

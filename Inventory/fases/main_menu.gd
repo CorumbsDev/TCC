@@ -6,6 +6,9 @@ func _on_fase1_pressed():
 func _on_fase3_pressed():
 	get_tree().change_scene_to_file("res://Inventory/fases/conversion_phase.tscn")
 
+func _on_fase_raw_mochila_pressed():
+	get_tree().change_scene_to_file("res://Inventory/fases/raw_knapsack_phase.tscn")
+
 func _on_glossary_pressed():
 	get_tree().change_scene_to_file("res://Inventory/fases/glossary_screen.tscn")
 

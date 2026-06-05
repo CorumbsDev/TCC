@@ -49,10 +49,13 @@ func _process(delta):
 	check_mouse_hover()
 
 func check_mouse_hover():
-	# Verifica se o mouse está sobre o item
-	var mouse_pos = get_global_mouse_position()
-	var item_rect = get_item_rect()
-	
+	if selected:
+		if is_hovered:
+			is_hovered = false
+			mouse_exited_item.emit(self)
+		return
+	var mouse_pos := get_global_mouse_position()
+	var item_rect := get_item_rect()
 	if item_rect.has_point(to_local(mouse_pos)):
 		if not is_hovered:
 			is_hovered = true
@@ -64,13 +67,15 @@ func check_mouse_hover():
 
 func get_item_rect() -> Rect2:
 	"""Retorna o retângulo do item para detecção de hover / clique."""
+	var half: float = SLOT_PX * 0.5
+	if grid_anchor != null or not selected:
+		return Rect2(Vector2(-half, -half), Vector2(SLOT_PX, SLOT_PX))
 	var icon: TextureRect = get_node_or_null("Icon") as TextureRect
 	if icon and icon.size.x > 1.0:
 		return Rect2(icon.position, icon.size)
 	if value_label:
-		var label_pos: Vector2 = value_label.global_position - global_position
-		return Rect2(label_pos, value_label.size)
-	return Rect2(Vector2(-SLOT_PX * 0.5, -SLOT_PX * 0.5), Vector2(SLOT_PX, SLOT_PX))
+		return Rect2(value_label.position, value_label.size)
+	return Rect2(Vector2(-half, -half), Vector2(SLOT_PX, SLOT_PX))
 
 func get_item_info() -> Dictionary:
 	"""Retorna um dicionário com todas as informações do item"""
@@ -564,8 +569,7 @@ func _resize_visual(color_rect, slot_count: float) -> void:
 		color_rect.size = Vector2(side, side)
 
 	if value_label:
-		value_label.position = Vector2(-half, -half)
-		value_label.size = Vector2(side, side)
+		# Label usa anchors full-rect no ColorRect; só ajusta fonte (evita warning de layout).
 		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		var fs: int = 14 if side < 36.0 else (16 if side < 52.0 else 20)
@@ -575,9 +579,10 @@ func _resize_visual(color_rect, slot_count: float) -> void:
 func position_in_slot(slot: TextureRect) -> Vector2:
 	if slot == null:
 		return Vector2.ZERO
-	var center: Vector2 = slot.size * 0.5
-	# Inventário / operador / item único no slot: sempre no centro visual.
-	if data_type == DataType.OPERATOR or _slot_item_count(slot) <= 1:
+	var side: float = maxf(slot.size.x, SLOT_PX)
+	var center: Vector2 = Vector2(side, side) * 0.5
+	# RAW, operador ou item único: sempre centralizado no slot.
+	if data_type == DataType.OPERATOR or data_type == DataType.RAW or _slot_item_count(slot) <= 1:
 		return center
 	var item_bytes: int = get_size_bytes() if has_method("get_size_bytes") else 4
 	if item_bytes >= 4:
@@ -602,7 +607,7 @@ func position_in_slot(slot: TextureRect) -> Vector2:
 				current_grid[2] = it
 				current_grid[3] = it
 				pos_found = 2
-		elif sz == 1:
+		elif sz <= 1:
 			for i in range(4):
 				if current_grid[i] == null:
 					current_grid[i] = it
@@ -613,7 +618,7 @@ func position_in_slot(slot: TextureRect) -> Vector2:
 			break
 	var quarter: float = slot.size.x * 0.25
 	var offset := Vector2.ZERO
-	if item_bytes == 1:
+	if item_bytes <= 1:
 		match my_pos:
 			0: offset = Vector2(-quarter, -quarter)
 			1: offset = Vector2(-quarter, quarter)

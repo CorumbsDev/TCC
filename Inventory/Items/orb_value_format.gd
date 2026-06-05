@@ -248,15 +248,15 @@ static func _compact_float(v: float) -> String:
 		return "0"
 	var av: float = absf(v)
 	if av >= 1_000_000.0:
-		return "%.3g" % v
+		return _format_sci(v, 3)
 	if av >= LARGE_FLOAT_ABS:
-		return "%.4g" % v
+		return _format_sci(v, 4)
 	if av < TINY_FLOAT_ABS:
-		return "%.2e" % v
-	var s: String = "%.4g" % v
+		return _format_sci(v, 2)
+	var s: String = _format_compact_decimal(v, 4)
 	if s.length() <= MAX_LABEL_CHARS:
 		return s
-	return "%.3e" % v
+	return _format_sci(v, 3)
 
 
 static func _compact_int(v: int) -> String:
@@ -266,11 +266,34 @@ static func _compact_int(v: int) -> String:
 	if av < 1_000_000:
 		var k: float = float(v) / 1000.0
 		if v % 1000 == 0:
-			return "%dk" % (v / 1000)
+			return "%dk" % int(float(v) / 1000.0)
 		return "%.2fk" % k
 	if av < 1_000_000_000:
 		var m: float = float(v) / 1_000_000.0
 		if v % 1_000_000 == 0:
-			return "%dM" % (v / 1_000_000)
+			return "%dM" % int(float(v) / 1_000_000.0)
 		return "%.2fM" % m
-	return "%.3e" % float(v)
+	return _format_sci(float(v), 3)
+
+
+static func _format_compact_decimal(v: float, max_decimals: int) -> String:
+	var s := String.num(v, max_decimals)
+	if s.contains("."):
+		s = s.rstrip("0").rstrip(".")
+	return s
+
+
+static func _format_sci(v: float, mantissa_digits: int) -> String:
+	if v == 0.0:
+		return "0"
+	var sign_prefix := "-" if v < 0.0 else ""
+	var av := absf(v)
+	var exponent := 0
+	while av >= 10.0:
+		av /= 10.0
+		exponent += 1
+	while av < 1.0:
+		av *= 10.0
+		exponent -= 1
+	var mantissa := _format_compact_decimal(av, mantissa_digits)
+	return sign_prefix + mantissa + "e" + str(exponent)

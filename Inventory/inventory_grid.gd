@@ -68,10 +68,22 @@ func _attach_item_to_slot(item: Node, slot: TextureRect) -> void:
 			item.get_parent().remove_child(item)
 		slot.add_child(item)
 	item.z_index = 2
+	_set_item_position_in_slot(item, slot)
+
+
+func _set_item_position_in_slot(item: Node, slot: TextureRect) -> void:
 	if item.has_method("position_in_slot"):
 		item.position = item.position_in_slot(slot)
 	else:
-		item.position = slot.size * 0.5
+		var side: float = maxf(slot.size.x, 64.0)
+		item.position = Vector2(side, side) * 0.5
+
+
+func refresh_item_positions() -> void:
+	for slot in slots_array:
+		for it in slot.items_stored:
+			if is_instance_valid(it):
+				_set_item_position_in_slot(it, slot)
 
 
 func total_bytes_used() -> int:
@@ -89,6 +101,16 @@ func can_place_item(item, slot) -> bool:
 	if not item or not slot:
 		return false
 	var item_bytes = item.get_size_bytes() if item.has_method("get_size_bytes") else 4
+
+	# RAW: um orbe por slot (pool visual), sem empilhar sub-células de 1 byte.
+	if item_bytes == 0:
+		for offset in item.item_grids:
+			var idx0 = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
+			if idx0 < 0 or idx0 >= slots_array.size():
+				return false
+			if slots_array[idx0].items_stored.size() > 0:
+				return false
+		return true
 	
 	for offset in item.item_grids:
 		var idx = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
@@ -108,7 +130,7 @@ func can_place_item(item, slot) -> bool:
 					current_grid[0] = it; current_grid[1] = it
 				elif current_grid[2] == null and current_grid[3] == null:
 					current_grid[2] = it; current_grid[3] = it
-			elif sz == 1:
+			elif sz <= 1:
 				for i in range(4):
 					if current_grid[i] == null:
 						current_grid[i] = it
@@ -119,7 +141,7 @@ func can_place_item(item, slot) -> bool:
 			can_fit = (current_grid[0] == null and current_grid[1] == null and current_grid[2] == null and current_grid[3] == null)
 		elif item_bytes == 2:
 			can_fit = (current_grid[0] == null and current_grid[1] == null) or (current_grid[2] == null and current_grid[3] == null)
-		elif item_bytes == 1:
+		elif item_bytes <= 1:
 			can_fit = (current_grid[0] == null or current_grid[1] == null or current_grid[2] == null or current_grid[3] == null)
 			
 		if not can_fit:

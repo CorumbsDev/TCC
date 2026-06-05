@@ -94,22 +94,6 @@ func _on_item_changed(slot):
 	print("Item mudou no slot:", slot.slot_ID)
 	check_combinations()
 
-func _unhandled_input(event: InputEvent) -> void:
-	if not (event is InputEventMouseButton and event.pressed and event.double_click):
-		return
-	for slot in grid_array:
-		if slot.item_stored == null:
-			continue
-		var it = slot.item_stored
-		if it.has_method("get_item_rect"):
-			var r: Rect2 = it.get_item_rect()
-			var gr := Rect2(it.global_position + r.position, r.size)
-			if gr.has_point(event.global_position):
-				OrbUI.show_detail(it, event.global_position, true)
-				get_viewport().set_input_as_handled()
-				return
-
-
 @warning_ignore("unused_parameter")
 func _process(delta):
 	if item_held:
@@ -665,12 +649,10 @@ func debug_slots_expressao():
 func _on_item_mouse_entered(item):
 	"""Chamado quando o mouse entra em um item"""
 	show_item_info(item)
-	OrbUI.show_detail(item, get_global_mouse_position())
 
 @warning_ignore("unused_parameter")
 func _on_item_mouse_exited(item):
 	"""Chamado quando o mouse sai de um item"""
-	OrbUI.hide_detail(false)
 	clear_info_panel()
 
 func show_item_info(item):
@@ -703,8 +685,6 @@ func show_item_info(item):
 	
 	if info_details_label:
 		info_details_label.text = "Python: " + OrbValueFormat.python_repr_string(item)
-		if OrbValueFormat.should_compact(item):
-			info_details_label.text += "\n\n(duplo-clique no orbe para fixar o painel flutuante)"
 	
 	# Mostra o painel
 	if info_panel:

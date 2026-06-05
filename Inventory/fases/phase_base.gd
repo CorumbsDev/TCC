@@ -4,9 +4,9 @@ extends Control
 @onready var btn_help = get_node_or_null("TopBar/BtnHelp")
 @onready var btn_proxima = get_node_or_null("TopBar/BtnProxima")
 @onready var phase_title = get_node_or_null("TopBar/PhaseTitle")
-@onready var btn_spawn = $HBox/BackpackPanel/MarginContainer/VBoxContainer/Header/BtnSpawn
-@onready var bytes_label = $HBox/BackpackPanel/MarginContainer/VBoxContainer/BytesLabel
-@onready var hint_label = $HBox/BackpackPanel/MarginContainer/VBoxContainer/HintLabel
+@onready var btn_spawn = $TopBar/BtnSpawn
+@onready var bytes_label = $HBox/BackpackPanel/MarginContainer/VBoxContainer/PhaseInfoBar/MarginContainer/VBoxContainer/BytesLabel
+@onready var hint_label = $HBox/BackpackPanel/MarginContainer/VBoxContainer/PhaseInfoBar/MarginContainer/VBoxContainer/HintLabel
 
 @onready var backpack_container = $HBox/BackpackPanel/MarginContainer/VBoxContainer/ScrollContainer/GridContainer
 @onready var pool_container = $HBox/BancadaPanel/MarginContainer/VBoxContainer/GridContainer
@@ -27,7 +27,7 @@ var item_held = null
 var current_slot = null
 var can_place := false
 var inspector_modal = null
-var _orb_hover: Node = null
+var _orb_hover_bar: OrbHoverBar = null
 
 
 func _ready():
@@ -44,6 +44,8 @@ func _ready():
 		call_deferred("_update_next_button_state")
 	if btn_spawn:
 		btn_spawn.pressed.connect(_on_spawn_pressed)
+	if phase_title:
+		phase_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	# Conectar ao signal do PhaseRunner para feedback amigável
 	PhaseRunner.phase_advance_blocked.connect(_on_phase_advance_blocked)
 	call_deferred("_try_show_intro")
@@ -88,6 +90,7 @@ func setup_grids(backpack: InventoryGrid, pool: InventoryGrid):
 	_update_hint()
 	call_deferred("_apply_panel_art")
 	call_deferred("_wire_all_orbs")
+	call_deferred("_anchor_orb_hover_above_pool")
 
 
 func _get_phase_config():
@@ -95,12 +98,23 @@ func _get_phase_config():
 
 
 func _apply_panel_art() -> void:
-	var bp := get_node_or_null("HBox/BackpackPanel")
-	var bn := get_node_or_null("HBox/BancadaPanel")
-	if bp is Panel:
-		PanelArtLoader.apply_panel_style(bp)
-	if bn is Panel:
-		PanelArtLoader.apply_panel_style(bn)
+	var bp := get_node_or_null("HBox/BackpackPanel") as Control
+	var bn := get_node_or_null("HBox/BancadaPanel") as Control
+	if bp:
+		PanelArtLoader.apply_phase_panel(bp)
+	if bn:
+		PanelArtLoader.apply_phase_panel(bn)
+	_style_phase_labels()
+
+
+func _style_phase_labels() -> void:
+	var bar := get_node_or_null("HBox/BackpackPanel/MarginContainer/VBoxContainer/PhaseInfoBar")
+	if bar is PhaseInfoBar:
+		return
+	if bytes_label:
+		OrbHoverBar.apply_info_label(bytes_label)
+	if hint_label:
+		OrbHoverBar.apply_info_label(hint_label)
 
 
 func _wire_all_orbs() -> void:
@@ -120,66 +134,37 @@ func _on_orb_slot_changed(slot) -> void:
 
 
 func _wire_orb(item: Node) -> void:
-	if item == null or not is_instance_valid(item):
-		return
-	if not item.has_signal("mouse_entered_item"):
-		return
-	if not item.mouse_entered_item.is_connected(_on_orb_hover_entered):
-		item.mouse_entered_item.connect(_on_orb_hover_entered)
-	if not item.mouse_exited_item.is_connected(_on_orb_hover_exited):
-		item.mouse_exited_item.connect(_on_orb_hover_exited)
+	var bar := _get_orb_hover_bar()
+	if bar:
+		bar.wire_orb(item)
 
 
-func _on_orb_hover_entered(item: Node) -> void:
-	_orb_hover = item
-	if hint_label:
-		var lines: PackedStringArray = OrbValueFormat.detail_lines(item)
-		if lines.size() > 0:
-			hint_label.text = lines[0] + "  |  duplo-clique: fixar detalhes  |  direito: inspetor"
-	OrbUI.show_detail(item, get_global_mouse_position())
-
-
-func _on_orb_hover_exited(item: Node) -> void:
-	if _orb_hover == item:
-		_orb_hover = null
-		OrbUI.hide_detail(false)
-		_update_hint()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if not (event is InputEventMouseButton and event.pressed):
-		return
-	var orb := _orb_under_mouse()
-	if orb == null:
-		return
-	if event.button_index == MOUSE_BUTTON_RIGHT:
-		if _get_phase_config() != null:
-			_open_orb_inspector(orb)
-		else:
-			OrbUI.show_detail(orb, event.global_position, true)
-		get_viewport().set_input_as_handled()
-	elif event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
-		OrbUI.show_detail(orb, event.global_position, true)
-		get_viewport().set_input_as_handled()
-
-
-func _orb_under_mouse() -> Node:
-	for grid in [backpack_grid, pool_grid]:
-		if grid == null:
-			continue
-		for slot in grid.slots_array:
-			for it in slot.items_stored:
-				if it != null and it.has_method("get_item_rect"):
-					var r: Rect2 = it.get_item_rect()
-					var global_r := Rect2(it.global_position + r.position, r.size)
-					if global_r.has_point(get_global_mouse_position()):
-						return it
-	if item_held != null and item_held.has_method("get_item_rect"):
-		var r2: Rect2 = item_held.get_item_rect()
-		var gr := Rect2(item_held.global_position + r2.position, r2.size)
-		if gr.has_point(get_global_mouse_position()):
-			return item_held
+func _get_orb_hover_bar() -> OrbHoverBar:
+	if _orb_hover_bar != null and is_instance_valid(_orb_hover_bar):
+		return _orb_hover_bar
+	for path in [
+		"HBox/BancadaPanel/MarginContainer/VBoxContainer/OrbHoverBar",
+		"HBox/BancadaPanel/MarginContainer/VBoxContainer/OrbHoverPanel",
+	]:
+		var n := get_node_or_null(path)
+		if n is OrbHoverBar:
+			_orb_hover_bar = n
+			return _orb_hover_bar
 	return null
+
+
+func _register_orb_hover_bar(bar: OrbHoverBar) -> void:
+	_orb_hover_bar = bar
+
+
+func _anchor_orb_hover_above_pool() -> void:
+	var bar := _get_orb_hover_bar()
+	if bar == null or pool_grid == null:
+		return
+	var parent := pool_grid.get_parent()
+	if parent == null:
+		return
+	parent.move_child(bar, pool_grid.get_index())
 
 
 func _open_orb_inspector(item: Node) -> void:
@@ -216,7 +201,7 @@ func _show_not_ready_modal(custom_message: String = ""):
 	var dlg := AcceptDialog.new()
 	dlg.dialog_text = message
 	add_child(dlg)
-	dlg.popup_centered_minsize(Vector2(400, 120))
+	dlg.popup_centered(Vector2(400, 120))
 
 
 func _update_next_button_state():
@@ -723,7 +708,7 @@ func _float_to_custom_fp_bits(val: float, exp_bits: int, mant_bits: int) -> Dict
 	bytes.resize(4)
 	bytes.encode_float(0, val)
 	var f_bits = bytes.decode_u32(0)
-	var sign = (f_bits >> 31) & 1
+	var sign_bit = (f_bits >> 31) & 1
 	var f_exp = (f_bits >> 23) & 0xFF
 	var f_mant = f_bits & 0x7FFFFF
 	var tgt_bias = (1 << (exp_bits - 1)) - 1
@@ -749,11 +734,11 @@ func _float_to_custom_fp_bits(val: float, exp_bits: int, mant_bits: int) -> Dict
 				tgt_mant = f_mant >> (23 - mant_bits)
 			else:
 				tgt_mant = f_mant << (mant_bits - 23)
-	var combined_bits = (sign << (exp_bits + mant_bits)) | (tgt_exp << mant_bits) | tgt_mant
+	var combined_bits = (sign_bit << (exp_bits + mant_bits)) | (tgt_exp << mant_bits) | tgt_mant
 	return {"bits": combined_bits}
 
 func _custom_fp_bits_to_float(bits: int, exp_bits: int, mant_bits: int) -> float:
-	var sign = (bits >> (exp_bits + mant_bits)) & 1
+	var sign_bit = (bits >> (exp_bits + mant_bits)) & 1
 	var tgt_exp = (bits >> mant_bits) & ((1 << exp_bits) - 1)
 	var tgt_mant = bits & ((1 << mant_bits) - 1)
 	var tgt_bias = (1 << (exp_bits - 1)) - 1
@@ -778,7 +763,7 @@ func _custom_fp_bits_to_float(bits: int, exp_bits: int, mant_bits: int) -> float
 				f_mant = tgt_mant << (23 - mant_bits)
 			else:
 				f_mant = tgt_mant >> (mant_bits - 23)
-	var f_bits = (sign << 31) | (f_exp << 23) | f_mant
+	var f_bits = (sign_bit << 31) | (f_exp << 23) | f_mant
 	var bytes = PackedByteArray()
 	bytes.resize(4)
 	bytes.encode_u32(0, f_bits)

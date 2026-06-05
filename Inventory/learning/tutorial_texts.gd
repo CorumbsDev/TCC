@@ -5,6 +5,7 @@ const KEY_PHASE_BINARY := "phase_binary_v1"
 const KEY_PHASE_BACKPACK := "phase_backpack_v1"
 const KEY_PHASE_CONVERSION := "phase_conversion_v1"
 const KEY_GLOSSARY := "glossary_v1"
+const KEY_RAW_KNAPSACK := "raw_knapsack_phase_intro"
 
 
 static func title_for(key: String) -> String:
@@ -17,6 +18,8 @@ static func title_for(key: String) -> String:
 			return "Fase 3 — Decimal → binário"
 		KEY_GLOSSARY:
 			return "Glossário rápido"
+		KEY_RAW_KNAPSACK:
+			return "Mochila + Tipagem (RAW)"
 		_:
 			return "Ajuda"
 
@@ -48,5 +51,13 @@ static func body_for(key: String) -> String:
 			)
 		KEY_GLOSSARY:
 			return "Abra o glossário pelo menu principal para ver definições dos termos usados no projeto."
+		KEY_RAW_KNAPSACK:
+			return (
+				"[b]Objetivo:[/b] encher a mochila até o limite de bytes, mas os valores chegam [b]sem tipo (RAW)[/b].\n\n"
+				+ "[b]1)[/b] Pegue um valor do pool (cinza, sem tipo).\n"
+				+ "[b]2)[/b] Solte numa [b]estação de tipagem[/b] (Int, Float, etc.). Se o valor não couber no tipo, a conversão falha.\n"
+				+ "[b]3)[/b] Arraste o orbe tipado para a mochila. Cada tipo ocupa bytes diferentes.\n\n"
+				+ "RAW não pode ir direto para a mochila — é o desafio extra desta fase."
+			)
 		_:
 			return ""

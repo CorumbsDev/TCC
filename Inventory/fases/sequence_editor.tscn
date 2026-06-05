@@ -150,13 +150,15 @@ text = "Tipo de Fase:"
 
 [node name="OptionType" type="OptionButton" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/PhaseTypeHBox"]
 layout_mode = 2
-item_count = 3
+item_count = 4
 popup/item_0/text = "Mochila (Knapsack)"
 popup/item_0/id = 0
 popup/item_1/text = "Binário"
 popup/item_1/id = 1
 popup/item_2/text = "Caixas de Tipagem"
 popup/item_2/id = 2
+popup/item_3/text = "Mochila + Tipagem (RAW)"
+popup/item_3/id = 3
 
 [node name="Sep1" type="HSeparator" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2

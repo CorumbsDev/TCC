@@ -1,26 +1,19 @@
-[gd_scene load_steps=5 format=3 uid="uid://b2wlm6mc5wqpq"]
+[gd_scene load_steps=3 format=3 uid="uid://bta3a11r0i2yy"]
 
-[ext_resource type="Script" uid="uid://dgbg8f78g66tr" path="res://Inventory/fases/type_box_phase.gd" id="1_fscm0"]
-[ext_resource type="Script" path="res://Inventory/ui/orb_hover_bar.gd" id="2_hover"]
-[ext_resource type="Script" path="res://Inventory/ui/phase_info_bar.gd" id="3_info"]
+[ext_resource type="Script" path="res://Inventory/fases/raw_knapsack_phase.gd" id="1_script"]
+[ext_resource type="Script" path="res://Inventory/ui/phase_info_bar.gd" id="2_info"]
 
-[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_fscm0"]
-blend_mode = 1
-
-[node name="PhaseBase" type="Control"]
+[node name="RawKnapsackPhase" type="Control"]
 clip_contents = true
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -2.0
-offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_fscm0")
+script = ExtResource("1_script")
 
 [node name="TopBar" type="HBoxContainer" parent="."]
-clip_contents = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -38,10 +31,9 @@ layout_mode = 2
 text = "?"
 
 [node name="BtnSpawn" type="Button" parent="TopBar"]
-visible = false
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
-text = "spawn"
+text = "spawn RAW"
 
 [node name="BtnProxima" type="Button" parent="TopBar"]
 visible = false
@@ -52,7 +44,7 @@ text = "Próxima fase →"
 [node name="PhaseTitle" type="Label" parent="TopBar"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Fase"
+text = "Mochila + Tipagem"
 horizontal_alignment = 2
 
 [node name="HBox" type="HBoxContainer" parent="."]
@@ -66,7 +58,6 @@ grow_horizontal = 2
 grow_vertical = 0
 
 [node name="BackpackPanel" type="Panel" parent="HBox"]
-material = SubResource("CanvasItemMaterial_fscm0")
 custom_minimum_size = Vector2(600, 0)
 layout_mode = 2
 
@@ -75,10 +66,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -56.71
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -98,7 +89,7 @@ columns = 4
 [node name="PhaseInfoBar" type="PanelContainer" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-script = ExtResource("3_info")
+script = ExtResource("2_info")
 
 [node name="MarginContainer" type="MarginContainer" parent="HBox/BackpackPanel/MarginContainer/VBoxContainer/PhaseInfoBar"]
 layout_mode = 2
@@ -123,44 +114,24 @@ size_flags_horizontal = 3
 autowrap_mode = 3
 
 [node name="BancadaPanel" type="Panel" parent="HBox"]
-custom_minimum_size = Vector2(545.55, 536.165)
+custom_minimum_size = Vector2(545, 0)
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="HBox/BancadaPanel"]
 layout_mode = 1
-anchors_preset = -1
+anchors_preset = 15
 anchor_right = 1.0
-anchor_bottom = 0.905
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -9.70502
-offset_bottom = -0.150024
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HBox/BancadaPanel/MarginContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-
-[node name="OrbHoverBar" type="PanelContainer" parent="HBox/BancadaPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
-script = ExtResource("2_hover")
-
-[node name="MarginContainer" type="MarginContainer" parent="HBox/BancadaPanel/MarginContainer/VBoxContainer/OrbHoverBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 2
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 2
-
-[node name="OrbHoverLabel" type="Label" parent="HBox/BancadaPanel/MarginContainer/VBoxContainer/OrbHoverBar/MarginContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.82, 0.88, 0.94, 1)
-theme_override_font_sizes/font_size = 13
-text = "Passe o mouse em um orbe para ver tipo e valor."
-autowrap_mode = 3
 
 [node name="GridContainer" type="GridContainer" parent="HBox/BancadaPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2

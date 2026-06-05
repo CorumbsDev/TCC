@@ -51,6 +51,7 @@ func _ready():
 	backpack.clear_all_items()
 	pool.clear_all_items()
 	setup_grids(backpack, pool)
+	call_deferred("_apply_panel_art")
 	call_deferred("_initialize_game", backpack, pool)
 
 
@@ -178,6 +179,7 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 	_generate_extra_pool_items(pool, min_extra)
 	_update_bytes_label()
 	_update_hint()
+	call_deferred("_anchor_orb_hover_above_pool")
 
 
 func _create_calculator_ui():
