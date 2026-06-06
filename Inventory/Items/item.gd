@@ -1,6 +1,7 @@
 extends Node2D
 
 @onready var value_label: Label = $ColorRect/value_label
+@onready var cylinder_visual: Control = $CylinderVisual
 
 # Enum para identificar o tipo de dado do orb
 enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR, DOUBLE, BINARY, SHORT_INT, FP8, FP16, RAW}
@@ -395,12 +396,9 @@ func update_label_display():
 			color_rect.color = Color(0.24, 0.17, 0.08, 1)
 		color_rect.z_index = -1
 	
-	var slot_scale := 1.0
 	match data_type:
 		DataType.OPERATOR:
 			value_label.add_theme_color_override("font_color", Color(1, 0.85, 0.35, 1))
-			var op_fs: int = 22 if operator.length() <= 2 else 13
-			value_label.add_theme_font_size_override("font_size", op_fs)
 			value_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		DataType.INT:
 			value_label.add_theme_color_override("font_color", Color.BLUE)
@@ -408,23 +406,18 @@ func update_label_display():
 			value_label.add_theme_color_override("font_color", Color.RED)
 		DataType.BOOLEAN:
 			value_label.add_theme_color_override("font_color", Color.GREEN)
-			slot_scale = 0.25
 		DataType.STRING:
 			value_label.add_theme_color_override("font_color", Color.YELLOW)
 		DataType.DOUBLE:
 			value_label.add_theme_color_override("font_color", Color.MAGENTA)
-			slot_scale = 2.0
 		DataType.BINARY:
 			value_label.add_theme_color_override("font_color", Color.LIME)
 		DataType.SHORT_INT:
 			value_label.add_theme_color_override("font_color", Color.CYAN)
-			slot_scale = 0.5
 		DataType.FP8:
 			value_label.add_theme_color_override("font_color", Color.VIOLET)
-			slot_scale = 0.25
 		DataType.FP16:
 			value_label.add_theme_color_override("font_color", Color.GOLD)
-			slot_scale = 0.5
 		DataType.RAW:
 			value_label.add_theme_color_override("font_color", Color.WHITE)
 		_:
@@ -435,9 +428,10 @@ func update_label_display():
 		value_label.text = value_binary
 	else:
 		value_label.text = OrbValueFormat.compact_label_string(self)
+	var dims := _compute_orb_dimensions(value_label.text)
 	var has_orb_art := false
-	_resize_visual(color_rect, slot_scale)
-	has_orb_art = _apply_orb_sprite(slot_scale)
+	_resize_visual(color_rect, dims)
+	has_orb_art = _apply_orb_sprite(dims)
 	_apply_label_fit()
 	if has_orb_art and value_label:
 		value_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
@@ -479,18 +473,72 @@ func _slot_item_count(slot: TextureRect) -> int:
 			n += 1
 	return n
 
-func _apply_orb_sprite(slot_count: float = 1.0) -> bool:
+func _base_type_slot_scale() -> float:
+	match data_type:
+		DataType.BOOLEAN, DataType.FP8:
+			return 0.25
+		DataType.SHORT_INT, DataType.FP16:
+			return 0.5
+		DataType.DOUBLE:
+			return 2.0
+		_:
+			return 1.0
+
+
+func shrink_orb_for_tool_slot() -> void:
+	if data_type != DataType.DOUBLE:
+		return
+	var dims := Vector2(SLOT_PX - ORB_SLOT_MARGIN * 2.0, SLOT_PX - ORB_SLOT_MARGIN * 2.0)
+	var color_rect = value_label.get_parent() if value_label else null
+	if color_rect:
+		_resize_visual(color_rect, dims)
+		_apply_double_cylinder(dims)
+		_apply_label_fit()
+
+
+func restore_orb_layout() -> void:
+	update_label_display()
+
+
+func _compute_orb_dimensions(text: String) -> Vector2:
+	if data_type == DataType.DOUBLE:
+		return _double_capsule_size()
+	var char_count := maxi(text.length(), 1)
+	var base_scale := _base_type_slot_scale()
+	var max_side := SLOT_PX - ORB_SLOT_MARGIN * 2.0
+	var max_w := SLOT_PX - 4.0
+	var visual_scale := base_scale
+	if char_count >= 7:
+		visual_scale = 1.0
+	elif char_count >= 5:
+		visual_scale = maxf(base_scale, 0.75)
+	elif char_count >= 4:
+		visual_scale = maxf(base_scale, 0.55)
+	var side := clampf(SLOT_PX * visual_scale - ORB_SLOT_MARGIN * 2.0, 22.0, max_side)
+	if char_count >= 6:
+		var width := clampf(char_count * 6.8 + 6.0, side, max_w)
+		var height := clampf(side, 24.0, max_side)
+		return Vector2(width, height)
+	return Vector2(side, side)
+
+
+func _apply_orb_sprite(dims: Vector2 = Vector2.ZERO) -> bool:
+	if dims == Vector2.ZERO:
+		dims = _compute_orb_dimensions(value_label.text if value_label else "")
+	if data_type == DataType.DOUBLE:
+		return _apply_double_cylinder(dims)
 	var icon: TextureRect = get_node_or_null("Icon") as TextureRect
 	if icon == null:
 		return false
+	if cylinder_visual:
+		cylinder_visual.visible = false
+	icon.visible = true
 	var path := ""
 	match data_type:
 		DataType.INT:
 			path = "res://Inventory/Art/Orbs/orb_int.png"
 		DataType.FLOAT:
 			path = "res://Inventory/Art/Orbs/orb_float.png"
-		DataType.DOUBLE:
-			path = "res://Inventory/Art/Orbs/orb_double.png"
 		DataType.BOOLEAN:
 			path = "res://Inventory/Art/Orbs/orb_bool.png"
 		DataType.BINARY:
@@ -507,7 +555,7 @@ func _apply_orb_sprite(slot_count: float = 1.0) -> bool:
 	elif data_type == DataType.BINARY and ResourceLoader.exists("res://Inventory/Sprites/Item_binary.png"):
 		tex = load("res://Inventory/Sprites/Item_binary.png") as Texture2D
 	icon.texture = tex
-	_fit_icon_rect(icon, slot_count)
+	_fit_visual_rect(icon, dims)
 	var color_rect = value_label.get_parent() if value_label and value_label.get_parent() is ColorRect else null
 	if color_rect:
 		if tex:
@@ -519,100 +567,90 @@ func _apply_orb_sprite(slot_count: float = 1.0) -> bool:
 	return tex != null
 
 
+func _apply_double_cylinder(dims: Vector2) -> bool:
+	var icon: TextureRect = get_node_or_null("Icon") as TextureRect
+	if icon:
+		icon.visible = false
+		icon.texture = null
+	if cylinder_visual == null:
+		return false
+	cylinder_visual.visible = true
+	_fit_visual_rect(cylinder_visual, dims)
+	cylinder_visual.queue_redraw()
+	var color_rect = value_label.get_parent() if value_label and value_label.get_parent() is ColorRect else null
+	if color_rect:
+		color_rect.color = Color(0, 0, 0, 0)
+	if value_label:
+		value_label.z_index = 2
+		value_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	return true
+
+
 func _double_capsule_size() -> Vector2:
 	var width := SLOT_PX * 2.0 - ORB_SLOT_MARGIN
 	var height := SLOT_PX - ORB_SLOT_MARGIN * 2.0
 	return Vector2(width, height)
 
 
-func _fit_icon_rect(icon: TextureRect, slot_count: float) -> void:
-	var width: float
-	var height: float
-	if data_type == DataType.DOUBLE:
-		var capsule := _double_capsule_size()
-		width = capsule.x
-		height = capsule.y
-	else:
-		var w_slots: float = maxf(slot_count, 0.25)
-		width = SLOT_PX * w_slots - ORB_SLOT_MARGIN * 2.0
-		height = width
-	width = clampf(width, 18.0, SLOT_PX * 4.0)
-	height = clampf(height, 18.0, SLOT_PX * 2.0)
+func _fit_visual_rect(node: Control, dims: Vector2) -> void:
+	var width := clampf(dims.x, 18.0, SLOT_PX * 4.0)
+	var height := clampf(dims.y, 18.0, SLOT_PX * 2.0)
 	var half_w: float = width * 0.5
 	var half_h: float = height * 0.5
-	icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	icon.offset_left = -half_w
-	icon.offset_top = -half_h
-	icon.offset_right = half_w
-	icon.offset_bottom = half_h
-	icon.custom_minimum_size = Vector2(width, height)
-	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	icon.stretch_mode = TextureRect.STRETCH_SCALE if data_type == DataType.DOUBLE else TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.z_index = 0
-	if value_label:
+	node.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	node.offset_left = -half_w
+	node.offset_top = -half_h
+	node.offset_right = half_w
+	node.offset_bottom = half_h
+	node.custom_minimum_size = Vector2(width, height)
+	if node is TextureRect:
+		var icon := node as TextureRect
+		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		var wide := width > height * 1.12
+		icon.stretch_mode = TextureRect.STRETCH_SCALE if wide else TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	node.z_index = 0
+	if value_label and data_type != DataType.DOUBLE:
 		value_label.z_index = 1
 		value_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 
 
-func _orb_draw_side() -> float:
+func _orb_label_fit_size() -> Vector2:
 	var cr = value_label.get_parent() if value_label else null
 	if cr is ColorRect and cr.size.x > 1.0:
-		if data_type == DataType.DOUBLE:
-			return mini(cr.size.x, cr.size.y)
-		return cr.size.x
-	return SLOT_PX - ORB_SLOT_MARGIN * 2.0
+		return cr.size
+	var fallback := SLOT_PX - ORB_SLOT_MARGIN * 2.0
+	return Vector2(fallback, fallback)
 
 
-func _orb_font_size(text: String, side: float) -> int:
-	var base: int = 14 if side < 36.0 else (16 if side < 52.0 else 20)
-	var char_count: int = maxi(text.length(), 1)
+func _orb_font_size(text: String, width: float, height: float) -> int:
+	var char_count := maxi(text.length(), 1)
+	var short_side := minf(width, height)
+	var base: int = 15 if short_side < 34.0 else (17 if short_side < 46.0 else 18)
 	if char_count <= 3:
 		return base
-	# Largura útil ~85% do diâmetro; ~0.55 px por caractere por ponto de fonte.
-	var fitted: int = clampi(int(side * 0.85 / (char_count * 0.55)), 9, base)
-	if char_count == 4:
-		return mini(base, maxi(fitted, 13))
-	if char_count == 5:
-		return mini(base, maxi(fitted, 11))
-	return fitted
+	var by_width := int(width * 0.9 / (char_count * 0.5))
+	var by_height := int(height * 0.72)
+	return clampi(mini(by_width, by_height), 10, base)
 
 
 func _apply_label_fit() -> void:
 	if not value_label:
 		return
-	var side: float = _orb_draw_side()
+	var dims := _orb_label_fit_size()
 	var fs: int
 	if data_type == DataType.OPERATOR:
 		fs = 22 if operator.length() <= 2 else 13
-		fs = mini(fs, _orb_font_size(value_label.text, side))
+		fs = mini(fs, _orb_font_size(value_label.text, dims.x, dims.y))
 	else:
-		fs = _orb_font_size(value_label.text, side)
+		fs = _orb_font_size(value_label.text, dims.x, dims.y)
 	value_label.add_theme_font_size_override("font_size", fs)
 	var outline: int = 2 if fs <= 12 else 3
 	value_label.add_theme_constant_override("outline_size", outline)
 
 
-func _resize_visual(color_rect, slot_count: float) -> void:
-	var width: float
-	var height: float
-	if data_type == DataType.DOUBLE:
-		var capsule := _double_capsule_size()
-		width = capsule.x
-		height = capsule.y
-	else:
-		var side: float = clampf(SLOT_PX * maxf(slot_count, 0.25) - ORB_SLOT_MARGIN * 2.0, 18.0, SLOT_PX * 4.0)
-		width = side
-		height = side
-		if data_type == DataType.BOOLEAN or data_type == DataType.FP8:
-			width = SLOT_PX * 0.5 - 4.0
-			height = width
-		elif data_type == DataType.SHORT_INT or data_type == DataType.FP16:
-			width = SLOT_PX * 0.5 - 4.0
-			height = width
-		elif data_type == DataType.OPERATOR:
-			width = SLOT_PX - ORB_SLOT_MARGIN * 2.0
-			height = width
-
+func _resize_visual(color_rect, dims: Vector2) -> void:
+	var width := dims.x
+	var height := dims.y
 	if color_rect and color_rect is ColorRect:
 		color_rect.position = Vector2(-width * 0.5, -height * 0.5)
 		color_rect.size = Vector2(width, height)

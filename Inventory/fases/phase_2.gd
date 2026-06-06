@@ -203,7 +203,7 @@ func _create_calculator_ui():
 	
 	var hbox = HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 10)
+	hbox.add_theme_constant_override("separation", 6)
 	vbox.add_child(hbox)
 	
 	var c1 = CenterContainer.new()
@@ -219,6 +219,7 @@ func _create_calculator_ui():
 	calc_op_btn.add_theme_font_size_override("font_size", 24)
 	calc_op_btn.pressed.connect(func():
 		calc_op_btn.text = "-" if calc_op_btn.text == "+" else "+"
+		_clear_calc_result()
 	)
 	hbox.add_child(calc_op_btn)
 	
@@ -229,10 +230,25 @@ func _create_calculator_ui():
 	c2.add_child(calc_slot_2)
 	hbox.add_child(c2)
 	
-	calc_slot_1.slot_entered.connect(_on_slot_entered)
-	calc_slot_1.slot_exited.connect(_on_slot_exited)
-	calc_slot_2.slot_entered.connect(_on_slot_entered)
-	calc_slot_2.slot_exited.connect(_on_slot_exited)
+	var eq_lbl = Label.new()
+	eq_lbl.text = "="
+	eq_lbl.custom_minimum_size = Vector2(24, 40)
+	eq_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	eq_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	eq_lbl.add_theme_font_size_override("font_size", 24)
+	hbox.add_child(eq_lbl)
+	
+	var c3 = CenterContainer.new()
+	c3.custom_minimum_size = Vector2(64, 64)
+	calc_slot_result = preload("res://Inventory/slots/slot.tscn").instantiate()
+	calc_slot_result.slot_ID = 904
+	calc_slot_result.set_meta("is_calc_result", true)
+	c3.add_child(calc_slot_result)
+	hbox.add_child(c3)
+	
+	for calc_slot in [calc_slot_1, calc_slot_2, calc_slot_result]:
+		calc_slot.slot_entered.connect(_on_slot_entered)
+		calc_slot.slot_exited.connect(_on_slot_exited)
 	
 	var tools_container = VBoxContainer.new()
 	tools_container.name = "BottomToolsContainer"

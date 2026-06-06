@@ -22,6 +22,7 @@ var short_slot: TextureRect = null
 var boolean_slot: TextureRect = null
 var calc_slot_1: TextureRect = null
 var calc_slot_2 = null
+var calc_slot_result: TextureRect = null
 var calc_op_btn = null
 var inspect_slot: TextureRect = null
 
@@ -228,6 +229,8 @@ func _on_slot_entered(slot):
 	if slot == converter_slot:
 		can_place = true
 		_update_next_button_state()
+	elif slot == calc_slot_result:
+		can_place = false
 	elif slot == calc_slot_1 or slot == calc_slot_2:
 		can_place = slot.item_stored == null
 		if can_place:
@@ -288,32 +291,12 @@ func _place_item():
 		return
 		
 	if current_slot == calc_slot_1 or current_slot == calc_slot_2 or current_slot == inspect_slot:
-		if item_held.get_parent() != current_slot:
-			item_held.get_parent().remove_child(item_held)
-			current_slot.add_child(item_held)
-		
-		# Shrink DOUBLE visually while in calculator
-		if item_held.data_type == ItemRef.DataType.DOUBLE:
-			if item_held.has_method("_resize_visual"):
-				var color_rect = item_held.get_node_or_null("ColorRect")
-				if not color_rect:
-					color_rect = item_held.get_node_or_null("ValueLabel").get_parent()
-				if color_rect:
-					item_held._resize_visual(color_rect, 1)
-		
-		if item_held.has_method("snap_to_slot"):
-			item_held.snap_to_slot(current_slot)
-		else:
-			item_held.position = current_slot.size * 0.5
-		item_held.grid_anchor = current_slot
-		item_held.selected = false
-		current_slot.item_stored = item_held
-		current_slot.state = current_slot.States.TAKEN
+		if current_slot == calc_slot_1 or current_slot == calc_slot_2:
+			_clear_calc_result()
+		_mount_item_on_calc_slot(current_slot, item_held)
 		item_held = null
 		can_place = false
-		
 		_check_calculator()
-		
 		_update_bytes_label()
 		_update_hint()
 		return
@@ -348,17 +331,17 @@ func _pick_item():
 	elif slot == inspect_slot:
 		inspect_slot.state = inspect_slot.States.FREE
 		inspect_slot.item_stored = null
+	elif slot == calc_slot_result:
+		slot.state = slot.States.FREE
+		slot.item_stored = null
+		if item_held.has_method("restore_orb_layout"):
+			item_held.restore_orb_layout()
 	elif slot == calc_slot_1 or slot == calc_slot_2:
 		slot.state = slot.States.FREE
 		slot.item_stored = null
-		# Restore DOUBLE visual
-		if item_held.data_type == ItemRef.DataType.DOUBLE:
-			if item_held.has_method("_resize_visual"):
-				var color_rect = item_held.get_node_or_null("ColorRect")
-				if not color_rect:
-					color_rect = item_held.get_node_or_null("ValueLabel").get_parent()
-				if color_rect:
-					item_held._resize_visual(color_rect, 2)
+		_clear_calc_result()
+		if item_held.has_method("restore_orb_layout"):
+			item_held.restore_orb_layout()
 	elif backpack_grid and slot in backpack_grid.slots_array:
 		backpack_grid.remove_item(item_held)
 	elif pool_grid and slot in pool_grid.slots_array:
@@ -390,10 +373,35 @@ func _update_hint() -> void:
 		hint_label.visible = false
 	_update_next_button_state()
 
-func _check_calculator():
-	pass
-		
-	if calc_slot_1 and calc_slot_2 and calc_op_btn:
+func _clear_calc_result() -> void:
+	if calc_slot_result == null or calc_slot_result.item_stored == null:
+		return
+	var old = calc_slot_result.item_stored
+	calc_slot_result.item_stored = null
+	calc_slot_result.state = calc_slot_result.States.FREE
+	if is_instance_valid(old):
+		old.queue_free()
+
+
+func _mount_item_on_calc_slot(slot: TextureRect, item: Node) -> void:
+	if item.get_parent() != slot:
+		if item.get_parent():
+			item.get_parent().remove_child(item)
+		slot.add_child(item)
+	if item.has_method("shrink_orb_for_tool_slot"):
+		item.shrink_orb_for_tool_slot()
+	if item.has_method("snap_to_slot"):
+		item.snap_to_slot(slot)
+	else:
+		item.position = slot.size * 0.5
+	item.grid_anchor = slot
+	item.selected = false
+	slot.item_stored = item
+	slot.state = slot.States.TAKEN
+
+
+func _check_calculator() -> void:
+	if calc_slot_1 and calc_slot_2 and calc_op_btn and calc_slot_result:
 		if calc_slot_1.item_stored != null and calc_slot_2.item_stored != null:
 			var item1 = calc_slot_1.item_stored
 			var item2 = calc_slot_2.item_stored
@@ -433,9 +441,8 @@ func _check_calculator():
 			calc_slot_2.item_stored = null
 			calc_slot_2.state = calc_slot_2.States.FREE
 			
-			var new_item = preload("res://Inventory/Items/Item.tscn").instantiate()
-			add_child(new_item)
-			
+			_clear_calc_result()
+			var new_item: Node2D = preload("res://Inventory/Items/Item.tscn").instantiate()
 			var final_val = deg.degraded_value
 			if target_type == ItemRef.DataType.BOOLEAN:
 				new_item.set_value_by_type(final_val != 0, target_type)
@@ -445,7 +452,6 @@ func _check_calculator():
 				new_item.set_value_by_type(final_val, target_type)
 			
 			if target_type in [ItemRef.DataType.FP8, ItemRef.DataType.FP16]:
-				# Inherit the fp configuration from the phase/items
 				if item1.data_type == target_type:
 					new_item.fp_exp_bits = item1.fp_exp_bits
 					new_item.fp_mant_bits = item1.fp_mant_bits
@@ -455,15 +461,11 @@ func _check_calculator():
 			
 			if new_item.has_method("update_label_display"):
 				new_item.update_label_display()
-			
-			new_item.selected = true
-			item_held = new_item
-			item_held.global_position = get_global_mouse_position()
-			_wire_orb(item_held)
-			
-			var tween = create_tween()
+			_mount_item_on_calc_slot(calc_slot_result, new_item)
+			_wire_orb(new_item)
 			new_item.scale = Vector2(0.2, 0.2)
-			tween.tween_property(new_item, "scale", Vector2(1.2, 1.2), 0.2)
+			var tween = create_tween()
+			tween.tween_property(new_item, "scale", Vector2(1.1, 1.1), 0.18)
 			tween.tween_property(new_item, "scale", Vector2(1.0, 1.0), 0.1)
 
 func _get_type_priority(item) -> int:
