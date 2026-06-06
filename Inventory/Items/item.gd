@@ -136,7 +136,7 @@ func get_item_info() -> Dictionary:
 		DataType.DOUBLE:
 			info.tipo = "DOUBLE (Precisão Dupla)"
 			info.valor = full_val
-			info.detalhes = "Valor double: " + full_val + "\nOcupa 2 slots"
+			info.detalhes = "Valor double: " + full_val + "\nOcupa 2 slots lado a lado (8 bytes)"
 		DataType.BINARY:
 			var decimal_val = binary_to_int(value_binary)
 			var explicacao = get_binary_explanation(value_binary)
@@ -404,42 +404,31 @@ func update_label_display():
 			value_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		DataType.INT:
 			value_label.add_theme_color_override("font_color", Color.BLUE)
-			value_label.add_theme_font_size_override("font_size", 20)
 		DataType.FLOAT:
 			value_label.add_theme_color_override("font_color", Color.RED)
-			value_label.add_theme_font_size_override("font_size", 20)
 		DataType.BOOLEAN:
 			value_label.add_theme_color_override("font_color", Color.GREEN)
-			value_label.add_theme_font_size_override("font_size", 12)
 			slot_scale = 0.25
 		DataType.STRING:
 			value_label.add_theme_color_override("font_color", Color.YELLOW)
-			value_label.add_theme_font_size_override("font_size", 18)
 		DataType.DOUBLE:
 			value_label.add_theme_color_override("font_color", Color.MAGENTA)
-			value_label.add_theme_font_size_override("font_size", 16)
 			slot_scale = 2.0
 		DataType.BINARY:
 			value_label.add_theme_color_override("font_color", Color.LIME)
-			value_label.add_theme_font_size_override("font_size", 14)
 		DataType.SHORT_INT:
 			value_label.add_theme_color_override("font_color", Color.CYAN)
-			value_label.add_theme_font_size_override("font_size", 18)
 			slot_scale = 0.5
 		DataType.FP8:
 			value_label.add_theme_color_override("font_color", Color.VIOLET)
-			value_label.add_theme_font_size_override("font_size", 14)
 			slot_scale = 0.25
 		DataType.FP16:
 			value_label.add_theme_color_override("font_color", Color.GOLD)
-			value_label.add_theme_font_size_override("font_size", 16)
 			slot_scale = 0.5
 		DataType.RAW:
 			value_label.add_theme_color_override("font_color", Color.WHITE)
-			value_label.add_theme_font_size_override("font_size", 20)
 		_:
 			value_label.add_theme_color_override("font_color", Color.BLACK)
-			value_label.add_theme_font_size_override("font_size", 20)
 	if data_type == DataType.OPERATOR:
 		value_label.text = operator_display_label()
 	elif data_type == DataType.BINARY:
@@ -449,9 +438,9 @@ func update_label_display():
 	var has_orb_art := false
 	_resize_visual(color_rect, slot_scale)
 	has_orb_art = _apply_orb_sprite(slot_scale)
+	_apply_label_fit()
 	if has_orb_art and value_label:
 		value_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-		value_label.add_theme_constant_override("outline_size", 4)
 	if OrbValueFormat.should_compact(self):
 		value_label.tooltip_text = "Valor exato: " + OrbValueFormat.full_value_string(self)
 	else:
@@ -530,59 +519,143 @@ func _apply_orb_sprite(slot_count: float = 1.0) -> bool:
 	return tex != null
 
 
+func _double_capsule_size() -> Vector2:
+	var width := SLOT_PX * 2.0 - ORB_SLOT_MARGIN
+	var height := SLOT_PX - ORB_SLOT_MARGIN * 2.0
+	return Vector2(width, height)
+
+
 func _fit_icon_rect(icon: TextureRect, slot_count: float) -> void:
-	var w_slots: float = maxf(slot_count, 0.25)
-	var side: float = SLOT_PX * w_slots - ORB_SLOT_MARGIN * 2.0
-	side = clampf(side, 18.0, SLOT_PX * 4.0)
-	var half: float = side * 0.5
+	var width: float
+	var height: float
+	if data_type == DataType.DOUBLE:
+		var capsule := _double_capsule_size()
+		width = capsule.x
+		height = capsule.y
+	else:
+		var w_slots: float = maxf(slot_count, 0.25)
+		width = SLOT_PX * w_slots - ORB_SLOT_MARGIN * 2.0
+		height = width
+	width = clampf(width, 18.0, SLOT_PX * 4.0)
+	height = clampf(height, 18.0, SLOT_PX * 2.0)
+	var half_w: float = width * 0.5
+	var half_h: float = height * 0.5
 	icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	icon.offset_left = -half
-	icon.offset_top = -half
-	icon.offset_right = half
-	icon.offset_bottom = half
-	icon.custom_minimum_size = Vector2(side, side)
+	icon.offset_left = -half_w
+	icon.offset_top = -half_h
+	icon.offset_right = half_w
+	icon.offset_bottom = half_h
+	icon.custom_minimum_size = Vector2(width, height)
 	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.stretch_mode = TextureRect.STRETCH_SCALE if data_type == DataType.DOUBLE else TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.z_index = 0
 	if value_label:
 		value_label.z_index = 1
 		value_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-		value_label.add_theme_constant_override("outline_size", 3)
+
+
+func _orb_draw_side() -> float:
+	var cr = value_label.get_parent() if value_label else null
+	if cr is ColorRect and cr.size.x > 1.0:
+		if data_type == DataType.DOUBLE:
+			return mini(cr.size.x, cr.size.y)
+		return cr.size.x
+	return SLOT_PX - ORB_SLOT_MARGIN * 2.0
+
+
+func _orb_font_size(text: String, side: float) -> int:
+	var base: int = 14 if side < 36.0 else (16 if side < 52.0 else 20)
+	var char_count: int = maxi(text.length(), 1)
+	if char_count <= 3:
+		return base
+	# Largura útil ~85% do diâmetro; ~0.55 px por caractere por ponto de fonte.
+	var fitted: int = clampi(int(side * 0.85 / (char_count * 0.55)), 9, base)
+	if char_count == 4:
+		return mini(base, maxi(fitted, 13))
+	if char_count == 5:
+		return mini(base, maxi(fitted, 11))
+	return fitted
+
+
+func _apply_label_fit() -> void:
+	if not value_label:
+		return
+	var side: float = _orb_draw_side()
+	var fs: int
+	if data_type == DataType.OPERATOR:
+		fs = 22 if operator.length() <= 2 else 13
+		fs = mini(fs, _orb_font_size(value_label.text, side))
+	else:
+		fs = _orb_font_size(value_label.text, side)
+	value_label.add_theme_font_size_override("font_size", fs)
+	var outline: int = 2 if fs <= 12 else 3
+	value_label.add_theme_constant_override("outline_size", outline)
 
 
 func _resize_visual(color_rect, slot_count: float) -> void:
-	var side: float = clampf(SLOT_PX * maxf(slot_count, 0.25) - ORB_SLOT_MARGIN * 2.0, 18.0, SLOT_PX * 4.0)
-	var half: float = side * 0.5
-
-	if data_type == DataType.BOOLEAN or data_type == DataType.FP8:
-		side = SLOT_PX * 0.5 - 4.0
-		half = side * 0.5
-	elif data_type == DataType.SHORT_INT or data_type == DataType.FP16:
-		side = SLOT_PX * 0.5 - 4.0
-		half = side * 0.5
-	elif data_type == DataType.OPERATOR:
-		side = SLOT_PX - ORB_SLOT_MARGIN * 2.0
-		half = side * 0.5
+	var width: float
+	var height: float
+	if data_type == DataType.DOUBLE:
+		var capsule := _double_capsule_size()
+		width = capsule.x
+		height = capsule.y
+	else:
+		var side: float = clampf(SLOT_PX * maxf(slot_count, 0.25) - ORB_SLOT_MARGIN * 2.0, 18.0, SLOT_PX * 4.0)
+		width = side
+		height = side
+		if data_type == DataType.BOOLEAN or data_type == DataType.FP8:
+			width = SLOT_PX * 0.5 - 4.0
+			height = width
+		elif data_type == DataType.SHORT_INT or data_type == DataType.FP16:
+			width = SLOT_PX * 0.5 - 4.0
+			height = width
+		elif data_type == DataType.OPERATOR:
+			width = SLOT_PX - ORB_SLOT_MARGIN * 2.0
+			height = width
 
 	if color_rect and color_rect is ColorRect:
-		color_rect.position = Vector2(-half, -half)
-		color_rect.size = Vector2(side, side)
+		color_rect.position = Vector2(-width * 0.5, -height * 0.5)
+		color_rect.size = Vector2(width, height)
 
 	if value_label:
-		# Label usa anchors full-rect no ColorRect; só ajusta fonte (evita warning de layout).
 		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		var fs: int = 14 if side < 36.0 else (16 if side < 52.0 else 20)
-		value_label.add_theme_font_size_override("font_size", fs)
+
+func _double_spans_two_slots(anchor: TextureRect) -> bool:
+	if anchor == null or item_grids.size() < 2:
+		return false
+	var spans_right := false
+	for g in item_grids:
+		if int(g.x) >= 1:
+			spans_right = true
+			break
+	if not spans_right:
+		return false
+	var grid_parent := anchor.get_parent()
+	if grid_parent == null:
+		return false
+	for sibling in grid_parent.get_children():
+		if sibling == anchor or not (sibling is TextureRect):
+			continue
+		if int(sibling.slot_ID) == anchor.slot_ID + 1 and self in sibling.items_stored:
+			return true
+	return false
+
 
 ## Posição local para centralizar o orbe dentro do slot (pai = slot TextureRect).
 func position_in_slot(slot: TextureRect) -> Vector2:
 	if slot == null:
 		return Vector2.ZERO
-	var side: float = maxf(slot.size.x, SLOT_PX)
+	var anchor: TextureRect = slot
+	if grid_anchor is TextureRect:
+		anchor = grid_anchor
+	var side: float = maxf(anchor.size.x, SLOT_PX)
 	var center: Vector2 = Vector2(side, side) * 0.5
+	# DOUBLE na grade: cápsula centrada entre dois slots horizontais (8 bytes).
+	if data_type == DataType.DOUBLE and _double_spans_two_slots(anchor):
+		return center + Vector2(SLOT_PX * 0.5, 0)
 	# RAW, operador ou item único: sempre centralizado no slot.
-	if data_type == DataType.OPERATOR or data_type == DataType.RAW or _slot_item_count(slot) <= 1:
+	if data_type == DataType.OPERATOR or data_type == DataType.RAW or _slot_item_count(anchor) <= 1:
 		return center
 	var item_bytes: int = get_size_bytes() if has_method("get_size_bytes") else 4
 	if item_bytes >= 4:

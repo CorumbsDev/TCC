@@ -391,41 +391,6 @@ func _tutorial_intro_id() -> String:
 	return TutorialTexts.KEY_PHASE_BACKPACK
 
 
-func _pedagogy_extra_when_full() -> String:
-	if not backpack_grid:
-		return ""
-	var seen := {}
-	var parts: PackedStringArray = PackedStringArray()
-	var total := 0
-	for slot in backpack_grid.slots_array:
-		var it = slot.item_stored
-		if it == null or seen.has(it):
-			continue
-		seen[it] = true
-		var b: int = it.get_size_bytes() if it.has_method("get_size_bytes") else 1
-		total += b
-		parts.append("%s → %d byte(s)" % [_item_pedagogy_label(it), b])
-	if parts.is_empty():
-		return ""
-	var joined := ""
-	for i in range(parts.size()):
-		if i > 0:
-			joined += ", "
-		joined += parts[i]
-	return "Por que fecha? Cada item conta uma vez pelo seu tamanho em bytes: " + joined + ". Total = %d bytes." % total
-
-
-func _item_pedagogy_label(it: Node) -> String:
-	if it.has_method("get_item_info"):
-		var info: Dictionary = it.get_item_info()
-		var v = str(info.get("valor", "?"))
-		var t = str(info.get("tipo", ""))
-		return v + " (" + t + ")"
-	if it.has_method("get_value_as_string"):
-		return it.get_value_as_string()
-	return str(it)
-
-
 func _on_spawn_pressed():
 	if item_held != null:
 		return

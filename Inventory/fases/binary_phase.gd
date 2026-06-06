@@ -9,6 +9,7 @@ extends Control
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
 @onready var left_grid = $HBox/LeftPanel/MarginContainer/VBox/GridContainer
 @onready var target_slot = $HBox/RightPanel/MarginContainer/VBox/BinaryRow/TargetSlot
+@onready var feedback_info_bar = $HBox/RightPanel/MarginContainer/VBox/FeedbackInfoBar
 @onready var result_label = $HBox/RightPanel/MarginContainer/VBox/FeedbackInfoBar/MarginContainer/VBoxContainer/ResultLabel
 @onready var explanation_label = $HBox/RightPanel/MarginContainer/VBox/FeedbackInfoBar/MarginContainer/VBoxContainer/ExplanationLabel
 @onready var binary_display = $HBox/RightPanel/MarginContainer/VBox/BinaryDisplay
@@ -70,9 +71,26 @@ func _ready():
 	target_slot.slot_exited.connect(_on_slot_exited)
 	target_slot.item_changed.connect(_on_target_item_changed)
 	_update_binary_display(null)
+	_hide_instruction_panels()
 	call_deferred("_try_show_intro")
 	call_deferred("_relayout_all_bits")
 	call_deferred("_wire_bits_hover")
+
+
+func _hide_instruction_panels() -> void:
+	for path in [
+		"HBox/LeftPanel/MarginContainer/VBox/PhaseInfoBar",
+		"HBox/RightPanel/MarginContainer/VBox/IntroInfoBar",
+	]:
+		var panel := get_node_or_null(path) as Control
+		if panel:
+			panel.visible = false
+	if feedback_info_bar:
+		feedback_info_bar.visible = false
+	if result_label:
+		result_label.text = ""
+	if explanation_label:
+		explanation_label.text = ""
 
 
 func _relayout_all_bits() -> void:
@@ -159,17 +177,23 @@ func _on_target_item_changed(slot):
 	if slot != target_slot:
 		return
 	if slot.item_stored == null:
-		result_label.text = "Depois de soltar o orb, veja abaixo a conversão de binário para decimal."
-		explanation_label.text = ""
+		if feedback_info_bar:
+			feedback_info_bar.visible = false
+		if result_label:
+			result_label.text = ""
+		if explanation_label:
+			explanation_label.text = ""
 		_update_binary_display(null)
 		return
 	var item = slot.item_stored
 	var bit_str = item.value_binary if item.value_binary.length() == 1 else str(item.value)
-	var full_binary = BINARY_LEFT + bit_str + BINARY_RIGHT
-	var decimal = _binary_string_to_int(full_binary)
-	result_label.text = "Binário: %s = %d (decimal)" % [full_binary, decimal]
-	explanation_label.text = _binary_expansion_explanation(full_binary, decimal)
 	_update_binary_display(bit_str)
+	if feedback_info_bar:
+		feedback_info_bar.visible = true
+	if result_label:
+		result_label.text = "Objetivo concluído!"
+	if explanation_label:
+		explanation_label.text = ""
 	_refill_bits_if_empty()
 
 

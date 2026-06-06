@@ -4,6 +4,7 @@ extends RefCounted
 ## Rótulo compacto no orbe; valor exato e precisão no hover / popup / inspetor.
 
 const MAX_LABEL_CHARS := 7
+const ORB_FLOAT_DECIMALS := 2
 const LARGE_INT_THRESHOLD := 10_000
 const LARGE_FLOAT_ABS := 10_000.0
 const TINY_FLOAT_ABS := 0.0001
@@ -12,7 +13,7 @@ const ELLIPSIS := "..."
 
 static func _has_data_type(item: Node) -> bool:
 	# INT == 0 no enum; nunca usar "if not data_type".
-	return item != null and item is Object and item.has_method("get") and item.get("data_type") != null
+	return item != null and is_instance_valid(item) and item is Object and item.has_method("get") and item.get("data_type") != null
 
 
 static func compact_label_string(item: Node) -> String:
@@ -167,27 +168,35 @@ static func detail_lines(item: Node) -> PackedStringArray:
 
 static func _compact_for_type(item: Node) -> String:
 	var full: String = full_value_string(item)
-	if not should_compact(item):
-		return full
 	var dt: int = item.data_type
 	match dt:
 		item.DataType.INT:
+			if not should_compact(item):
+				return full
 			return _compact_int(item.value)
 		item.DataType.SHORT_INT:
+			if not should_compact(item):
+				return full
 			return _compact_int(item.value_short)
 		item.DataType.FLOAT, item.DataType.FP8, item.DataType.FP16, item.DataType.RAW:
-			return _compact_float(item.value_float)
+			return _label_float(item.value_float)
 		item.DataType.DOUBLE:
-			return _compact_float(item.value_double)
+			return _label_float(item.value_double)
 		item.DataType.STRING:
+			if not should_compact(item):
+				return full
 			if full.length() <= MAX_LABEL_CHARS:
 				return full
 			return "\"" + full.substr(1, 3) + ELLIPSIS
 		item.DataType.BINARY:
+			if not should_compact(item):
+				return full
 			if item.value_binary.length() <= MAX_LABEL_CHARS:
 				return item.value_binary
 			return item.value_binary.substr(0, 5) + ELLIPSIS
 		_:
+			if not should_compact(item):
+				return full
 			if full.length() <= MAX_LABEL_CHARS:
 				return full
 			return full.substr(0, MAX_LABEL_CHARS - 1) + ELLIPSIS
@@ -218,7 +227,7 @@ static func _float_has_representation_noise(v: float) -> bool:
 	var parts := raw.split(".")
 	if parts.size() < 2:
 		return false
-	return parts[1].length() > 5
+	return parts[1].length() > ORB_FLOAT_DECIMALS
 
 
 static func _float_needs_compact(v: float) -> bool:
@@ -239,7 +248,7 @@ static func _float_full(v: float) -> String:
 	return String.num(v, 12).strip_edges()
 
 
-static func _compact_float(v: float) -> String:
+static func _label_float(v: float) -> String:
 	if is_nan(v):
 		return "nan"
 	if is_inf(v):
@@ -248,15 +257,15 @@ static func _compact_float(v: float) -> String:
 		return "0"
 	var av: float = absf(v)
 	if av >= 1_000_000.0:
-		return _format_sci(v, 3)
+		return _format_sci(v, ORB_FLOAT_DECIMALS)
 	if av >= LARGE_FLOAT_ABS:
-		return _format_sci(v, 4)
+		return _format_sci(v, ORB_FLOAT_DECIMALS)
 	if av < TINY_FLOAT_ABS:
-		return _format_sci(v, 2)
-	var s: String = _format_compact_decimal(v, 4)
+		return _format_sci(v, ORB_FLOAT_DECIMALS)
+	var s: String = _format_compact_decimal(v, ORB_FLOAT_DECIMALS)
 	if s.length() <= MAX_LABEL_CHARS:
 		return s
-	return _format_sci(v, 3)
+	return _format_sci(v, ORB_FLOAT_DECIMALS)
 
 
 static func _compact_int(v: int) -> String:

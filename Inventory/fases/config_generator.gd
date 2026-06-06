@@ -23,8 +23,8 @@ static func generate_knapsack_config(
 	config.capacity_bytes = config.backpack_slot_count
 	config.pool_slot_count = clampi(pool_slots, 8, 40)
 	config.grid_columns = clampi(grid_cols, 2, 8)
-	config.spawn_int_min = clampi(int_min, -99, 99)
-	config.spawn_int_max = clampi(int_max, -99, 99)
+	config.spawn_int_min = int_min
+	config.spawn_int_max = int_max
 	config.initial_backpack_csv = initial_csv
 	config.min_bytes_random_pool = 0
 	

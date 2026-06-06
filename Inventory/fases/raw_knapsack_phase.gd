@@ -2,7 +2,6 @@ extends "res://Inventory/fases/phase_base.gd"
 
 const GRID_SCENE := preload("res://Inventory/InventoryGrid.tscn")
 const ITEM_SCENE := preload("res://Inventory/Items/Item.tscn")
-const ItemRef = preload("res://Inventory/Items/item.gd")
 
 var config: RawKnapsackPhaseConfig
 var type_station_slots: Array = []
@@ -240,27 +239,17 @@ func _on_custom_slot_entered(slot) -> void:
 		return
 	if slot.has_meta("is_type_station"):
 		can_place = slot.get_meta("item_stored") == null
-		if can_place:
-			hint_label.text = "Solte para tipar como " + str(slot.get_meta("box_name")) + "."
 	elif slot in backpack_grid.slots_array:
 		if item_held.data_type == ItemRef.DataType.RAW:
 			can_place = false
-			hint_label.text = "Tipagem obrigatória! Solte em Int ou Float antes da mochila."
 		else:
 			can_place = backpack_grid.can_place_item(item_held, slot)
 			var need: int = item_held.get_size_bytes() if item_held.has_method("get_size_bytes") else 1
 			var used := backpack_grid.total_bytes_used()
 			if can_place and used + need > backpack_grid.capacity_bytes:
 				can_place = false
-				hint_label.text = "Não cabe! Este tipo usa %d byte(s). Restam %d." % [need, config.capacity_bytes - used]
-			elif can_place:
-				hint_label.text = "Solte na mochila."
-			else:
-				hint_label.text = "Slot ocupado ou sem espaço contíguo na mochila."
 	elif slot in pool_grid.slots_array:
 		can_place = slot.item_stored == null
-		if can_place:
-			hint_label.text = "Devolver ao pool."
 
 
 func _on_custom_slot_exited(_slot) -> void:
@@ -381,7 +370,6 @@ func _pick_item_custom() -> void:
 
 
 func _show_raw_backpack_blocked_feedback() -> void:
-	hint_label.text = "Tipagem obrigatória! Solte em Int ou Float antes da mochila."
 	_show_not_ready_modal(
 		"Este valor ainda não tem tipo!\n\n" +
 		"1) Arraste para uma estação (Int, Float, …)\n" +
@@ -471,30 +459,19 @@ func _update_bytes_label() -> void:
 	var used := backpack_grid.total_bytes_used()
 	var cap := config.capacity_bytes
 	bytes_label.text = "Mochila: %d / %d bytes" % [used, cap]
-	if used >= cap:
-		bytes_label.text += " — Cheia!"
-		bytes_label.add_theme_color_override("font_color", Color.LIGHT_GREEN)
-	elif used > cap:
-		bytes_label.add_theme_color_override("font_color", Color.RED)
-	else:
-		bytes_label.add_theme_color_override("font_color", Color.WHITE)
+	_update_hint()
 
 
 func _update_hint() -> void:
 	if not hint_label:
 		return
-	var used := backpack_grid.total_bytes_used() if backpack_grid else 0
-	if pending_raw_count > 0:
-		hint_label.text = (
-			"1) Pegue um RAW do pool.\n"
-			+ "2) Tipifique numa estação.\n"
-			+ "3) Coloque na mochila.\n"
-			+ "(%d RAW no pool)" % pending_raw_count
-		)
-	elif used < config.capacity_bytes:
-		hint_label.text = "Todos tipados! Encha a mochila até %d bytes." % config.capacity_bytes
+	if is_phase_success():
+		hint_label.text = "Objetivo concluído!"
+		hint_label.visible = true
 	else:
-		hint_label.text = "Objetivo concluído! Pode avançar."
+		hint_label.text = ""
+		hint_label.visible = false
+	_update_next_button_state()
 
 
 func is_phase_success() -> bool:
@@ -509,7 +486,3 @@ func is_phase_success() -> bool:
 			if it and it.data_type == ItemRef.DataType.RAW:
 				return false
 	return true
-
-
-func _pedagogy_extra_when_full() -> String:
-	return "\nNesta fase você tipou valores RAW e encaixou na mochila respeitando bytes por tipo."

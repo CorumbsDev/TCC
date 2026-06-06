@@ -241,8 +241,10 @@ layout_mode = 2
 text = "Int Mínimo:"
 [node name="SpinMin" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2"]
 layout_mode = 2
-min_value = -99.0
-max_value = 99.0
+min_value = -2.147483648e+09
+max_value = 2.147483647e+09
+allow_lesser = true
+allow_greater = true
 value = 0.0
 
 [node name="LblMax" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2"]
@@ -250,8 +252,10 @@ layout_mode = 2
 text = "Int Máximo:"
 [node name="SpinMax" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2"]
 layout_mode = 2
-min_value = -99.0
-max_value = 99.0
+min_value = -2.147483648e+09
+max_value = 2.147483647e+09
+allow_lesser = true
+allow_greater = true
 value = 10.0
 
 [node name="LblCSV" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]

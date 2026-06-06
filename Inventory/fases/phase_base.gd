@@ -1,5 +1,7 @@
 extends Control
 
+const ItemRef = preload("res://Inventory/Items/item.gd")
+
 @onready var btn_voltar = $TopBar/BtnVoltar
 @onready var btn_help = get_node_or_null("TopBar/BtnHelp")
 @onready var btn_proxima = get_node_or_null("TopBar/BtnProxima")
@@ -28,6 +30,7 @@ var current_slot = null
 var can_place := false
 var inspector_modal = null
 var _orb_hover_bar: OrbHoverBar = null
+var _converter_syncing: bool = false
 
 
 func _ready():
@@ -224,40 +227,23 @@ func _on_slot_entered(slot):
 		return
 	if slot == converter_slot:
 		can_place = true
-		var t_type = converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
-		hint_label.text = "Solte o orbe aqui para convertê-lo para " + t_type + "."
 		_update_next_button_state()
 	elif slot == calc_slot_1 or slot == calc_slot_2:
-		if slot.item_stored == null:
-			can_place = true
-			hint_label.text = "Solte o orbe na calculadora."
+		can_place = slot.item_stored == null
+		if can_place:
 			_update_next_button_state()
-		else:
-			can_place = false
 	elif slot == inspect_slot:
-		if slot.item_stored == null:
-			can_place = true
-			hint_label.text = "Slot de inspeção."
+		can_place = slot.item_stored == null
+		if can_place:
 			_update_next_button_state()
-		else:
-			can_place = false
 	elif backpack_grid and slot in backpack_grid.slots_array:
 		can_place = backpack_grid.can_place_item(item_held, slot)
 		var need = item_held.get_size_bytes() if item_held.has_method("get_size_bytes") else 1
 		var used = backpack_grid.total_bytes_used()
 		if can_place and used + need > backpack_grid.capacity_bytes:
 			can_place = false
-			hint_label.text = "Não cabe! Este item usa %d byte(s). Falta(m) %d byte(s)." % [need, backpack_grid.capacity_bytes - used]
-		elif not can_place:
-			hint_label.text = "Slots ocupados ou não há espaço contíguo."
-		else:
-			_update_hint()
 	elif pool_grid and slot in pool_grid.slots_array:
 		can_place = pool_grid.can_place_item(item_held, slot)
-		if not can_place:
-			hint_label.text = "Pool: slots ocupados ou item não cabe nos slots livres."
-		else:
-			_update_hint()
 	else:
 		can_place = false
 
@@ -288,56 +274,13 @@ func _process(_delta):
 func _place_item():
 	if not can_place or not current_slot:
 		return
+	if not item_held or not is_instance_valid(item_held):
+		return
 		
 	if current_slot == converter_slot:
-		var target_type_str = converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
-		var val_to_convert = item_held.value_float if item_held.data_type in [item_held.DataType.FLOAT, item_held.DataType.DOUBLE, item_held.DataType.FP8, item_held.DataType.FP16] else float(item_held.value)
-		
-		var deg = _check_degradation(target_type_str, val_to_convert)
-		if deg.has_warning:
-			var dlg = ConfirmationDialog.new()
-			dlg.dialog_text = deg.message + "\n\nDeseja converter assim mesmo?"
-			dlg.title = "Aviso de Degradação"
-			dlg.ok_button_text = "Prosseguir"
-			dlg.cancel_button_text = "Cancelar"
-			add_child(dlg)
-			dlg.popup_centered(Vector2(450, 150))
-			var res = await _wait_for_dialog(dlg)
-			dlg.queue_free()
-			if not res:
-				return
-		
-		var final_val = deg.degraded_value
-		if target_type_str == "Int":
-			item_held.set_value_by_type(int(final_val), item_held.DataType.INT)
-		elif target_type_str == "Float":
-			item_held.set_value_by_type(final_val, item_held.DataType.FLOAT)
-		elif target_type_str == "Double":
-			item_held.set_value_by_type(final_val, item_held.DataType.DOUBLE)
-		elif target_type_str == "Short":
-			item_held.set_value_by_type(int(final_val), item_held.DataType.SHORT_INT)
-		elif target_type_str == "Boolean":
-			item_held.set_value_by_type(final_val != 0, item_held.DataType.BOOLEAN)
-		elif target_type_str == "FP8":
-			item_held.set_value_by_type(final_val, item_held.DataType.FP8)
-		elif target_type_str == "FP16":
-			item_held.set_value_by_type(final_val, item_held.DataType.FP16)
-		
-		if item_held.has_method("update_label_display"):
-			item_held.update_label_display()
-		
-		if item_held.get_parent() != converter_slot:
-			item_held.get_parent().remove_child(item_held)
-			converter_slot.add_child(item_held)
-		
-		if item_held.has_method("snap_to_slot"):
-			item_held.snap_to_slot(converter_slot)
-		else:
-			item_held.position = converter_slot.size * 0.5
-		item_held.grid_anchor = converter_slot
-		item_held.selected = false
-		converter_slot.item_stored = item_held
-		converter_slot.state = converter_slot.States.TAKEN
+		var placed := await _convert_item_with_dialog(item_held, true)
+		if not placed:
+			return
 		item_held = null
 		can_place = false
 		_update_bytes_label()
@@ -350,7 +293,7 @@ func _place_item():
 			current_slot.add_child(item_held)
 		
 		# Shrink DOUBLE visually while in calculator
-		if item_held.data_type == item_held.DataType.DOUBLE:
+		if item_held.data_type == ItemRef.DataType.DOUBLE:
 			if item_held.has_method("_resize_visual"):
 				var color_rect = item_held.get_node_or_null("ColorRect")
 				if not color_rect:
@@ -388,7 +331,12 @@ func _place_item():
 
 func _pick_item():
 	var slot = current_slot
+	if slot == null or slot.item_stored == null:
+		return
 	item_held = slot.item_stored
+	if not is_instance_valid(item_held):
+		item_held = null
+		return
 	item_held.selected = true
 	item_held.get_parent().remove_child(item_held)
 	add_child(item_held)
@@ -404,7 +352,7 @@ func _pick_item():
 		slot.state = slot.States.FREE
 		slot.item_stored = null
 		# Restore DOUBLE visual
-		if item_held.data_type == item_held.DataType.DOUBLE:
+		if item_held.data_type == ItemRef.DataType.DOUBLE:
 			if item_held.has_method("_resize_visual"):
 				var color_rect = item_held.get_node_or_null("ColorRect")
 				if not color_rect:
@@ -416,6 +364,8 @@ func _pick_item():
 	elif pool_grid and slot in pool_grid.slots_array:
 		pool_grid.remove_item(item_held)
 	_wire_orb(item_held)
+	if converter_option_btn:
+		_revert_converter_dropdown(item_held.data_type)
 	_update_bytes_label()
 	_update_hint()
 
@@ -425,35 +375,20 @@ func _update_bytes_label():
 		return
 	var used = backpack_grid.total_bytes_used()
 	var cap = backpack_grid.capacity_bytes
-	bytes_label.text = "Mochila (desafio): %d / %d bytes" % [used, cap]
-	if used >= cap:
-		bytes_label.text += " — Cheia!"
-	# Atualiza estado do botão Próxima quando bytes mudam
+	bytes_label.text = "Mochila: %d / %d bytes" % [used, cap]
 	_update_next_button_state()
 
 
-func _update_hint():
-	if not backpack_grid:
+func _update_hint() -> void:
+	if not hint_label:
 		return
-	var used = backpack_grid.total_bytes_used()
-	var cap = backpack_grid.capacity_bytes
-	var free = cap - used
-	if free <= 0:
-		hint_label.text = _hint_full_message()
-	elif free == 1:
-		hint_label.text = "Falta 1 byte. Clique em um INT do pool e arraste para o slot vazio da mochila."
+	if is_phase_success():
+		hint_label.text = "Objetivo concluído!"
+		hint_label.visible = true
 	else:
-		hint_label.text = "Faltam %d bytes. Use INTs do pool na mochila até fechar a capacidade." % free
-	# Atualiza estado do botão Próxima quando hints mudam
+		hint_label.text = ""
+		hint_label.visible = false
 	_update_next_button_state()
-
-
-func _hint_full_message() -> String:
-	var base := "Mochila cheia! Objetivo concluído."
-	var extra := _pedagogy_extra_when_full()
-	if extra.is_empty():
-		return base
-	return base + "\n\n" + extra
 
 func _check_calculator():
 	pass
@@ -469,7 +404,7 @@ func _check_calculator():
 			var p1 = _get_type_priority(item1)
 			var p2 = _get_type_priority(item2)
 			var target_type = item1.data_type if p1 >= p2 else item2.data_type
-			var target_type_str = _get_type_string(target_type, item1)
+			var target_type_str = _get_type_string(target_type)
 			
 			var result_val = 0.0
 			if calc_op_btn.text == "+":
@@ -502,14 +437,14 @@ func _check_calculator():
 			add_child(new_item)
 			
 			var final_val = deg.degraded_value
-			if target_type == new_item.DataType.BOOLEAN:
+			if target_type == ItemRef.DataType.BOOLEAN:
 				new_item.set_value_by_type(final_val != 0, target_type)
-			elif target_type in [new_item.DataType.INT, new_item.DataType.SHORT_INT]:
+			elif target_type in [ItemRef.DataType.INT, ItemRef.DataType.SHORT_INT]:
 				new_item.set_value_by_type(int(final_val), target_type)
 			else:
 				new_item.set_value_by_type(final_val, target_type)
 			
-			if target_type in [new_item.DataType.FP8, new_item.DataType.FP16]:
+			if target_type in [ItemRef.DataType.FP8, ItemRef.DataType.FP16]:
 				# Inherit the fp configuration from the phase/items
 				if item1.data_type == target_type:
 					new_item.fp_exp_bits = item1.fp_exp_bits
@@ -531,89 +466,169 @@ func _check_calculator():
 			tween.tween_property(new_item, "scale", Vector2(1.2, 1.2), 0.2)
 			tween.tween_property(new_item, "scale", Vector2(1.0, 1.0), 0.1)
 
-func _pedagogy_extra_when_full() -> String:
-	return ""
-
 func _get_type_priority(item) -> int:
-	var dt = item.data_type
-	if dt == item.DataType.DOUBLE: return 100
-	if dt == item.DataType.FLOAT: return 90
-	if dt == item.DataType.FP16: return 80
-	if dt == item.DataType.FP8: return 70
-	if dt == item.DataType.INT: return 60
-	if dt == item.DataType.SHORT_INT: return 50
-	if dt == item.DataType.BOOLEAN: return 40
+	if item == null:
+		return 0
+	return _priority_for_data_type(item.data_type)
+
+
+func _priority_for_data_type(dt: int) -> int:
+	if dt == ItemRef.DataType.DOUBLE: return 100
+	if dt == ItemRef.DataType.FLOAT: return 90
+	if dt == ItemRef.DataType.FP16: return 80
+	if dt == ItemRef.DataType.FP8: return 70
+	if dt == ItemRef.DataType.INT: return 60
+	if dt == ItemRef.DataType.SHORT_INT: return 50
+	if dt == ItemRef.DataType.BOOLEAN: return 40
 	return 0
 
-func _get_type_string(dt, item) -> String:
-	if dt == item.DataType.DOUBLE: return "Double"
-	if dt == item.DataType.FLOAT: return "Float"
-	if dt == item.DataType.FP16: return "FP16"
-	if dt == item.DataType.FP8: return "FP8"
-	if dt == item.DataType.INT: return "Int"
-	if dt == item.DataType.SHORT_INT: return "Short"
-	if dt == item.DataType.BOOLEAN: return "Boolean"
+
+func _get_type_string(dt: int) -> String:
+	if dt == ItemRef.DataType.DOUBLE: return "Double"
+	if dt == ItemRef.DataType.FLOAT: return "Float"
+	if dt == ItemRef.DataType.FP16: return "FP16"
+	if dt == ItemRef.DataType.FP8: return "FP8"
+	if dt == ItemRef.DataType.INT: return "Int"
+	if dt == ItemRef.DataType.SHORT_INT: return "Short"
+	if dt == ItemRef.DataType.BOOLEAN: return "Boolean"
 	return "Float"
+
+
+func _converter_target_item() -> Node:
+	if converter_slot and converter_slot.item_stored:
+		return converter_slot.item_stored
+	if item_held and is_instance_valid(item_held):
+		return item_held
+	return null
+
+
+func _value_for_conversion(item: Node) -> float:
+	if item.data_type in [ItemRef.DataType.FLOAT, ItemRef.DataType.DOUBLE, ItemRef.DataType.FP8, ItemRef.DataType.FP16]:
+		return item.value_float
+	return float(item.value)
+
+
+func _apply_fp_bits_from_config(item: Node, kind: String) -> void:
+	var cfg = get("config")
+	if cfg == null or item == null:
+		return
+	if kind == "fp8":
+		item.fp_exp_bits = cfg.fp8_exp_bits
+		item.fp_mant_bits = cfg.fp8_mant_bits
+	elif kind == "fp16":
+		item.fp_exp_bits = cfg.fp16_exp_bits
+		item.fp_mant_bits = cfg.fp16_mant_bits
+
+
+func _apply_target_type_to_item(item: Node, target_type_str: String, final_val: float) -> void:
+	if item == null or not is_instance_valid(item):
+		return
+	match target_type_str:
+		"Int":
+			item.set_value_by_type(int(final_val), ItemRef.DataType.INT)
+		"Float":
+			item.set_value_by_type(final_val, ItemRef.DataType.FLOAT)
+		"Double":
+			item.set_value_by_type(final_val, ItemRef.DataType.DOUBLE)
+		"Short":
+			item.set_value_by_type(int(final_val), ItemRef.DataType.SHORT_INT)
+		"Boolean":
+			item.set_value_by_type(final_val != 0, ItemRef.DataType.BOOLEAN)
+		"FP8":
+			item.set_value_by_type(final_val, ItemRef.DataType.FP8)
+			_apply_fp_bits_from_config(item, "fp8")
+		"FP16":
+			item.set_value_by_type(final_val, ItemRef.DataType.FP16)
+			_apply_fp_bits_from_config(item, "fp16")
+	if item.has_method("update_label_display"):
+		item.update_label_display()
+
+
+func _revert_converter_dropdown(dt: int) -> void:
+	if not converter_option_btn:
+		return
+	var revert_str := _get_type_string(dt)
+	_converter_syncing = true
+	for i in range(converter_option_btn.item_count):
+		if converter_option_btn.get_item_text(i) == revert_str:
+			converter_option_btn.select(i)
+			break
+	_converter_syncing = false
+
+
+func _mount_item_on_converter(item: Node) -> void:
+	if item == null or not is_instance_valid(item) or converter_slot == null:
+		return
+	var parent = item.get_parent()
+	if parent != converter_slot:
+		if parent:
+			parent.remove_child(item)
+		converter_slot.add_child(item)
+	if item.has_method("snap_to_slot"):
+		item.snap_to_slot(converter_slot)
+	else:
+		item.position = converter_slot.size * 0.5
+	item.grid_anchor = converter_slot
+	item.selected = false
+	converter_slot.item_stored = item
+	converter_slot.state = converter_slot.States.TAKEN
+
+
+func _convert_item_with_dialog(item: Node, mount_on_converter: bool) -> bool:
+	if item == null or not is_instance_valid(item):
+		return false
+	var target_type_str := converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
+	var deg := _check_degradation(target_type_str, _value_for_conversion(item))
+	if deg.has_warning:
+		var dlg := ConfirmationDialog.new()
+		dlg.dialog_text = deg.message + "\n\nDeseja converter assim mesmo?"
+		dlg.title = "Aviso de Degradação"
+		dlg.ok_button_text = "Prosseguir"
+		dlg.cancel_button_text = "Cancelar"
+		add_child(dlg)
+		dlg.popup_centered(Vector2(450, 150))
+		var res := await _wait_for_dialog(dlg)
+		dlg.queue_free()
+		if not res:
+			return false
+	if not is_instance_valid(item):
+		return false
+	_apply_target_type_to_item(item, target_type_str, deg.degraded_value)
+	if mount_on_converter:
+		_mount_item_on_converter(item)
+	return true
 
 func is_phase_success() -> bool:
 	# Padrão: permitir avanço. Subclasses (ex: mochila) podem sobrescrever.
 	return true
 
 func _on_converter_type_changed(_index):
-	if converter_slot and converter_slot.item_stored:
-		var item = converter_slot.item_stored
-		
-		var target_type_str = converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
-		var val_to_convert = item.value_float if item.data_type in [item.DataType.FLOAT, item.DataType.DOUBLE, item.DataType.FP8, item.DataType.FP16] else float(item.value)
-		
-		var deg = _check_degradation(target_type_str, val_to_convert)
-		if deg.has_warning:
-			var dlg = ConfirmationDialog.new()
-			dlg.dialog_text = deg.message + "\n\nDeseja prosseguir mesmo assim?"
-			dlg.title = "Aviso de Degradação de Dados"
-			dlg.ok_button_text = "Prosseguir"
-			dlg.cancel_button_text = "Cancelar"
-			add_child(dlg)
-			dlg.popup_centered(Vector2(450, 150))
-			
-			var res = await _wait_for_dialog(dlg)
-			dlg.queue_free()
-			if not res:
-				var revert_str = "Int"
-				if item.data_type == item.DataType.FLOAT: revert_str = "Float"
-				elif item.data_type == item.DataType.DOUBLE: revert_str = "Double"
-				elif item.data_type == item.DataType.SHORT_INT: revert_str = "Short"
-				elif item.data_type == item.DataType.BOOLEAN: revert_str = "Boolean"
-				elif item.data_type == item.DataType.FP8: revert_str = "FP8"
-				elif item.data_type == item.DataType.FP16: revert_str = "FP16"
-				
-				for i in range(converter_option_btn.item_count):
-					if converter_option_btn.get_item_text(i) == revert_str:
-						converter_option_btn.select(i)
-						break
-				return
-		
-		var final_val = deg.degraded_value
-		if target_type_str == "Int":
-			item.set_value_by_type(int(final_val), item.DataType.INT)
-		elif target_type_str == "Float":
-			item.set_value_by_type(final_val, item.DataType.FLOAT)
-		elif target_type_str == "Double":
-			item.set_value_by_type(final_val, item.DataType.DOUBLE)
-		elif target_type_str == "Short":
-			item.set_value_by_type(int(final_val), item.DataType.SHORT_INT)
-		elif target_type_str == "Boolean":
-			item.set_value_by_type(final_val != 0, item.DataType.BOOLEAN)
-		elif target_type_str == "FP8":
-			item.set_value_by_type(final_val, item.DataType.FP8)
-		elif target_type_str == "FP16":
-			item.set_value_by_type(final_val, item.DataType.FP16)
-			
-		if item.has_method("update_label_display"):
-			item.update_label_display()
-		
-		_update_bytes_label()
-		_update_hint()
+	if _converter_syncing:
+		return
+	var item := _converter_target_item()
+	if item == null or not is_instance_valid(item):
+		return
+	var previous_dt: int = item.data_type
+	var target_type_str := converter_option_btn.get_item_text(converter_option_btn.selected) if converter_option_btn else "Float"
+	var deg := _check_degradation(target_type_str, _value_for_conversion(item))
+	if deg.has_warning:
+		var dlg := ConfirmationDialog.new()
+		dlg.dialog_text = deg.message + "\n\nDeseja prosseguir mesmo assim?"
+		dlg.title = "Aviso de Degradação de Dados"
+		dlg.ok_button_text = "Prosseguir"
+		dlg.cancel_button_text = "Cancelar"
+		add_child(dlg)
+		dlg.popup_centered(Vector2(450, 150))
+		var res := await _wait_for_dialog(dlg)
+		dlg.queue_free()
+		if not res:
+			_revert_converter_dropdown(previous_dt)
+			return
+	if not is_instance_valid(item):
+		return
+	_apply_target_type_to_item(item, target_type_str, deg.degraded_value)
+	_update_bytes_label()
+	_update_hint()
 
 func _check_degradation(target_type_str: String, val_to_convert: float) -> Dictionary:
 	var result = {"has_warning": false, "message": "", "degraded_value": val_to_convert}

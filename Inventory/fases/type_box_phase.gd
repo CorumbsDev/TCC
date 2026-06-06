@@ -1,7 +1,5 @@
 extends "res://Inventory/fases/phase_base.gd"
 
-const ItemRef = preload("res://Inventory/Items/item.gd")
-
 var config: TypeBoxPhaseConfig
 
 var type_boxes: Dictionary = {} # { DataType : { container: HBoxContainer, slots: Array, used_bytes: int } }
@@ -72,7 +70,7 @@ func _process(delta):
 				_place_item()
 	else:
 		if Input.is_action_just_pressed("select_item"):
-			if current_slot and current_slot.has_meta("item_stored") and current_slot.get_meta("item_stored") != null:
+			if current_slot and current_slot.item_stored != null:
 				_pick_item()
 
 func _update_phase_title() -> void:
@@ -116,7 +114,7 @@ func _create_boxes():
 			slot.set_meta("is_type_box", true)
 			slot.set_meta("box_type", t.type)
 			slot.set_meta("box_name", t.name)
-			slot.set_meta("item_stored", null)
+			slot.item_stored = null
 			
 			slot_container.add_child(slot)
 			slots.append(slot)
@@ -156,7 +154,7 @@ func _populate_pool():
 	for raw_val_str in values_to_spawn:
 		var slot = preload("res://Inventory/slots/slot.tscn").instantiate()
 		slot.set_meta("is_pool", true)
-		slot.set_meta("item_stored", null)
+		slot.item_stored = null
 		
 		var item = preload("res://Inventory/Items/Item.tscn").instantiate()
 		item.data_type = ItemRef.DataType.RAW
@@ -165,7 +163,7 @@ func _populate_pool():
 		
 		slot.add_child(item)
 		item.position = Vector2(32, 32) # center
-		slot.set_meta("item_stored", item)
+		slot.item_stored = item
 		
 		pool_grid_node.add_child(slot)
 		all_slots.append(slot)
@@ -175,16 +173,11 @@ func _on_box_slot_entered(slot):
 	current_slot = slot
 	if item_held:
 		can_place = true
-		if item_held.data_type == ItemRef.DataType.RAW:
-			hint_label.text = "Solte o valor aqui para tipar como " + slot.get_meta("box_name") + "."
-		else:
-			hint_label.text = "Solte para converter de " + _get_type_name(item_held.data_type) + " para " + slot.get_meta("box_name") + "."
 
 func _on_pool_slot_entered(slot):
 	current_slot = slot
 	if item_held:
 		can_place = true
-		hint_label.text = "Solte o valor de volta no pool."
 
 func _on_box_slot_exited(slot):
 	if current_slot == slot:
@@ -196,8 +189,7 @@ func _place_item():
 	if not can_place or not current_slot: return
 	
 	if current_slot.has_meta("is_type_box"):
-		if current_slot.get_meta("item_stored") != null:
-			hint_label.text = "Slot já ocupado!"
+		if current_slot.item_stored != null:
 			return
 			
 		var target_type = current_slot.get_meta("box_type")
@@ -237,7 +229,7 @@ func _place_item():
 			current_slot.add_child(item_held)
 			
 		item_held.position = Vector2(32, 32)
-		current_slot.set_meta("item_stored", item_held)
+		current_slot.item_stored = item_held
 		item_held.selected = false
 		item_held = null
 		can_place = false
@@ -248,7 +240,7 @@ func _place_item():
 		_update_next_button_state()
 		
 	elif current_slot.has_meta("is_pool"):
-		if current_slot.get_meta("item_stored") != null:
+		if current_slot.item_stored != null:
 			return
 			
 		if item_held.data_type != ItemRef.DataType.RAW:
@@ -261,7 +253,7 @@ func _place_item():
 			current_slot.add_child(item_held)
 			
 		item_held.position = Vector2(32, 32)
-		current_slot.set_meta("item_stored", item_held)
+		current_slot.item_stored = item_held
 		item_held.selected = false
 		item_held = null
 		can_place = false
@@ -272,7 +264,7 @@ func _place_item():
 
 func _pick_item():
 	var slot = current_slot
-	item_held = slot.get_meta("item_stored")
+	item_held = slot.item_stored
 	if not item_held: return
 	
 	item_held.selected = true
@@ -280,7 +272,7 @@ func _pick_item():
 	add_child(item_held)
 	item_held.global_position = get_global_mouse_position()
 	
-	slot.set_meta("item_stored", null)
+	slot.item_stored = null
 	
 	if slot.has_meta("is_type_box"):
 		_update_bytes_label()
@@ -291,8 +283,10 @@ func total_bytes_used() -> int:
 	var total = 0
 	for type_info in type_boxes.values():
 		for slot in type_info.slots:
-			var item = slot.get_meta("item_stored")
-			if item:
+			if not is_instance_valid(slot):
+				continue
+			var item = slot.item_stored
+			if item and is_instance_valid(item) and item.has_method("get_size_bytes"):
 				total += item.get_size_bytes()
 	return total
 
@@ -300,24 +294,19 @@ func _update_bytes_label():
 	var used = total_bytes_used()
 	var cap = global_capacity
 	if bytes_label:
-		bytes_label.text = "Memória Global: %d / %d bytes" % [used, cap]
-		if used > cap:
-			bytes_label.text += " — OVERFLOW DE MEMÓRIA!"
-			bytes_label.add_theme_color_override("font_color", Color.RED)
-		else:
-			bytes_label.add_theme_color_override("font_color", Color.WHITE)
+		bytes_label.text = "Mochila: %d / %d bytes" % [used, cap]
+	_update_hint()
 
-func _update_hint():
-	if not hint_label: return
-	var used = total_bytes_used()
-	var cap = global_capacity
-	
-	if used > cap:
-		hint_label.text = "Limite de memória excedido! Tente tipos mais leves."
-	elif pending_raw_values > 0:
-		hint_label.text = "Aloque todos os valores do pool nas caixas."
+func _update_hint() -> void:
+	if not hint_label:
+		return
+	if is_phase_success():
+		hint_label.text = "Objetivo concluído!"
+		hint_label.visible = true
 	else:
-		hint_label.text = "Todos os valores alocados e dentro da memória! Pronto para avançar."
+		hint_label.text = ""
+		hint_label.visible = false
+	_update_next_button_state()
 
 func is_phase_success() -> bool:
 	var used = total_bytes_used()

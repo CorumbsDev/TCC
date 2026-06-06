@@ -60,11 +60,24 @@ func _ready():
 		ts.slot_entered.connect(_on_slot_entered)
 		ts.slot_exited.connect(_on_slot_exited)
 		ts.item_changed.connect(_on_target_changed)
-	_update_bits_info_label()
+	_hide_instruction_panels()
 	_refresh_challenge_ui()
 	call_deferred("_try_show_intro")
 	call_deferred("_relayout_all_bits")
 	call_deferred("_wire_bits_hover")
+
+
+func _hide_instruction_panels() -> void:
+	var left_bar := get_node_or_null("HBox/LeftPanel/MarginContainer/VBox/PhaseInfoBar") as Control
+	if left_bar:
+		left_bar.visible = false
+	if progress_label:
+		progress_label.visible = false
+	if goal_label:
+		goal_label.visible = false
+	if bits_info_label:
+		bits_info_label.visible = false
+	_clear_completion_labels()
 
 
 func _relayout_all_bits() -> void:
@@ -161,22 +174,17 @@ func _check_solution() -> void:
 	var target := _current_target_decimal()
 	for t in target_slots:
 		if t.item_stored == null:
-			result_label.text = "Desafio %d/%d: preencha os %d bits (esquerda = MSB)." % [challenge_idx + 1, _challenge_count(), num_bits]
-			explanation_label.text = ""
+			_clear_completion_labels()
 			return
 	var bin_str := ""
 	for t in target_slots:
 		bin_str += _bit_char_from_item(t.item_stored)
-	var val := _binary_string_to_int(bin_str)
 	var expected := _decimal_to_binary_bits(target, num_bits)
-	result_label.text = "Seu binário: %s = %d (decimal). Objetivo: representar %d." % [bin_str, val, target]
-	var expansion := _binary_expansion_explanation(bin_str, val)
 	if bin_str == expected:
-		explanation_label.text = expansion + " [correto]"
 		if challenge_idx < _challenge_count() - 1:
 			is_advancing = true
 			var next_idx := challenge_idx + 1
-			result_label.text = "Acertou! Próximo desafio: %d em %d bits..." % [_effective_challenges()[next_idx], num_bits]
+			_clear_completion_labels()
 			await get_tree().create_timer(advance_delay_seconds).timeout
 			challenge_idx = next_idx
 			_clear_target_slots_to_pool()
@@ -184,10 +192,27 @@ func _check_solution() -> void:
 			_refresh_challenge_ui()
 			is_advancing = false
 		else:
-			result_label.text = "Parabéns! Você concluiu os %d desafios da fase 3." % _challenge_count()
-			explanation_label.text = "Última resposta correta: " + expansion
+			_show_completion_message()
 	else:
-		explanation_label.text = expansion + "\nEsperado em %d bits: %s. Dica: decomponha %d em soma de potências de 2." % [num_bits, expected, target]
+		_clear_completion_labels()
+
+
+func _clear_completion_labels() -> void:
+	if result_label:
+		result_label.text = ""
+		result_label.visible = false
+	if explanation_label:
+		explanation_label.text = ""
+		explanation_label.visible = false
+
+
+func _show_completion_message() -> void:
+	if result_label:
+		result_label.text = "Objetivo concluído!"
+		result_label.visible = true
+	if explanation_label:
+		explanation_label.text = ""
+		explanation_label.visible = false
 
 
 func _current_target_decimal() -> int:
@@ -238,11 +263,7 @@ func _challenge_count() -> int:
 
 
 func _refresh_challenge_ui() -> void:
-	var target := _current_target_decimal()
-	progress_label.text = "Desafio %d de %d" % [challenge_idx + 1, _challenge_count()]
-	goal_label.text = "Objetivo: representar o decimal %d usando exatamente %d bits." % [target, num_bits]
-	result_label.text = "Preencha os %d bits (esquerda = MSB)." % num_bits
-	explanation_label.text = ""
+	_clear_completion_labels()
 
 
 func _clear_target_slots_to_pool() -> void:

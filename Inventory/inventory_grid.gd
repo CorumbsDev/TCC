@@ -72,18 +72,24 @@ func _attach_item_to_slot(item: Node, slot: TextureRect) -> void:
 
 
 func _set_item_position_in_slot(item: Node, slot: TextureRect) -> void:
+	var anchor: TextureRect = slot
+	if item.get("grid_anchor") != null and item.grid_anchor is TextureRect:
+		anchor = item.grid_anchor
 	if item.has_method("position_in_slot"):
-		item.position = item.position_in_slot(slot)
+		item.position = item.position_in_slot(anchor)
 	else:
-		var side: float = maxf(slot.size.x, 64.0)
+		var side: float = maxf(anchor.size.x, 64.0)
 		item.position = Vector2(side, side) * 0.5
 
 
 func refresh_item_positions() -> void:
+	var positioned := {}
 	for slot in slots_array:
 		for it in slot.items_stored:
-			if is_instance_valid(it):
-				_set_item_position_in_slot(it, slot)
+			if not is_instance_valid(it) or positioned.has(it):
+				continue
+			_set_item_position_in_slot(it, slot)
+			positioned[it] = true
 
 
 func total_bytes_used() -> int:
