@@ -105,9 +105,9 @@ func _apply_panel_art() -> void:
 	var bp := get_node_or_null("HBox/BackpackPanel") as Control
 	var bn := get_node_or_null("HBox/BancadaPanel") as Control
 	if bp:
-		PanelArtLoader.apply_phase_panel(bp)
+		PanelArtLoader.apply_zone_chrome(bp)
 	if bn:
-		PanelArtLoader.apply_phase_panel(bn)
+		PanelArtLoader.apply_zone_chrome(bn)
 	_style_phase_labels()
 
 

@@ -63,22 +63,27 @@ func _setup_backpack_grid() -> void:
 
 func _setup_bancada() -> void:
 	var pl_vbox: VBoxContainer = pool_container.get_parent()
-	for stale_name in ["OrbHoverLabel", "OrbHoverPanel", "OrbHoverBar"]:
-		var stale := pl_vbox.get_node_or_null(stale_name)
-		if stale:
-			pl_vbox.remove_child(stale)
-			stale.queue_free()
 	pl_vbox.remove_child(pool_container)
 	pool_container.queue_free()
+	var hover_bar := pl_vbox.get_node_or_null("OrbHoverBar") as OrbHoverBar
+	if hover_bar == null:
+		hover_bar = OrbHoverBar.make_in(pl_vbox)
+	_register_orb_hover_bar(hover_bar)
+	var typing_box := VBoxContainer.new()
+	typing_box.name = "TypingSection"
+	typing_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	typing_box.add_theme_constant_override("separation", 6)
 	var lbl_types := Label.new()
 	lbl_types.text = "Estações de tipagem (solte o valor RAW aqui)"
 	lbl_types.add_theme_color_override("font_color", Color(0.5, 0.85, 1.0))
-	pl_vbox.add_child(lbl_types)
+	lbl_types.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	typing_box.add_child(lbl_types)
 	_typing_row = HFlowContainer.new()
 	_typing_row.add_theme_constant_override("h_separation", 10)
 	_typing_row.add_theme_constant_override("v_separation", 8)
-	pl_vbox.add_child(_typing_row)
+	typing_box.add_child(_typing_row)
 	_create_type_stations()
+	pl_vbox.add_child(typing_box)
 	var lbl_pool := Label.new()
 	lbl_pool.text = "Pool — valores sem tipo (RAW)"
 	lbl_pool.add_theme_color_override("font_color", Color(0.85, 0.75, 0.5))
@@ -89,14 +94,26 @@ func _setup_bancada() -> void:
 	pool.number_of_slots = config.pool_slot_count
 	pool.initial_items = []
 	pl_vbox.add_child(pool)
+	pool.custom_minimum_size = Vector2(0, 0)
 	pool.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	pool.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pool_container = pool
 	pool.clear_all_items()
-	var hover_bar := OrbHoverBar.make_in(pl_vbox, pool)
-	_register_orb_hover_bar(hover_bar)
 	setup_grids(backpack_container, pool_container)
 	_disconnect_base_slot_signals()
-	call_deferred("_anchor_orb_hover_above_pool")
+
+
+func _anchor_orb_hover_above_pool() -> void:
+	var bar := _get_orb_hover_bar()
+	var vbox := get_node_or_null("HBox/BancadaPanel/MarginContainer/VBoxContainer") as VBoxContainer
+	if bar == null or vbox == null:
+		return
+	var target_idx := 0
+	var header := vbox.get_node_or_null("ZoneHeader")
+	if header:
+		target_idx = header.get_index() + 1
+	if bar.get_index() != target_idx:
+		vbox.move_child(bar, target_idx)
 
 
 func _disconnect_base_slot_signals() -> void:

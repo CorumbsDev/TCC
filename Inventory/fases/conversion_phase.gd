@@ -95,9 +95,9 @@ func _apply_phase_panels() -> void:
 	var left := get_node_or_null("HBox/LeftPanel") as Control
 	var right := get_node_or_null("HBox/RightPanel") as Control
 	if left:
-		PanelArtLoader.apply_phase_panel(left)
+		PanelArtLoader.apply_zone_chrome(left)
 	if right:
-		PanelArtLoader.apply_phase_panel(right)
+		PanelArtLoader.apply_zone_chrome(right)
 
 
 func _try_show_intro() -> void:
