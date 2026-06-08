@@ -12,7 +12,7 @@ def detectar_tipo_python(valor):
     tipo_map = {
         'int': 'INT',
         'float': 'FLOAT',
-        'bool': 'BOOLEAN',
+        'bool': 'INT',
         'str': 'STRING'
     }
     
@@ -25,7 +25,6 @@ def processar_expressao(expressao):
         expressao_proc = re.sub(r'([0-9\.]+)\+?to_float\+?([0-9\.]+)', r'(float(\1)+0*\2)', expressao, flags=re.IGNORECASE)
         expressao_proc = re.sub(r'([0-9\.]+)\+?to_int\+?([0-9\.]+)', r'(int(\1)+0*\2)', expressao_proc, flags=re.IGNORECASE)
         expressao_proc = re.sub(r'([0-9\.]+)\+?to_short\+?([0-9\.]+)', r'(int(\1)+0*\2)', expressao_proc, flags=re.IGNORECASE)
-        expressao_proc = re.sub(r'([0-9\.]+)\+?to_boolean\+?([0-9\.]+)', r'(bool(\1) or bool(\2))', expressao_proc, flags=re.IGNORECASE)
         
         # Remove espaços e padroniza operadores
         expressao_limpa = expressao_proc.replace(" ", "").replace("×", "*").replace("÷", "/")
@@ -46,8 +45,8 @@ def processar_expressao(expressao):
         valor_resultado = resultado
         
         # Converte para formato JSON-safe
-        if tipo_resultado == 'BOOLEAN':
-            valor_resultado = bool(resultado)
+        if tipo_resultado == 'INT' and isinstance(resultado, bool):
+            valor_resultado = 1 if resultado else 0
         elif tipo_resultado == 'INT':
             valor_resultado = int(resultado)
         elif tipo_resultado == 'FLOAT':

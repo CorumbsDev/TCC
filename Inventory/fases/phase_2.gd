@@ -133,7 +133,6 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 			if config.use_converter: converter_option_btn.add_item("Float")
 			if config.allow_double: converter_option_btn.add_item("Double")
 			if config.allow_short: converter_option_btn.add_item("Short")
-			if config.allow_bool: converter_option_btn.add_item("Boolean")
 			if config.allow_fp8: converter_option_btn.add_item("FP8")
 			if config.allow_fp16: converter_option_btn.add_item("FP16")
 			converter_option_btn.add_item("Int") # Sempre permitir a volta pro Int
@@ -356,9 +355,6 @@ func _make_item_from_entry(entry: String) -> Node2D:
 		shorthand.set_value_by_type(float(value_str), shorthand.DataType.DOUBLE)
 	elif type_str == "s":
 		shorthand.set_value_by_type(int(value_str), shorthand.DataType.SHORT_INT)
-	elif type_str == "b":
-		var b_val = (value_str.to_lower() == "true" or value_str == "1")
-		shorthand.set_value_by_type(b_val, shorthand.DataType.BOOLEAN)
 	else:
 		push_warning("Tipo não suportado no CSV: %s" % type_str)
 		shorthand.queue_free()

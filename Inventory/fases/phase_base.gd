@@ -19,7 +19,6 @@ var converter_slot: TextureRect = null
 var converter_option_btn: OptionButton = null
 var double_slot: TextureRect = null
 var short_slot: TextureRect = null
-var boolean_slot: TextureRect = null
 var calc_slot_1: TextureRect = null
 var calc_slot_2 = null
 var calc_slot_result: TextureRect = null
@@ -444,9 +443,7 @@ func _check_calculator() -> void:
 			_clear_calc_result()
 			var new_item: Node2D = preload("res://Inventory/Items/Item.tscn").instantiate()
 			var final_val = deg.degraded_value
-			if target_type == ItemRef.DataType.BOOLEAN:
-				new_item.set_value_by_type(final_val != 0, target_type)
-			elif target_type in [ItemRef.DataType.INT, ItemRef.DataType.SHORT_INT]:
+			if target_type in [ItemRef.DataType.INT, ItemRef.DataType.SHORT_INT]:
 				new_item.set_value_by_type(int(final_val), target_type)
 			else:
 				new_item.set_value_by_type(final_val, target_type)
@@ -481,7 +478,6 @@ func _priority_for_data_type(dt: int) -> int:
 	if dt == ItemRef.DataType.FP8: return 70
 	if dt == ItemRef.DataType.INT: return 60
 	if dt == ItemRef.DataType.SHORT_INT: return 50
-	if dt == ItemRef.DataType.BOOLEAN: return 40
 	return 0
 
 
@@ -492,7 +488,6 @@ func _get_type_string(dt: int) -> String:
 	if dt == ItemRef.DataType.FP8: return "FP8"
 	if dt == ItemRef.DataType.INT: return "Int"
 	if dt == ItemRef.DataType.SHORT_INT: return "Short"
-	if dt == ItemRef.DataType.BOOLEAN: return "Boolean"
 	return "Float"
 
 
@@ -534,8 +529,6 @@ func _apply_target_type_to_item(item: Node, target_type_str: String, final_val: 
 			item.set_value_by_type(final_val, ItemRef.DataType.DOUBLE)
 		"Short":
 			item.set_value_by_type(int(final_val), ItemRef.DataType.SHORT_INT)
-		"Boolean":
-			item.set_value_by_type(final_val != 0, ItemRef.DataType.BOOLEAN)
 		"FP8":
 			item.set_value_by_type(final_val, ItemRef.DataType.FP8)
 			_apply_fp_bits_from_config(item, "fp8")

@@ -5,7 +5,7 @@ O Code Orbs é um jogo educativo desenvolvido para desmistificar os conceitos ma
 Muitas vezes, iniciantes em programação desistem devido à alta carga de abstração inicial. O Code Orbs transforma essa abstração em mecânicas visuais, onde o jogador manipula orbes de energia (dados) e os organiza em recipientes (variáveis). Baseado na Arquitetura de Von Neumann e na Teoria de Tipos de Pierce, o jogo cria uma ponte entre a ação lúdica e a sintaxe real em Python.
 
 🎮 Mecânicas Principais
-Sistema de Orbes: Cada cor e forma representa um tipo de dado (int, float, string, bool).
+Sistema de Orbes: Cada cor e forma representa um tipo de dado (int, float, string, etc.).
 
 Recipientes de Memória: Representação visual de variáveis onde o jogador deve respeitar a tipagem para resolver puzzles.
 

@@ -19,7 +19,6 @@ extends Resource
 @export var allow_double: bool = false
 @export var allow_fp8: bool = false
 @export var allow_fp16: bool = false
-@export var allow_bool: bool = false
 
 @export var fp8_exp_bits: int = 4
 @export var fp8_mant_bits: int = 3

@@ -325,10 +325,6 @@ text = "Permitir Conversor Double (8 bytes)"
 layout_mode = 2
 text = "Permitir Conversor Short (0.5 slot)"
 
-[node name="CheckBool" type="CheckBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
-layout_mode = 2
-text = "Permitir Conversor Boolean (0.25 slot)"
-
 [node name="CheckFP8" type="CheckBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
 text = "Permitir Conversor FP8 (1 byte)"
@@ -377,7 +373,6 @@ text = "Alterações são salvas ao trocar de fase ou ao clicar em Salvar."
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFloat" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckDouble" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckShort" to="." method="_on_bool_param_changed"]
-[connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckBool" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP8" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP16" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFPCust" to="." method="_on_bool_param_changed"]

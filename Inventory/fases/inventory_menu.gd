@@ -132,9 +132,9 @@ func create_item_on_hand_randomly():
 			5: random_item = "item_number_5"
 			6: random_item = "item_double_3.14159"
 			7: random_item = "item_binary_10"
-			8: random_item = "item_operator_to_boolean"
-			9: random_item = "item_operator_to_float"
-			10: random_item = "item_operator_to_int"
+			8: random_item = "item_operator_to_float"
+			9: random_item = "item_operator_to_int"
+			10: random_item = "item_number_10"
 		
 		if new_item.has_method("load_item"):
 			new_item.load_item(random_item)
@@ -310,8 +310,6 @@ func check_combinations():
 									sequence.append(str(item.value))
 								item.DataType.FLOAT:
 									sequence.append(str(item.value_float))
-								item.DataType.BOOLEAN:
-									sequence.append("true" if item.value_bool else "false")
 								item.DataType.STRING:
 									sequence.append('"' + item.value_string + '"')
 						slots_na_sequencia.append(slot)
@@ -368,8 +366,6 @@ func check_combinations():
 									sequence.append(str(item.value))
 								item.DataType.FLOAT:
 									sequence.append(str(item.value_float))
-								item.DataType.BOOLEAN:
-									sequence.append("true" if item.value_bool else "false")
 								item.DataType.STRING:
 									sequence.append('"' + item.value_string + '"')
 						slots_na_sequencia.append(slot)
@@ -412,8 +408,8 @@ func validar_tipos_expressao(sequence: Array) -> Dictionary:
 			tipos_encontrados.append("STRING")
 			valores_encontrados.append(token)
 		elif token.to_lower() == "true" or token.to_lower() == "false":
-			tipos_encontrados.append("BOOLEAN")
-			valores_encontrados.append(token)
+			tipos_encontrados.append("INT")
+			valores_encontrados.append("1" if token.to_lower() == "true" else "0")
 		elif "." in token and token.replace(".", "").replace("-", "").is_valid_float():
 			tipos_encontrados.append("FLOAT")
 			valores_encontrados.append(token)
@@ -484,8 +480,6 @@ func avaliar_expressao_com_tipo(expr: String) -> Dictionary:
 	expr = regex.sub(expr, "(floor($1) + 0 * $2)", true)
 	regex.compile("([0-9\\.]+)\\+?to_short\\+?([0-9\\.]+)")
 	expr = regex.sub(expr, "(floor($1) + 0 * $2)", true)
-	regex.compile("([0-9\\.]+)\\+?to_boolean\\+?([0-9\\.]+)")
-	expr = regex.sub(expr, "($1 != 0 or $2 != 0)", true)
 	
 	expr = expr.replace(" ", "")
 	
@@ -494,11 +488,10 @@ func avaliar_expressao_com_tipo(expr: String) -> Dictionary:
 		var str_valor = expr.substr(1, expr.length() - 2)
 		return {"resultado": str_valor, "tipo": "STRING"}
 	
-	# Detecta booleanos
 	if expr.to_lower() == "true":
-		return {"resultado": true, "tipo": "BOOLEAN"}
+		return {"resultado": 1, "tipo": "INT"}
 	if expr.to_lower() == "false":
-		return {"resultado": false, "tipo": "BOOLEAN"}
+		return {"resultado": 0, "tipo": "INT"}
 	
 	var expression = Expression.new()
 	var error = expression.parse(expr, [])
@@ -511,7 +504,8 @@ func avaliar_expressao_com_tipo(expr: String) -> Dictionary:
 			elif typeof(resultado) == TYPE_FLOAT:
 				tipo_resultado = "FLOAT"
 			elif typeof(resultado) == TYPE_BOOL:
-				tipo_resultado = "BOOLEAN"
+				tipo_resultado = "INT"
+				resultado = 1 if resultado else 0
 			elif typeof(resultado) == TYPE_STRING:
 				tipo_resultado = "STRING"
 			
@@ -572,10 +566,6 @@ func create_result_item_typed(resultado: Variant, tipo_resultado: String):
 				# Limita casas decimais para exibição
 				valor_float = clamp(valor_float, -999.99, 999.99)
 				new_item.set_value_by_type(valor_float, tipo_enum)
-			"BOOLEAN":
-				tipo_enum = new_item.DataType.BOOLEAN
-				var valor_bool = bool(resultado)
-				new_item.set_value_by_type(valor_bool, tipo_enum)
 			"STRING":
 				tipo_enum = new_item.DataType.STRING
 				var valor_str = str(resultado)

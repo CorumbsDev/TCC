@@ -119,13 +119,6 @@ func converter_resultado_para_tipo(valor: Variant, tipo: String) -> Variant:
 			return float(valor)
 		"DOUBLE":
 			return float(valor)
-		"BOOLEAN":
-			if typeof(valor) == TYPE_BOOL:
-				return bool(valor)
-			elif typeof(valor) == TYPE_INT or typeof(valor) == TYPE_FLOAT:
-				return bool(valor)
-			else:
-				return bool(valor)
 		"STRING":
 			return str(valor)
 		"BINARY":
@@ -144,8 +137,6 @@ func avaliar_expressao_rapida(expressao: String) -> Dictionary:
 	expressao = regex.sub(expressao, "(floor($1) + 0 * $2)", true)
 	regex.compile("([0-9\\.]+)\\+?to_short\\+?([0-9\\.]+)")
 	expressao = regex.sub(expressao, "(floor($1) + 0 * $2)", true)
-	regex.compile("([0-9\\.]+)\\+?to_boolean\\+?([0-9\\.]+)")
-	expressao = regex.sub(expressao, "($1 != 0 or $2 != 0)", true)
 	
 	expressao = expressao.replace("×", "*").replace("÷", "/").replace(" ", "")
 	
@@ -154,11 +145,10 @@ func avaliar_expressao_rapida(expressao: String) -> Dictionary:
 		var str_valor = expressao.substr(1, expressao.length() - 2)
 		return {"resultado": str_valor, "tipo": "STRING"}
 	
-	# Tenta detectar booleanos
 	if expressao.to_lower() == "true":
-		return {"resultado": true, "tipo": "BOOLEAN"}
+		return {"resultado": 1, "tipo": "INT"}
 	if expressao.to_lower() == "false":
-		return {"resultado": false, "tipo": "BOOLEAN"}
+		return {"resultado": 0, "tipo": "INT"}
 	
 	# Tenta avaliar como expressão matemática
 	var expression = Expression.new()
@@ -174,7 +164,8 @@ func avaliar_expressao_rapida(expressao: String) -> Dictionary:
 			elif typeof(resultado) == TYPE_FLOAT:
 				tipo_resultado = "FLOAT"
 			elif typeof(resultado) == TYPE_BOOL:
-				tipo_resultado = "BOOLEAN"
+				tipo_resultado = "INT"
+				resultado = 1 if resultado else 0
 			elif typeof(resultado) == TYPE_STRING:
 				tipo_resultado = "STRING"
 			
