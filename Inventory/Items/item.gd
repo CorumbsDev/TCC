@@ -236,7 +236,11 @@ func load_item(a_ItemID: String) -> void:
 		value_string = ""
 		operator = ""
 
-	update_label_display()
+	if item_ID.begins_with("item_double_") and data_type != DataType.DOUBLE:
+		set_value_by_type(float(data.get("Value", value_float)), DataType.DOUBLE)
+		return
+
+	_finalize_item_visual()
 
 func set_value_directly(new_value: int):
 	"""Define o valor diretamente (para resultados de expressões) - mantém compatibilidade"""
@@ -311,7 +315,7 @@ func set_value_by_type(new_value, tipo: DataType):
 			value_string = ""
 			item_grids = [Vector2(0,0)]
 	
-	update_label_display()
+	_finalize_item_visual()
 
 func get_value_as_string() -> String:
 	"""Valor completo (console / lógica), não a versão compacta do rótulo."""
@@ -452,7 +456,16 @@ func shrink_orb_for_tool_slot() -> void:
 
 
 func restore_orb_layout() -> void:
+	_finalize_item_visual()
+
+
+func _finalize_item_visual() -> void:
+	if not is_inside_tree():
+		call_deferred("_finalize_item_visual")
+		return
 	update_label_display()
+	if data_type == DataType.DOUBLE:
+		call_deferred("_ensure_centered_in_slot_parent")
 
 
 func _compute_orb_dimensions(text: String) -> Vector2:
@@ -520,16 +533,23 @@ func _apply_orb_sprite(dims: Vector2 = Vector2.ZERO) -> bool:
 	return tex != null
 
 
+func _resolve_cylinder_visual() -> Control:
+	if cylinder_visual == null:
+		cylinder_visual = get_node_or_null("CylinderVisual") as Control
+	return cylinder_visual
+
+
 func _apply_double_cylinder(dims: Vector2) -> bool:
 	var icon: TextureRect = get_node_or_null("Icon") as TextureRect
 	if icon:
 		icon.visible = false
 		icon.texture = null
-	if cylinder_visual == null:
+	var cyl := _resolve_cylinder_visual()
+	if cyl == null:
 		return false
-	cylinder_visual.visible = true
-	_fit_visual_rect(cylinder_visual, dims)
-	cylinder_visual.queue_redraw()
+	cyl.visible = true
+	_fit_visual_rect(cyl, dims)
+	cyl.queue_redraw()
 	var color_rect = value_label.get_parent() if value_label and value_label.get_parent() is ColorRect else null
 	if color_rect:
 		color_rect.color = Color(0, 0, 0, 0)

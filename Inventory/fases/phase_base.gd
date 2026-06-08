@@ -327,6 +327,8 @@ func _pick_item():
 		if converter_slot:
 			converter_slot.item_stored = null
 		converter_slot.state = converter_slot.States.FREE
+		if item_held.has_method("restore_orb_layout"):
+			item_held.restore_orb_layout()
 	elif slot == inspect_slot:
 		inspect_slot.state = inspect_slot.States.FREE
 		inspect_slot.item_stored = null

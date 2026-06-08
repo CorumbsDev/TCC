@@ -69,6 +69,8 @@ func _attach_item_to_slot(item: Node, slot: TextureRect) -> void:
 		slot.add_child(item)
 	item.z_index = 2
 	_set_item_position_in_slot(item, slot)
+	if item.has_method("restore_orb_layout"):
+		item.call_deferred("restore_orb_layout")
 
 
 func _set_item_position_in_slot(item: Node, slot: TextureRect) -> void:
@@ -89,6 +91,8 @@ func refresh_item_positions() -> void:
 			if not is_instance_valid(it) or positioned.has(it):
 				continue
 			_set_item_position_in_slot(it, slot)
+			if it.has_method("restore_orb_layout"):
+				it.call_deferred("restore_orb_layout")
 			positioned[it] = true
 
 

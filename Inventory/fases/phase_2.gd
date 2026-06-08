@@ -176,6 +176,8 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 	if min_extra <= 0:
 		min_extra = max(0, backpack.capacity_bytes - backpack.total_bytes_used())
 	_generate_extra_pool_items(pool, min_extra)
+	pool.refresh_item_positions()
+	backpack.refresh_item_positions()
 	_update_bytes_label()
 	_update_hint()
 	call_deferred("_anchor_orb_hover_above_pool")

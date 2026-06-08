@@ -22,7 +22,7 @@ func _init_item_data():
 		"item_number_10": {"Value": 10, "DataType": "INT", "Bytes": 1},
 		"item_operator_plus": {"Operator": "+"},
 		"item_operator_increment": {"Operator": "++"},
-		"item_double_3.14159": {"Value": 3.14159, "DataType": "FLOAT", "Bytes": 8},
+		"item_double_3.14159": {"Value": 3.14159, "DataType": "DOUBLE", "Bytes": 8},
 		"item_binary_10": {"Value": 10, "DataType": "BINARY", "Bits": 4, "Bytes": 1},
 		"item_binary_42": {"Value": 42, "DataType": "BINARY", "Bits": 6, "Bytes": 1},
 		"item_binary_0": {"Value": 0, "DataType": "BINARY", "Bits": 1, "Bytes": 1},
