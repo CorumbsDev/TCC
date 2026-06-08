@@ -23,7 +23,6 @@ const SEQUENCES_DIR = "user://sequences"
 @onready var check_float: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFloat
 @onready var check_double: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckDouble
 @onready var check_short: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckShort
-@onready var check_bool: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckBool
 @onready var check_fp8: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP8
 @onready var check_fp16: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP16
 @onready var check_fp_cust: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFPCust
@@ -193,7 +192,6 @@ func _show_phase_editor(step: PhaseSequenceStep) -> void:
 		check_float.button_pressed = cfg.use_converter
 		check_double.button_pressed = cfg.allow_double
 		check_short.button_pressed = cfg.allow_short
-		check_bool.button_pressed = cfg.allow_bool
 		check_fp8.button_pressed = cfg.allow_fp8
 		check_fp16.button_pressed = cfg.allow_fp16
 		check_fp_cust.button_pressed = cfg.allow_fp_customization
@@ -211,7 +209,6 @@ func _show_phase_editor(step: PhaseSequenceStep) -> void:
 		check_float.button_pressed = cfg.allow_float
 		check_double.button_pressed = cfg.allow_double
 		check_short.button_pressed = cfg.allow_short
-		check_bool.button_pressed = cfg.allow_bool
 		check_fp8.button_pressed = cfg.allow_fp8
 		check_fp16.button_pressed = cfg.allow_fp16
 		check_calc.button_pressed = false
@@ -231,7 +228,6 @@ func _show_phase_editor(step: PhaseSequenceStep) -> void:
 		check_float.button_pressed = cfg.allow_float
 		check_double.button_pressed = cfg.allow_double
 		check_short.button_pressed = cfg.allow_short
-		check_bool.button_pressed = cfg.allow_bool
 		check_fp8.button_pressed = cfg.allow_fp8
 		check_fp16.button_pressed = cfg.allow_fp16
 		check_calc.button_pressed = false
@@ -280,7 +276,6 @@ func _update_phase_editor_visibility(step: PhaseSequenceStep) -> void:
 	check_float.visible = show_tools
 	check_double.visible = show_tools
 	check_short.visible = show_tools
-	check_bool.visible = show_tools
 	check_fp8.visible = show_tools
 	check_fp16.visible = show_tools
 	check_fp_cust.visible = is_mochila
@@ -336,7 +331,6 @@ func _apply_ui_to_step(step: PhaseSequenceStep) -> void:
 			cfg.use_converter = check_float.button_pressed
 			cfg.allow_double = check_double.button_pressed
 			cfg.allow_short = check_short.button_pressed
-			cfg.allow_bool = check_bool.button_pressed
 			cfg.allow_fp8 = check_fp8.button_pressed
 			cfg.allow_fp16 = check_fp16.button_pressed
 			cfg.allow_fp_customization = check_fp_cust.button_pressed
@@ -358,7 +352,6 @@ func _apply_ui_to_step(step: PhaseSequenceStep) -> void:
 			cfg.allow_float = check_float.button_pressed
 			cfg.allow_double = check_double.button_pressed
 			cfg.allow_short = check_short.button_pressed
-			cfg.allow_bool = check_bool.button_pressed
 			cfg.allow_fp8 = check_fp8.button_pressed
 			cfg.allow_fp16 = check_fp16.button_pressed
 		PhaseSequenceStep.Kind.RAW_MOCHILA:
@@ -380,7 +373,6 @@ func _apply_ui_to_step(step: PhaseSequenceStep) -> void:
 			cfg.allow_float = check_float.button_pressed
 			cfg.allow_double = check_double.button_pressed
 			cfg.allow_short = check_short.button_pressed
-			cfg.allow_bool = check_bool.button_pressed
 			cfg.allow_fp8 = check_fp8.button_pressed
 			cfg.allow_fp16 = check_fp16.button_pressed
 		PhaseSequenceStep.Kind.BINARIO:
@@ -600,7 +592,7 @@ func _on_help_mochila_pressed() -> void:
 	_show_dialog("Mochila e Bancada", "- Capacidade: Quantos bytes a mochila suporta.\n- Slots: Quantos quadrados visíveis existem para soltar itens.\n- Bancada (Pool): A área onde os itens ficam disponíveis para escolha.")
 
 func _on_help_valores_pressed() -> void:
-	_show_dialog("Valores e Tipos", "- Int Mín/Máx: faixa de ints aleatórios.\n- Itens iniciais: 1_i, 3.14_f, 2.5_d, 1_b (vírgulas entre itens).\n- Exportar/Importar CSV usa | entre itens na coluna de itens (ex: 1_i|2_i|3_i).\n- Tipos aleatórios extra: quantidade de IDs sortidos na bancada.")
+	_show_dialog("Valores e Tipos", "- Int Mín/Máx: faixa de ints aleatórios.\n- Itens iniciais: 1_i, 3.14_f, 2.5_d (vírgulas entre itens).\n- Exportar/Importar CSV usa | entre itens na coluna de itens (ex: 1_i|2_i|3_i).\n- Tipos aleatórios extra: quantidade de IDs sortidos na bancada.")
 
 func _on_btn_export_csv_pressed() -> void:
 	var sel = tree.get_selected()
@@ -608,17 +600,17 @@ func _on_btn_export_csv_pressed() -> void:
 	var seq_item = sel if sel.get_metadata(0).type == "sequence" else sel.get_parent()
 	var seq_list: PhaseSequenceList = seq_item.get_metadata(0).data
 	
-	var csv_str = "KIND,CAPACITY,SLOTS_M,SLOTS_P,COLS,MIN,MAX,CSV_ITEMS,RND_POOL,FLOAT,DOUBLE,SHORT,BOOL,FP8,FP16,CALC,FP_CUST,FP8_E,FP8_M,FP16_E,FP16_M\n"
+	var csv_str = "KIND,CAPACITY,SLOTS_M,SLOTS_P,COLS,MIN,MAX,CSV_ITEMS,RND_POOL,FLOAT,DOUBLE,SHORT,FP8,FP16,CALC,FP_CUST,FP8_E,FP8_M,FP16_E,FP16_M\n"
 	for step in seq_list.steps:
 		if step.kind == PhaseSequenceStep.Kind.MOCHILA:
 			var c = step.config_mochila
 			if not c: c = PhaseConfig.new()
 			var items_field := SequenceCsvCodec.items_field_from_backpack_csv(c.initial_backpack_csv)
-			csv_str += "M,%d,%d,%d,%d,%d,%d,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d\n" % [
+			csv_str += "M,%d,%d,%d,%d,%d,%d,%s,%d,%s,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d\n" % [
 				c.capacity_bytes, c.backpack_slot_count, c.pool_slot_count, c.pool_grid_columns,
 				c.spawn_int_min, c.spawn_int_max,
 				SequenceCsvCodec.escape_field(items_field), c.random_pool.size(),
-				str(c.use_converter), str(c.allow_double), str(c.allow_short), str(c.allow_bool),
+				str(c.use_converter), str(c.allow_double), str(c.allow_short),
 				str(c.allow_fp8), str(c.allow_fp16), str(c.allow_calc), str(c.allow_fp_customization),
 				c.fp8_exp_bits, c.fp8_mant_bits, c.fp16_exp_bits, c.fp16_mant_bits
 			]
@@ -626,11 +618,11 @@ func _on_btn_export_csv_pressed() -> void:
 			var c = step.config_type_box
 			if not c: c = TypeBoxPhaseConfig.new()
 			var raw_field := SequenceCsvCodec.ITEMS_SEP.join(c.initial_raw_values)
-			csv_str += "T,%d,%d,0,0,0,0,%s,%d,%s,%s,%s,%s,%s,%s,false,false,%d,%d,%d,%d\n" % [
+			csv_str += "T,%d,%d,0,0,0,0,%s,%d,%s,%s,%s,%s,%s,false,false,%d,%d,%d,%d\n" % [
 				c.capacity_bytes, c.box_slot_count,
 				SequenceCsvCodec.escape_field(raw_field),
 				1 if c.randomize_values else 0,
-				str(c.allow_float), str(c.allow_double), str(c.allow_short), str(c.allow_bool),
+				str(c.allow_float), str(c.allow_double), str(c.allow_short),
 				str(c.allow_fp8), str(c.allow_fp16),
 				c.fp8_exp_bits, c.fp8_mant_bits, c.fp16_exp_bits, c.fp16_mant_bits
 			]
@@ -639,11 +631,11 @@ func _on_btn_export_csv_pressed() -> void:
 			if not c:
 				c = RawKnapsackPhaseConfig.new()
 			var raw_field2 := SequenceCsvCodec.ITEMS_SEP.join(c.initial_raw_values)
-			csv_str += "R,%d,%d,%d,%d,0,0,%s,%d,%s,%s,%s,%s,%s,%s,false,false,%d,%d,%d,%d\n" % [
+			csv_str += "R,%d,%d,%d,%d,0,0,%s,%d,%s,%s,%s,%s,%s,false,false,%d,%d,%d,%d\n" % [
 				c.capacity_bytes, c.backpack_slot_count, c.pool_slot_count, c.pool_grid_columns,
 				SequenceCsvCodec.escape_field(raw_field2),
 				1 if c.randomize_values else 0,
-				str(c.allow_float), str(c.allow_double), str(c.allow_short), str(c.allow_bool),
+				str(c.allow_float), str(c.allow_double), str(c.allow_short),
 				str(c.allow_fp8), str(c.allow_fp16),
 				c.fp8_exp_bits, c.fp8_mant_bits, c.fp16_exp_bits, c.fp16_mant_bits
 			]
@@ -651,7 +643,7 @@ func _on_btn_export_csv_pressed() -> void:
 			var bc: BinaryPhaseConfig = step.config_binario
 			if not bc:
 				bc = ConfigGenerator.generate_binary_config()
-			csv_str += "B,%d,%d,0,0,0,0,,0,false,false,false,false,false,false,false,false,4,3,5,10\n" % [
+			csv_str += "B,%d,%d,0,0,0,0,,0,false,false,false,false,false,false,false,4,3,5,10\n" % [
 				bc.fixed_left_bit, bc.fixed_right_bit
 			]
 			
@@ -666,6 +658,9 @@ func _on_btn_import_csv_pressed() -> void:
 		
 	var lines = csv_str.split("\n")
 	var seq_list = PhaseSequenceList.new()
+	var col_idx: Dictionary = {}
+	for hi in lines[0].split(",").size():
+		col_idx[lines[0].split(",")[hi].strip_edges()] = hi
 	
 	for i in range(1, lines.size()):
 		var line = lines[i].strip_edges()
@@ -689,26 +684,28 @@ func _on_btn_import_csv_pressed() -> void:
 			var rp_size = int(parts[8])
 			if rp_size > 0:
 				c.random_pool = ConfigGenerator._random_int_items(rp_size)
-			if parts.size() > 9:
-				c.use_converter = (parts[9] == "true")
-			if parts.size() > 10:
-				c.allow_double = (parts[10] == "true")
-			if parts.size() > 11:
-				c.allow_short = (parts[11] == "true")
-			if parts.size() > 12:
-				c.allow_bool = (parts[12] == "true")
-			if parts.size() > 13:
-				c.allow_fp8 = (parts[13] == "true")
-			if parts.size() > 14:
-				c.allow_fp16 = (parts[14] == "true")
-			if parts.size() > 15:
-				c.allow_calc = (parts[15] == "true")
-			if parts.size() >= 21:
-				c.allow_fp_customization = (parts[16] == "true")
-				c.fp8_exp_bits = int(parts[17])
-				c.fp8_mant_bits = int(parts[18])
-				c.fp16_exp_bits = int(parts[19])
-				c.fp16_mant_bits = int(parts[20])
+			if col_idx.has("FLOAT") and col_idx["FLOAT"] < parts.size():
+				c.use_converter = (parts[col_idx["FLOAT"]] == "true")
+			if col_idx.has("DOUBLE") and col_idx["DOUBLE"] < parts.size():
+				c.allow_double = (parts[col_idx["DOUBLE"]] == "true")
+			if col_idx.has("SHORT") and col_idx["SHORT"] < parts.size():
+				c.allow_short = (parts[col_idx["SHORT"]] == "true")
+			if col_idx.has("FP8") and col_idx["FP8"] < parts.size():
+				c.allow_fp8 = (parts[col_idx["FP8"]] == "true")
+			if col_idx.has("FP16") and col_idx["FP16"] < parts.size():
+				c.allow_fp16 = (parts[col_idx["FP16"]] == "true")
+			if col_idx.has("CALC") and col_idx["CALC"] < parts.size():
+				c.allow_calc = (parts[col_idx["CALC"]] == "true")
+			if col_idx.has("FP_CUST") and col_idx["FP_CUST"] < parts.size():
+				c.allow_fp_customization = (parts[col_idx["FP_CUST"]] == "true")
+			if col_idx.has("FP8_E") and col_idx["FP8_E"] < parts.size():
+				c.fp8_exp_bits = int(parts[col_idx["FP8_E"]])
+			if col_idx.has("FP8_M") and col_idx["FP8_M"] < parts.size():
+				c.fp8_mant_bits = int(parts[col_idx["FP8_M"]])
+			if col_idx.has("FP16_E") and col_idx["FP16_E"] < parts.size():
+				c.fp16_exp_bits = int(parts[col_idx["FP16_E"]])
+			if col_idx.has("FP16_M") and col_idx["FP16_M"] < parts.size():
+				c.fp16_mant_bits = int(parts[col_idx["FP16_M"]])
 			step.config_mochila = c
 		elif parts[0] == "R":
 			step.kind = PhaseSequenceStep.Kind.RAW_MOCHILA
@@ -725,23 +722,24 @@ func _on_btn_import_csv_pressed() -> void:
 					raw_vals2.append(s2)
 			rc.initial_raw_values = raw_vals2
 			rc.randomize_values = (int(parts[8]) > 0)
-			if parts.size() > 9:
-				rc.allow_float = (parts[9] == "true")
-			if parts.size() > 10:
-				rc.allow_double = (parts[10] == "true")
-			if parts.size() > 11:
-				rc.allow_short = (parts[11] == "true")
-			if parts.size() > 12:
-				rc.allow_bool = (parts[12] == "true")
-			if parts.size() > 13:
-				rc.allow_fp8 = (parts[13] == "true")
-			if parts.size() > 14:
-				rc.allow_fp16 = (parts[14] == "true")
-			if parts.size() >= 21:
-				rc.fp8_exp_bits = int(parts[17])
-				rc.fp8_mant_bits = int(parts[18])
-				rc.fp16_exp_bits = int(parts[19])
-				rc.fp16_mant_bits = int(parts[20])
+			if col_idx.has("FLOAT") and col_idx["FLOAT"] < parts.size():
+				rc.allow_float = (parts[col_idx["FLOAT"]] == "true")
+			if col_idx.has("DOUBLE") and col_idx["DOUBLE"] < parts.size():
+				rc.allow_double = (parts[col_idx["DOUBLE"]] == "true")
+			if col_idx.has("SHORT") and col_idx["SHORT"] < parts.size():
+				rc.allow_short = (parts[col_idx["SHORT"]] == "true")
+			if col_idx.has("FP8") and col_idx["FP8"] < parts.size():
+				rc.allow_fp8 = (parts[col_idx["FP8"]] == "true")
+			if col_idx.has("FP16") and col_idx["FP16"] < parts.size():
+				rc.allow_fp16 = (parts[col_idx["FP16"]] == "true")
+			if col_idx.has("FP8_E") and col_idx["FP8_E"] < parts.size():
+				rc.fp8_exp_bits = int(parts[col_idx["FP8_E"]])
+			if col_idx.has("FP8_M") and col_idx["FP8_M"] < parts.size():
+				rc.fp8_mant_bits = int(parts[col_idx["FP8_M"]])
+			if col_idx.has("FP16_E") and col_idx["FP16_E"] < parts.size():
+				rc.fp16_exp_bits = int(parts[col_idx["FP16_E"]])
+			if col_idx.has("FP16_M") and col_idx["FP16_M"] < parts.size():
+				rc.fp16_mant_bits = int(parts[col_idx["FP16_M"]])
 			step.config_raw_mochila = rc
 		elif parts[0] == "T":
 			step.kind = PhaseSequenceStep.Kind.TYPE_BOX
@@ -756,23 +754,24 @@ func _on_btn_import_csv_pressed() -> void:
 					vals.append(s)
 			c.initial_raw_values = vals
 			c.randomize_values = (int(parts[8]) > 0)
-			if parts.size() > 9:
-				c.allow_float = (parts[9] == "true")
-			if parts.size() > 10:
-				c.allow_double = (parts[10] == "true")
-			if parts.size() > 11:
-				c.allow_short = (parts[11] == "true")
-			if parts.size() > 12:
-				c.allow_bool = (parts[12] == "true")
-			if parts.size() > 13:
-				c.allow_fp8 = (parts[13] == "true")
-			if parts.size() > 14:
-				c.allow_fp16 = (parts[14] == "true")
-			if parts.size() >= 21:
-				c.fp8_exp_bits = int(parts[17])
-				c.fp8_mant_bits = int(parts[18])
-				c.fp16_exp_bits = int(parts[19])
-				c.fp16_mant_bits = int(parts[20])
+			if col_idx.has("FLOAT") and col_idx["FLOAT"] < parts.size():
+				c.allow_float = (parts[col_idx["FLOAT"]] == "true")
+			if col_idx.has("DOUBLE") and col_idx["DOUBLE"] < parts.size():
+				c.allow_double = (parts[col_idx["DOUBLE"]] == "true")
+			if col_idx.has("SHORT") and col_idx["SHORT"] < parts.size():
+				c.allow_short = (parts[col_idx["SHORT"]] == "true")
+			if col_idx.has("FP8") and col_idx["FP8"] < parts.size():
+				c.allow_fp8 = (parts[col_idx["FP8"]] == "true")
+			if col_idx.has("FP16") and col_idx["FP16"] < parts.size():
+				c.allow_fp16 = (parts[col_idx["FP16"]] == "true")
+			if col_idx.has("FP8_E") and col_idx["FP8_E"] < parts.size():
+				c.fp8_exp_bits = int(parts[col_idx["FP8_E"]])
+			if col_idx.has("FP8_M") and col_idx["FP8_M"] < parts.size():
+				c.fp8_mant_bits = int(parts[col_idx["FP8_M"]])
+			if col_idx.has("FP16_E") and col_idx["FP16_E"] < parts.size():
+				c.fp16_exp_bits = int(parts[col_idx["FP16_E"]])
+			if col_idx.has("FP16_M") and col_idx["FP16_M"] < parts.size():
+				c.fp16_mant_bits = int(parts[col_idx["FP16_M"]])
 			step.config_type_box = c
 		else:
 			step.kind = PhaseSequenceStep.Kind.BINARIO

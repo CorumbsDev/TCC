@@ -88,7 +88,6 @@ func _create_boxes():
 	if config.allow_double: types.append({"type": ItemRef.DataType.DOUBLE, "name": "Double", "color": Color.MAGENTA})
 	if config.allow_fp8: types.append({"type": ItemRef.DataType.FP8, "name": "FP8", "color": Color.VIOLET})
 	if config.allow_fp16: types.append({"type": ItemRef.DataType.FP16, "name": "FP16", "color": Color.GOLD})
-	if config.allow_bool: types.append({"type": ItemRef.DataType.BOOLEAN, "name": "Boolean", "color": Color.GREEN})
 	
 	for t in types:
 		var box_container = HBoxContainer.new()
@@ -146,7 +145,7 @@ func _populate_pool():
 			match case_type:
 				0: values_to_spawn.append("%.4f" % randf_range(-1.0, 1.0)) # Exige float ou double (muita precisão)
 				1: values_to_spawn.append(str(randi_range(33000, 50000))) # Estoura short_int, exige int
-				2: values_to_spawn.append(str(randi_range(0, 1))) # Ideal para boolean
+				2: values_to_spawn.append(str(randi_range(0, 1)))
 				3: values_to_spawn.append("%.1f" % randf_range(100.0, 1000.0)) # Float comum
 	else:
 		values_to_spawn = config.initial_raw_values
@@ -321,5 +320,4 @@ func _get_type_name(dt) -> String:
 	if dt == ItemRef.DataType.DOUBLE: return "Double"
 	if dt == ItemRef.DataType.FP8: return "FP8"
 	if dt == ItemRef.DataType.FP16: return "FP16"
-	if dt == ItemRef.DataType.BOOLEAN: return "Boolean"
 	return "Desconhecido"

@@ -48,7 +48,6 @@ func advance_from_phase() -> void:
 	# Verifica se a fase atual permite avanço (subclasses podem implementar is_phase_success)
 	var current_scene = get_tree().get_current_scene()
 	if current_scene and current_scene.has_method("is_phase_success"):
-		# Forçar tipo booleano explícito para evitar erro de inferência
 		var ok: bool = current_scene.is_phase_success()
 		if not ok:
 			# Emite signal em vez de apenas push_warning para UI feedback

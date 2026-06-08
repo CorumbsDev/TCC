@@ -172,8 +172,6 @@ func _allowed_types() -> Array:
 		types.append({"type": ItemRef.DataType.FP8, "name": "FP8", "color": Color.VIOLET})
 	if config.allow_fp16:
 		types.append({"type": ItemRef.DataType.FP16, "name": "FP16", "color": Color.GOLD})
-	if config.allow_bool:
-		types.append({"type": ItemRef.DataType.BOOLEAN, "name": "Bool", "color": Color.GREEN})
 	return types
 
 
@@ -454,8 +452,6 @@ func _on_spawn_pressed() -> void:
 func _numeric_from_item(item: Node) -> float:
 	if item.data_type in [ItemRef.DataType.FLOAT, ItemRef.DataType.DOUBLE, ItemRef.DataType.FP8, ItemRef.DataType.FP16, ItemRef.DataType.RAW]:
 		return item.value_float
-	if item.data_type == ItemRef.DataType.BOOLEAN:
-		return 1.0 if item.value_bool else 0.0
 	return float(item.value)
 
 

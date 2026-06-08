@@ -24,8 +24,6 @@ class GeradorCodigoPython:
     def detectar_tipo(self, valor: str):
         """Detecta o tipo do valor e retorna tipo e valor convertido"""
         valor = valor.strip()
-        if valor.lower() in ['true', 'false']:
-            return 'bool', valor.lower() == 'true'
         if '.' in valor and valor.replace('.', '').replace('-', '').isdigit():
             return 'float', float(valor)
         if valor.replace('-', '').isdigit():
@@ -57,8 +55,6 @@ class GeradorCodigoPython:
         for nome_var, tipo, val in variaveis:
             if tipo == "str":
                 codigo_linhas.append(f'{nome_var}: {tipo} = "{val}"')
-            elif tipo == "bool":
-                codigo_linhas.append(f"{nome_var}: {tipo} = {str(val)}")
             else:
                 codigo_linhas.append(f"{nome_var}: {tipo} = {val}")
 

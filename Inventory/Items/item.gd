@@ -4,13 +4,12 @@ extends Node2D
 @onready var cylinder_visual: Control = $CylinderVisual
 
 # Enum para identificar o tipo de dado do orb
-enum DataType {INT, FLOAT, BOOLEAN, STRING, OPERATOR, DOUBLE, BINARY, SHORT_INT, FP8, FP16, RAW}
+enum DataType {INT, FLOAT, STRING, OPERATOR, DOUBLE, BINARY, SHORT_INT, FP8, FP16, RAW}
 
 var item_ID : String
 var data_type: DataType = DataType.INT  # Tipo padrão é INT
 var value : int = 0
 var value_float : float = 0.0
-var value_bool : bool = false
 var value_string : String = ""
 var value_double : float = 0.0  # Precisão dupla (ocupa 2 slots)
 var value_short : int = 0
@@ -95,8 +94,6 @@ func get_item_info() -> Dictionary:
 				info.id = "item_number_" + str(value)
 			DataType.FLOAT:
 				info.id = "item_float_" + str(value_float)
-			DataType.BOOLEAN:
-				info.id = "item_bool_" + ("true" if value_bool else "false")
 			DataType.STRING:
 				info.id = "item_string_" + str(value_string.hash())
 			DataType.OPERATOR:
@@ -122,10 +119,6 @@ func get_item_info() -> Dictionary:
 			info.tipo = "FLOAT (Decimal)"
 			info.valor = full_val
 			info.detalhes = "Número decimal: " + full_val
-		DataType.BOOLEAN:
-			info.tipo = "BOOLEAN (Booleano)"
-			info.valor = "true" if value_bool else "false"
-			info.detalhes = "Valor booleano: " + ("Verdadeiro" if value_bool else "Falso")
 		DataType.STRING:
 			info.tipo = "STRING (Texto)"
 			info.valor = '"' + value_string + '"'
@@ -173,7 +166,6 @@ func load_item(a_ItemID: String) -> void:
 		data_type = DataType.OPERATOR
 		value = 0
 		value_float = 0.0
-		value_bool = false
 		value_string = ""
 	# Verifica o tipo de dado
 	elif data.has("DataType"):
@@ -183,26 +175,17 @@ func load_item(a_ItemID: String) -> void:
 				data_type = DataType.FLOAT
 				value_float = float(data.get("Value", 0.0))
 				value = 0
-				value_bool = false
-				value_string = ""
-			"BOOLEAN", "BOOL":
-				data_type = DataType.BOOLEAN
-				value_bool = bool(data.get("Value", false))
-				value = 0
-				value_float = 0.0
 				value_string = ""
 			"STRING", "STR":
 				data_type = DataType.STRING
 				value_string = str(data.get("Value", ""))
 				value = 0
 				value_float = 0.0
-				value_bool = false
 			"DOUBLE":
 				data_type = DataType.DOUBLE
 				value_double = float(data.get("Value", 0.0))
 				value = int(value_double)
 				value_float = value_double
-				value_bool = false
 				value_string = ""
 				# DOUBLE ocupa 2 slots horizontais
 				item_grids = [Vector2(0,0), Vector2(1,0)]
@@ -212,7 +195,6 @@ func load_item(a_ItemID: String) -> void:
 				value = int(data.get("Value", 0))
 				value_binary = int_to_binary(value, binary_bits)
 				value_float = float(value)
-				value_bool = false
 				value_string = ""
 				item_grids = [Vector2(0,0)]
 			"SHORT_INT", "SHORT":
@@ -220,28 +202,24 @@ func load_item(a_ItemID: String) -> void:
 				value_short = int(data.get("Value", 0))
 				value = value_short
 				value_float = float(value_short)
-				value_bool = false
 				value_string = ""
 				item_grids = [Vector2(0,0)]
 			"FP8":
 				data_type = DataType.FP8
 				value_float = float(data.get("Value", 0.0))
 				value = int(value_float)
-				value_bool = false
 				value_string = ""
 				item_grids = [Vector2(0,0)]
 			"FP16":
 				data_type = DataType.FP16
 				value_float = float(data.get("Value", 0.0))
 				value = int(value_float)
-				value_bool = false
 				value_string = ""
 				item_grids = [Vector2(0,0)]
 			"RAW":
 				data_type = DataType.RAW
 				value_float = float(data.get("Value", 0.0))
 				value = int(value_float)
-				value_bool = false
 				value_string = ""
 				item_grids = [Vector2(0,0)]
 			_:
@@ -249,14 +227,12 @@ func load_item(a_ItemID: String) -> void:
 				data_type = DataType.INT
 				value = int(data.get("Value", 0))
 				value_float = 0.0
-				value_bool = false
 				value_string = ""
 	else:
 		# Fallback: assume que é um número inteiro (compatibilidade)
 		data_type = DataType.INT
 		value = int(data.get("Value", 0))
 		value_float = 0.0
-		value_bool = false
 		value_string = ""
 		operator = ""
 
@@ -266,7 +242,6 @@ func set_value_directly(new_value: int):
 	"""Define o valor diretamente (para resultados de expressões) - mantém compatibilidade"""
 	value = new_value
 	value_float = float(new_value)
-	value_bool = false
 	value_string = ""
 	operator = ""
 	data_type = DataType.INT
@@ -282,39 +257,28 @@ func set_value_by_type(new_value, tipo: DataType):
 		DataType.INT:
 			value = int(new_value)
 			value_float = float(new_value)
-			value_bool = false
 			value_string = ""
 			item_grids = [Vector2(0,0)]
 		DataType.FLOAT:
 			value_float = float(new_value)
 			value = int(value_float)
-			value_bool = false
-			value_string = ""
-			item_grids = [Vector2(0,0)]
-		DataType.BOOLEAN:
-			value_bool = bool(new_value)
-			value = 1 if value_bool else 0
-			value_float = 1.0 if value_bool else 0.0
 			value_string = ""
 			item_grids = [Vector2(0,0)]
 		DataType.STRING:
 			value_string = str(new_value)
 			value = 0
 			value_float = 0.0
-			value_bool = false
 			item_grids = [Vector2(0,0)]
 		DataType.OPERATOR:
 			operator = str(new_value)
 			value = 0
 			value_float = 0.0
-			value_bool = false
 			value_string = ""
 			item_grids = [Vector2(0,0)]
 		DataType.DOUBLE:
 			value_double = float(new_value)
 			value = int(value_double)
 			value_float = value_double
-			value_bool = false
 			value_string = ""
 			# DOUBLE ocupa 2 slots horizontais
 			item_grids = [Vector2(0,0), Vector2(1,0)]
@@ -322,7 +286,6 @@ func set_value_by_type(new_value, tipo: DataType):
 			value = int(new_value)
 			value_binary = int_to_binary(value, binary_bits)
 			value_float = float(value)
-			value_bool = false
 			value_string = ""
 			# BINARY ocupa 1 slot (antes era N slots)
 			item_grids = [Vector2(0,0)]
@@ -330,25 +293,21 @@ func set_value_by_type(new_value, tipo: DataType):
 			value_short = int(new_value)
 			value = value_short
 			value_float = float(value_short)
-			value_bool = false
 			value_string = ""
 			item_grids = [Vector2(0,0)]
 		DataType.FP8:
 			value_float = float(new_value)
 			value = int(value_float)
-			value_bool = false
 			value_string = ""
 			item_grids = [Vector2(0,0)]
 		DataType.FP16:
 			value_float = float(new_value)
 			value = int(value_float)
-			value_bool = false
 			value_string = ""
 			item_grids = [Vector2(0,0)]
 		DataType.RAW:
 			value_float = float(new_value)
 			value = int(value_float)
-			value_bool = false
 			value_string = ""
 			item_grids = [Vector2(0,0)]
 	
@@ -364,7 +323,6 @@ func set_operator_directly(new_operator: String):
 	data_type = DataType.OPERATOR
 	value = 0
 	value_float = 0.0
-	value_bool = false
 	value_string = ""
 	item_ID = "item_operator_" + new_operator
 	update_label_display()
@@ -404,8 +362,6 @@ func update_label_display():
 			value_label.add_theme_color_override("font_color", Color.BLUE)
 		DataType.FLOAT:
 			value_label.add_theme_color_override("font_color", Color.RED)
-		DataType.BOOLEAN:
-			value_label.add_theme_color_override("font_color", Color.GREEN)
 		DataType.STRING:
 			value_label.add_theme_color_override("font_color", Color.YELLOW)
 		DataType.DOUBLE:
@@ -452,7 +408,6 @@ func operator_display_label() -> String:
 		"to_int": return "int"
 		"to_float": return "flt"
 		"to_short": return "sh"
-		"to_boolean", "to_bool": return "bool"
 	if operator.begins_with("to_") and operator.length() > 3:
 		return operator.substr(3)
 	if operator.length() <= 5:
@@ -475,7 +430,7 @@ func _slot_item_count(slot: TextureRect) -> int:
 
 func _base_type_slot_scale() -> float:
 	match data_type:
-		DataType.BOOLEAN, DataType.FP8:
+		DataType.FP8:
 			return 0.25
 		DataType.SHORT_INT, DataType.FP16:
 			return 0.5
@@ -539,8 +494,6 @@ func _apply_orb_sprite(dims: Vector2 = Vector2.ZERO) -> bool:
 			path = "res://Inventory/Art/Orbs/orb_int.png"
 		DataType.FLOAT:
 			path = "res://Inventory/Art/Orbs/orb_float.png"
-		DataType.BOOLEAN:
-			path = "res://Inventory/Art/Orbs/orb_bool.png"
 		DataType.BINARY:
 			path = "res://Inventory/Art/Orbs/orb_binary.png"
 		DataType.OPERATOR:
@@ -795,8 +748,6 @@ func get_size_bytes() -> int:
 			return 2
 		DataType.FP16:
 			return 2
-		DataType.BOOLEAN:
-			return 1
 		DataType.FP8:
 			return 1
 		DataType.RAW:

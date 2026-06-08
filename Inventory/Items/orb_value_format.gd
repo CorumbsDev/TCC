@@ -49,8 +49,6 @@ static func full_value_string(item: Node) -> String:
 			return _float_full(item.value_float)
 		item.DataType.DOUBLE:
 			return _float_full(item.value_double)
-		item.DataType.BOOLEAN:
-			return "true" if item.value_bool else "false"
 		item.DataType.STRING:
 			return "\"" + item.value_string + "\""
 		item.DataType.OPERATOR:
@@ -75,8 +73,6 @@ static func python_repr_string(item: Node) -> String:
 			return _float_full(item.value_float)
 		item.DataType.DOUBLE:
 			return _float_full(item.value_double)
-		item.DataType.BOOLEAN:
-			return "True" if item.value_bool else "False"
 		item.DataType.STRING:
 			return "repr: " + item.value_string
 		item.DataType.OPERATOR:

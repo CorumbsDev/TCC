@@ -26,7 +26,6 @@ extends Resource
 @export var allow_float: bool = false
 @export var allow_double: bool = false
 @export var allow_short: bool = false
-@export var allow_bool: bool = false
 @export var allow_fp8: bool = false
 @export var allow_fp16: bool = false
 @export var allow_calc: bool = false
