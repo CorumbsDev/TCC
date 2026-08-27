@@ -3,7 +3,6 @@
 [ext_resource type="PackedScene" uid="uid://cys5sf0454a5j" path="res://Inventory/InventoryGrid.tscn" id="1"]
 
 [node name="PoolGrid" instance=ExtResource("1")]
-layout_mode = 3
 capacity_bytes = 999999
 number_of_slots = 10
 grid_columns = 5

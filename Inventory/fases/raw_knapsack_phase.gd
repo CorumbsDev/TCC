@@ -84,10 +84,7 @@ func _setup_bancada() -> void:
 	typing_box.add_child(_typing_row)
 	_create_type_stations()
 	pl_vbox.add_child(typing_box)
-	var lbl_pool := Label.new()
-	lbl_pool.text = "Pool — valores sem tipo (RAW)"
-	lbl_pool.add_theme_color_override("font_color", Color(0.85, 0.75, 0.5))
-	pl_vbox.add_child(lbl_pool)
+	
 	var pool: InventoryGrid = GRID_SCENE.instantiate()
 	pool.capacity_bytes = 999999
 	pool.grid_columns = config.pool_grid_columns
@@ -207,6 +204,9 @@ func _populate_raw_pool() -> void:
 
 @warning_ignore("unused_parameter")
 func _process(delta: float) -> void:
+	if _is_finishing:
+		return
+		
 	var mouse_pos := get_global_mouse_position()
 	var new_slot = _slot_under_mouse(mouse_pos)
 	if current_slot != new_slot:
@@ -275,12 +275,18 @@ func _on_custom_slot_exited(_slot) -> void:
 func _place_item_custom() -> void:
 	if not current_slot or not item_held:
 		return
+		
+	var prev_source = _source_slot
+	
 	if current_slot.has_meta("is_type_station"):
 		_place_on_type_station(current_slot)
 	elif current_slot in backpack_grid.slots_array:
 		_place_on_backpack(current_slot)
 	elif current_slot in pool_grid.slots_array:
 		_place_on_pool(current_slot)
+		
+	if item_held == null and prev_source != current_slot:
+		moves_count += 1
 
 
 func _place_on_type_station(slot) -> void:
@@ -290,7 +296,7 @@ func _place_on_type_station(slot) -> void:
 	var target_name: String = slot.get_meta("box_name")
 	var target_type = slot.get_meta("box_type")
 	var val := _numeric_from_item(item_held)
-	var deg := _check_degradation(target_name, val)
+	var deg := TypeConversionSystem.check_degradation(target_name, val, config)
 	if deg.has_warning:
 		_show_not_ready_modal("FALHA NA TIPAGEM!\n" + deg.message)
 		return
@@ -457,9 +463,7 @@ func _numeric_from_item(item: Node) -> float:
 
 func _update_phase_title() -> void:
 	if phase_title:
-		phase_title.text = "Mochila + Tipagem | Cap: %d | RAW pendentes: %d" % [
-			config.capacity_bytes, pending_raw_count
-		]
+		phase_title.visible = false
 
 
 func _tutorial_intro_id() -> String:

@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://dgc3nw5tn1prn"]
 
-[ext_resource type="Script" path="res://Inventory/fases/sequence_editor.gd" id="1_2n5q8"]
+[ext_resource type="Script" uid="uid://b5y2sgweq8283" path="res://Inventory/fases/sequence_editor.gd" id="1_2n5q8"]
 
 [node name="SequenceEditor" type="Control"]
 layout_mode = 3
@@ -97,6 +97,14 @@ text = "+ Fase"
 layout_mode = 2
 text = "🗑"
 
+[node name="BtnMoveUp" type="Button" parent="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar"]
+layout_mode = 2
+text = "⬆"
+
+[node name="BtnMoveDown" type="Button" parent="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar"]
+layout_mode = 2
+text = "⬇"
+
 [node name="Tree" type="Tree" parent="Panel/VBoxContainer/HSplitContainer/LeftPanel"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -169,8 +177,8 @@ layout_mode = 2
 [node name="LabelMochila" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxMochila"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = ">> Parâmetros: Mochila & Bancada"
 theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
+text = ">> Parâmetros: Mochila & Bancada"
 
 [node name="BtnHelpMochila" type="Button" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxMochila"]
 layout_mode = 2
@@ -183,6 +191,7 @@ columns = 4
 [node name="LblCap" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer"]
 layout_mode = 2
 text = "Capacidade (Bytes):"
+
 [node name="SpinCap" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer"]
 layout_mode = 2
 min_value = 1.0
@@ -192,24 +201,25 @@ value = 8.0
 [node name="LblSlotsM" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer"]
 layout_mode = 2
 text = "Slots Mochila:"
+
 [node name="SpinSlotsM" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer"]
 layout_mode = 2
 min_value = 1.0
-max_value = 100.0
 value = 8.0
 
 [node name="LblSlotsP" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer"]
 layout_mode = 2
 text = "Slots Bancada:"
+
 [node name="SpinSlotsP" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer"]
 layout_mode = 2
 min_value = 1.0
-max_value = 100.0
 value = 10.0
 
 [node name="LblCols" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer"]
 layout_mode = 2
 text = "Colunas Bancada:"
+
 [node name="SpinCols" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer"]
 layout_mode = 2
 min_value = 1.0
@@ -225,8 +235,8 @@ layout_mode = 2
 [node name="LabelValores" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxValores"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = ">> Parâmetros: Valores e Tipos Disponíveis"
 theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
+text = ">> Parâmetros: Valores e Tipos Disponíveis"
 
 [node name="BtnHelpValores" type="Button" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxValores"]
 layout_mode = 2
@@ -239,24 +249,25 @@ columns = 4
 [node name="LblMin" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2"]
 layout_mode = 2
 text = "Int Mínimo:"
+
 [node name="SpinMin" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2"]
 layout_mode = 2
-min_value = -2.147483648e+09
-max_value = 2.147483647e+09
-allow_lesser = true
+min_value = -2.14748e+09
+max_value = 2.14748e+09
 allow_greater = true
-value = 0.0
+allow_lesser = true
 
 [node name="LblMax" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2"]
 layout_mode = 2
 text = "Int Máximo:"
+
 [node name="SpinMax" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2"]
 layout_mode = 2
-min_value = -2.147483648e+09
-max_value = 2.147483647e+09
-allow_lesser = true
-allow_greater = true
+min_value = -2.14748e+09
+max_value = 2.14748e+09
 value = 10.0
+allow_greater = true
+allow_lesser = true
 
 [node name="LblCSV" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
@@ -302,7 +313,6 @@ text = "Qtd Tipos Aleatórios Extra:"
 
 [node name="SpinRndPool" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
-min_value = 0.0
 max_value = 50.0
 
 [node name="Sep3" type="HSeparator" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
@@ -310,8 +320,8 @@ layout_mode = 2
 
 [node name="LabelFerramentas" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
-text = ">> Conversores e Ferramentas (Habilita p/ jogador)"
 theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
+text = ">> Conversores e Ferramentas (Habilita p/ jogador)"
 
 [node name="CheckFloat" type="CheckBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
@@ -341,6 +351,35 @@ text = "Permitir customizar formato (exp/mantissa) de FP8/16"
 layout_mode = 2
 text = "Habilitar Calculadora Aritmética"
 
+[node name="SepStar" type="HSeparator" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
+layout_mode = 2
+
+[node name="LabelStarHeader" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.84, 0, 1)
+text = ">> Critérios de Estrelas (2 e 3)"
+
+[node name="StarGrid" type="GridContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
+layout_mode = 2
+columns = 2
+
+[node name="LblStar2Moves" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StarGrid"]
+layout_mode = 2
+text = "Máx Movimentos (0 = s/ limite):"
+
+[node name="SpinStar2Moves" type="SpinBox" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StarGrid"]
+layout_mode = 2
+max_value = 9999.0
+
+[node name="LblStar3Solution" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StarGrid"]
+layout_mode = 2
+text = "Melhor Solução (CSV):"
+
+[node name="LineEditStar3Solution" type="LineEdit" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StarGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Ex: 42_i, 3.14_f"
+
 [node name="StatusLabel" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.85, 0.55, 1)
@@ -355,20 +394,21 @@ text = "Alterações são salvas ao trocar de fase ou ao clicar em Salvar."
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar/BtnNovaSeq" to="." method="_on_btn_nova_seq_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar/BtnNovaFase" to="." method="_on_btn_nova_fase_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar/BtnDelete" to="." method="_on_btn_delete_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar/BtnMoveUp" to="." method="_on_btn_move_up_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar/BtnMoveDown" to="." method="_on_btn_move_down_pressed"]
 [connection signal="item_selected" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Tree" to="." method="_on_tree_item_selected"]
-[connection signal="text_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor/FileNameEdit" to="." method="_on_file_name_changed"]
 [connection signal="item_selected" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/PhaseTypeHBox/OptionType" to="." method="_on_phase_type_selected"]
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxMochila/BtnHelpMochila" to="." method="_on_help_mochila_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxValores/BtnHelpValores" to="." method="_on_help_valores_pressed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/SpinCap" to="." method="_on_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/SpinSlotsM" to="." method="_on_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/SpinSlotsP" to="." method="_on_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/SpinCols" to="." method="_on_param_changed"]
+[connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxValores/BtnHelpValores" to="." method="_on_help_valores_pressed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2/SpinMin" to="." method="_on_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2/SpinMax" to="." method="_on_param_changed"]
+[connection signal="text_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LineEditCSV" to="." method="_on_text_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary/SpinBinLeft" to="." method="_on_binary_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary/SpinBinRight" to="." method="_on_binary_param_changed"]
-[connection signal="text_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LineEditCSV" to="." method="_on_text_param_changed"]
 [connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/SpinRndPool" to="." method="_on_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFloat" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckDouble" to="." method="_on_bool_param_changed"]
@@ -377,3 +417,5 @@ text = "Alterações são salvas ao trocar de fase ou ao clicar em Salvar."
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP16" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFPCust" to="." method="_on_bool_param_changed"]
 [connection signal="toggled" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckCalc" to="." method="_on_bool_param_changed"]
+[connection signal="value_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StarGrid/SpinStar2Moves" to="." method="_on_param_changed"]
+[connection signal="text_changed" from="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StarGrid/LineEditStar3Solution" to="." method="_on_text_param_changed"]

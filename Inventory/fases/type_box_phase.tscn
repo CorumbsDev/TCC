@@ -1,8 +1,8 @@
 [gd_scene load_steps=5 format=3 uid="uid://b2wlm6mc5wqpq"]
 
 [ext_resource type="Script" uid="uid://dgbg8f78g66tr" path="res://Inventory/fases/type_box_phase.gd" id="1_fscm0"]
-[ext_resource type="Script" path="res://Inventory/ui/orb_hover_bar.gd" id="2_hover"]
-[ext_resource type="Script" path="res://Inventory/ui/phase_info_bar.gd" id="3_info"]
+[ext_resource type="Script" uid="uid://chulexu1xfjgj" path="res://Inventory/ui/orb_hover_bar.gd" id="2_hover"]
+[ext_resource type="Script" uid="uid://c0pvawjfqsa4u" path="res://Inventory/ui/phase_info_bar.gd" id="3_info"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_fscm0"]
 blend_mode = 1

@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://ddmhud65ipxev" path="res://Inventory/fases/binary_phase.gd" id="1_0j8i7"]
 [ext_resource type="PackedScene" uid="uid://b0uhc1jdhcm7s" path="res://Inventory/slots/slot.tscn" id="2_y8gdq"]
-[ext_resource type="Script" path="res://Inventory/ui/orb_hover_bar.gd" id="3_hover"]
-[ext_resource type="Script" path="res://Inventory/ui/phase_info_bar.gd" id="4_info"]
+[ext_resource type="Script" uid="uid://chulexu1xfjgj" path="res://Inventory/ui/orb_hover_bar.gd" id="3_hover"]
+[ext_resource type="Script" uid="uid://c0pvawjfqsa4u" path="res://Inventory/ui/phase_info_bar.gd" id="4_info"]
 
 [node name="BinaryPhase" type="Control"]
 layout_mode = 3

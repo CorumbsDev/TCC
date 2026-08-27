@@ -30,6 +30,8 @@ fp8_mant_bits = 3
 fp16_exp_bits = 5
 fp16_mant_bits = 10
 allow_fp_customization = false
+star2_max_moves = 0
+star3_best_solution_csv = ""
 
 [node name="PhaseBase" instance=ExtResource("1_pb")]
 script = ExtResource("2_ph")

@@ -46,6 +46,9 @@ func _ready():
 	_update_hint()
 
 func _process(delta):
+	if _is_finishing:
+		return
+		
 	# Detect mouse hover manually
 	var new_current = null
 	var mouse_pos = get_global_mouse_position()
@@ -75,7 +78,7 @@ func _process(delta):
 
 func _update_phase_title() -> void:
 	if phase_title:
-		phase_title.text = "Fase: Caixas de Tipagem"
+		phase_title.visible = false
 
 func _tutorial_intro_id() -> String:
 	return "type_box_phase_intro"
@@ -187,6 +190,8 @@ func _on_box_slot_exited(slot):
 func _place_item():
 	if not can_place or not current_slot: return
 	
+	var prev_source = _source_slot
+	
 	if current_slot.has_meta("is_type_box"):
 		if current_slot.item_stored != null:
 			return
@@ -204,7 +209,7 @@ func _place_item():
 			val_to_convert = float(item_held.value)
 		
 		# Verifica conversão
-		var deg = _check_degradation(target_name, val_to_convert)
+		var deg = TypeConversionSystem.check_degradation(target_name, val_to_convert, config)
 		if deg.has_warning:
 			# FASE FALHA se houver degradação em caixa de tipagem
 			var dlg = AcceptDialog.new()
@@ -260,7 +265,10 @@ func _place_item():
 		_update_bytes_label()
 		_update_hint()
 		_update_next_button_state()
-
+		
+	if item_held == null and prev_source != current_slot:
+		moves_count += 1
+		
 func _pick_item():
 	var slot = current_slot
 	item_held = slot.item_stored

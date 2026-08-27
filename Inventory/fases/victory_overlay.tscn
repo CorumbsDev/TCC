@@ -1,0 +1,175 @@
+[gd_scene load_steps=5 format=3 uid="uid://cxnbl8y0okb4t"]
+
+[ext_resource type="Script" uid="uid://bcon0x4owumhc" path="res://Inventory/fases/victory_overlay.gd" id="1_vov"]
+[ext_resource type="Texture2D" uid="uid://doyrpqff8p8l5" path="res://Inventory/Art/UI/star.png" id="2_star"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_Title"]
+font_size = 48
+outline_size = 6
+outline_color = Color(0, 0, 0, 1)
+shadow_size = 3
+shadow_color = Color(0, 0, 0, 0.7)
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="LabelSettings" id="LabelSettings_Desc"]
+font_size = 24
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+shadow_size = 2
+shadow_color = Color(0, 0, 0, 0.7)
+
+[node name="VictoryOverlay" type="Control"]
+z_index = 100
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_vov")
+
+[node name="BackgroundDim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(600, 400)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -200.0
+offset_right = 300.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "Fase Concluída!"
+label_settings = SubResource("LabelSettings_Title")
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="StarsContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Star1" type="TextureRect" parent="Panel/VBoxContainer/StarsContainer"]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+texture = ExtResource("2_star")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="Panel/VBoxContainer/StarsContainer/Star1"]
+z_index = 10
+position = Vector2(50, 50)
+emitting = false
+amount = 50
+lifetime = 1.5
+one_shot = true
+explosiveness = 0.9
+direction = Vector2(0, 0)
+spread = 180.0
+initial_velocity_min = 100.0
+initial_velocity_max = 300.0
+scale_amount_min = 5.0
+scale_amount_max = 10.0
+color = Color(1, 1, 0, 1)
+
+[node name="Star2" type="TextureRect" parent="Panel/VBoxContainer/StarsContainer"]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+texture = ExtResource("2_star")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="Panel/VBoxContainer/StarsContainer/Star2"]
+z_index = 10
+position = Vector2(50, 50)
+emitting = false
+amount = 50
+lifetime = 1.5
+one_shot = true
+explosiveness = 0.9
+direction = Vector2(0, 0)
+spread = 180.0
+initial_velocity_min = 100.0
+initial_velocity_max = 300.0
+scale_amount_min = 5.0
+scale_amount_max = 10.0
+color = Color(1, 1, 0, 1)
+
+[node name="Star3" type="TextureRect" parent="Panel/VBoxContainer/StarsContainer"]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+texture = ExtResource("2_star")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="Panel/VBoxContainer/StarsContainer/Star3"]
+z_index = 10
+position = Vector2(50, 50)
+emitting = false
+amount = 150
+lifetime = 2.5
+one_shot = true
+explosiveness = 0.9
+direction = Vector2(0, 0)
+spread = 180.0
+initial_velocity_min = 100.0
+initial_velocity_max = 400.0
+scale_amount_min = 5.0
+scale_amount_max = 15.0
+color = Color(1, 1, 0, 1)
+
+[node name="HSeparator2" type="HSeparator" parent="Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="Desc" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "Resultados da Fase"
+label_settings = SubResource("LabelSettings_Desc")
+horizontal_alignment = 1
+
+[node name="HSeparator3" type="HSeparator" parent="Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BtnRetry" type="Button" parent="Panel/VBoxContainer/Buttons"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "Refazer Fase"
+
+[node name="BtnAdvance" type="Button" parent="Panel/VBoxContainer/Buttons"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "Avançar"

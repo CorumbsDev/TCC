@@ -25,6 +25,10 @@ extends Resource
 @export var fp16_exp_bits: int = 5
 @export var fp16_mant_bits: int = 10
 
+## Limite de movimentos para ganhar a 2ª estrela. 0 significa que não é exigido.
+@export var star2_max_moves: int = 0
+## Solução ideal (CSV de atalhos) para ganhar a 3ª estrela. Vazio significa que não é exigido.
+@export var star3_best_solution_csv: String = ""
 
 func apply_constraints() -> void:
 	capacity_bytes = clampi(capacity_bytes, 1, 4096)

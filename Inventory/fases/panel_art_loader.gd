@@ -2,7 +2,9 @@ class_name PanelArtLoader
 extends RefCounted
 
 const PATH_BACKPACK := "res://Inventory/Art/UI/panel_backpack.png"
-const PATH_WORKBENCH := "res://Inventory/Art/UI/panel_workbench.png"
+const PATH_WORKBENCH := "res://Inventory/Art/UI/bancada.png"
+const PATH_BACKGROUND := "res://Inventory/Art/UI/backgorund.png"
+const PATH_MENU_BACKGROUND := "res://Inventory/Art/UI/backgorund_tela_inicial.jpeg"
 
 
 static func gray_panel_stylebox() -> StyleBoxFlat:
@@ -66,7 +68,7 @@ static func apply_zone_chrome(panel: Control) -> void:
 	panel.clip_contents = true
 	var vbox := _find_content_vbox(panel)
 	if vbox:
-		PanelZoneHeader.install(vbox, _zone_for_panel(panel))
+		# PanelZoneHeader.install(vbox, _zone_for_panel(panel)) # Removed per user request
 		vbox.add_theme_constant_override("separation", 8)
 
 
@@ -130,6 +132,78 @@ static func _find_content_vbox(panel: Control) -> VBoxContainer:
 
 
 static func _load_if_exists(path: String) -> Texture2D:
-	if not ResourceLoader.exists(path):
-		return null
-	return load(path) as Texture2D
+	var res = load(path)
+	if res is Texture2D:
+		return res
+	return null
+
+
+static func apply_button_style(btn: Button) -> void:
+	if btn == null: return
+	var tex = _load_if_exists("res://Inventory/Art/UI/botao_1.png")
+	if tex == null: return
+	
+	var sb := StyleBoxTexture.new()
+	sb.texture = tex
+	sb.texture_margin_left = 6
+	sb.texture_margin_top = 6
+	sb.texture_margin_right = 6
+	sb.texture_margin_bottom = 6
+	
+	var sb_hover = sb.duplicate()
+	sb_hover.modulate_color = Color(1.1, 1.1, 1.1)
+	
+	var sb_pressed = sb.duplicate()
+	sb_pressed.modulate_color = Color(0.9, 0.9, 0.9)
+	
+	var sb_disabled = sb.duplicate()
+	sb_disabled.modulate_color = Color(0.5, 0.5, 0.5, 0.8)
+	
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.add_theme_stylebox_override("hover", sb_hover)
+	btn.add_theme_stylebox_override("pressed", sb_pressed)
+	btn.add_theme_stylebox_override("focus", sb)
+	btn.add_theme_stylebox_override("disabled", sb_disabled)
+	btn.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
+	btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+
+
+static func skin_all_buttons(root: Node) -> void:
+	if root is Button and not root is OptionButton:
+		apply_button_style(root)
+	
+	for i in range(root.get_child_count()):
+		skin_all_buttons(root.get_child(i))
+
+static func apply_background(root: Node, custom_path: String = "") -> void:
+	if not root is Control: 
+		print("DEBUG: root is not Control")
+		return
+	var path_to_load = custom_path if custom_path != "" else PATH_BACKGROUND
+	print("DEBUG: applying background from path: ", path_to_load)
+	var tex = _load_if_exists(path_to_load)
+	if not tex: 
+		print("DEBUG: tex is null for path: ", path_to_load)
+		return
+	
+	print("DEBUG: loaded texture: ", tex)
+	var existing_bg = root.get_node_or_null("Background")
+	if existing_bg is ColorRect:
+		existing_bg.color = Color(0, 0, 0, 0)
+	elif existing_bg is Panel:
+		var empty_sb = StyleBoxEmpty.new()
+		existing_bg.add_theme_stylebox_override("panel", empty_sb)
+
+	if root.has_node("DynamicBackgroundArt"):
+		return
+		
+	var bg = TextureRect.new()
+	bg.texture = tex
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.name = "DynamicBackgroundArt"
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	root.add_child(bg)
+	root.move_child(bg, 0)

@@ -339,6 +339,9 @@ func _refill_pool_if_empty() -> void:
 
 @warning_ignore("unused_parameter")
 func _process(_delta):
+	if _is_finishing:
+		return
+		
 	if item_held:
 		if Input.is_action_just_pressed("select_item"):
 			_try_place_item()

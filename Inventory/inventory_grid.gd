@@ -235,4 +235,10 @@ func _on_slot_exited(slot):
 
 
 func _on_slot_item_changed(slot):
+	for it in slot.items_stored:
+		if is_instance_valid(it):
+			if it.has_method("snap_to_slot"):
+				it.snap_to_slot(slot)
+			else:
+				_set_item_position_in_slot(it, slot)
 	item_changed.emit(slot)

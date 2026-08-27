@@ -38,7 +38,9 @@ func _ready():
 	for i in range(64):
 		create_slot()
 	call_deferred("_recenter_all_slot_items")
-
+	
+	PanelArtLoader.skin_all_buttons(self)
+	PanelArtLoader.apply_background(self)
 
 func _recenter_all_slot_items() -> void:
 	for slot in grid_array:
@@ -391,59 +393,7 @@ func check_combinations():
 			_process_sequence(sequence)
 
 func validar_tipos_expressao(sequence: Array) -> Dictionary:
-	"""Valida se os tipos na expressão são compatíveis"""
-	var tipos_encontrados = []
-	var valores_encontrados = []
-	
-	# Analisa a sequência para identificar tipos
-	for i in range(sequence.size()):
-		var token = sequence[i]
-		
-		# Verifica se é operador
-		if token in ["+", "-", "*", "/", "**", "//", "%", "==", "!=", ">", "<", ">=", "<=", "and", "or", "not"]:
-			continue
-		
-		# Detecta tipo do valor
-		if token.begins_with('"') and token.ends_with('"'):
-			tipos_encontrados.append("STRING")
-			valores_encontrados.append(token)
-		elif token.to_lower() == "true" or token.to_lower() == "false":
-			tipos_encontrados.append("INT")
-			valores_encontrados.append("1" if token.to_lower() == "true" else "0")
-		elif "." in token and token.replace(".", "").replace("-", "").is_valid_float():
-			tipos_encontrados.append("FLOAT")
-			valores_encontrados.append(token)
-		elif token.is_valid_int() or (token.begins_with("-") and token.substr(1).is_valid_int()):
-			tipos_encontrados.append("INT")
-			valores_encontrados.append(token)
-		else:
-			tipos_encontrados.append("UNKNOWN")
-			valores_encontrados.append(token)
-	
-	# Verifica compatibilidade básica
-	var tipos_unicos = []
-	for tipo in tipos_encontrados:
-		if tipo not in tipos_unicos and tipo != "UNKNOWN":
-			tipos_unicos.append(tipo)
-	
-	var valido = true
-	var mensagem = ""
-	
-	# Regras de validação
-	if tipos_unicos.size() > 2:
-		valido = false
-		mensagem = "Muitos tipos diferentes na expressão"
-	elif "STRING" in tipos_unicos and tipos_unicos.size() > 1:
-		# String só pode ser concatenada com string ou multiplicada por int
-		valido = true  # Python permite algumas operações
-		mensagem = "Aviso: Operação com string"
-	
-	return {
-		"valido": valido,
-		"mensagem": mensagem,
-		"tipos": tipos_encontrados,
-		"valores": valores_encontrados
-	}
+	return ExpressionEvaluator.validate_types(sequence)
 
 func _process_sequence(seq: Array):
 	if seq.size() >= 3:
@@ -451,70 +401,21 @@ func _process_sequence(seq: Array):
 		ultima_expressao = expr
 		print("Expressão formada:", expr)
 		
-		# Valida tipos (opcional - pode ser comentado se não quiser validação)
 		var validacao = validar_tipos_expressao(seq)
 		if not validacao.valido:
 			print("AVISO: ", validacao.mensagem)
-			# Continua mesmo assim - Python vai lidar com erros
 		
-		# Tenta usar o controlador externo primeiro
 		if controlador_externo and controlador_externo.has_method("processar_expressao_assincrona"):
 			controlador_externo.processar_expressao_assincrona(expr)
 		else:
-			# Fallback: avalia localmente
 			var resultado_info = avaliar_expressao_com_tipo(expr)
 			print("Resultado (fallback):", resultado_info.resultado, " Tipo:", resultado_info.tipo)
 			
-			# Consome os itens e cria o resultado
 			consumir_itens_expressao()
 			create_result_item_typed(resultado_info.resultado, resultado_info.tipo)
 
 func avaliar_expressao_com_tipo(expr: String) -> Dictionary:
-	"""Avalia expressão e retorna resultado com tipo"""
-	
-	# Pre-processamento para conversores de tipo (int <-> float)
-	var regex = RegEx.new()
-	regex.compile("([0-9\\.]+)\\+?to_float\\+?([0-9\\.]+)")
-	expr = regex.sub(expr, "($1 * 1.0 + 0 * $2)", true)
-	regex.compile("([0-9\\.]+)\\+?to_int\\+?([0-9\\.]+)")
-	expr = regex.sub(expr, "(floor($1) + 0 * $2)", true)
-	regex.compile("([0-9\\.]+)\\+?to_short\\+?([0-9\\.]+)")
-	expr = regex.sub(expr, "(floor($1) + 0 * $2)", true)
-	
-	expr = expr.replace(" ", "")
-	
-	# Detecta strings
-	if expr.begins_with('"') and expr.ends_with('"'):
-		var str_valor = expr.substr(1, expr.length() - 2)
-		return {"resultado": str_valor, "tipo": "STRING"}
-	
-	if expr.to_lower() == "true":
-		return {"resultado": 1, "tipo": "INT"}
-	if expr.to_lower() == "false":
-		return {"resultado": 0, "tipo": "INT"}
-	
-	var expression = Expression.new()
-	var error = expression.parse(expr, [])
-	if error == OK:
-		var resultado = expression.execute([], null, true)
-		if not expression.has_execute_failed():
-			var tipo_resultado = "FLOAT"
-			if typeof(resultado) == TYPE_INT:
-				tipo_resultado = "INT"
-			elif typeof(resultado) == TYPE_FLOAT:
-				tipo_resultado = "FLOAT"
-			elif typeof(resultado) == TYPE_BOOL:
-				tipo_resultado = "INT"
-				resultado = 1 if resultado else 0
-			elif typeof(resultado) == TYPE_STRING:
-				tipo_resultado = "STRING"
-			
-			if "to_short" in expr.to_lower():
-				tipo_resultado = "SHORT_INT"
-			
-			return {"resultado": resultado, "tipo": tipo_resultado}
-	
-	return {"resultado": 0.0, "tipo": "FLOAT"}
+	return ExpressionEvaluator.evaluate_with_type(expr)
 
 func create_result_item(resultado: float):
 	"""Método antigo mantido para compatibilidade - sempre cria INT"""

@@ -230,6 +230,9 @@ func _refill_bits_if_empty():
 
 @warning_ignore("unused_parameter")
 func _process(delta):
+	if _is_finishing:
+		return
+		
 	if item_held:
 		if Input.is_action_just_pressed("select_item"):
 			_try_place_item()

@@ -11,15 +11,6 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="ColorRect" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.12, 0.1, 0.12, 1)
-
 [node name="VBox" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
@@ -28,64 +19,22 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -150.0
-offset_top = -200.0
+offset_top = -79.0
 offset_right = 180.0
-offset_bottom = 200.0
+offset_bottom = 121.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 20
 
-[node name="Title" type="Label" parent="VBox"]
+[node name="BtnComecar" type="Button" parent="VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "TCC - Fases"
-horizontal_alignment = 1
-
-[node name="BtnFase1" type="Button" parent="VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Fase 1: Completar binário (1 _ 0)"
-
-[node name="BtnFase2" type="Button" parent="VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Fase 2: Mochila (parâmetros fixos)"
-
-[node name="BtnFase2Classic" type="Button" parent="VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Fase 2: Clássica (7 ints + pool)"
-
-[node name="BtnFase3" type="Button" parent="VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Fase 3: Decimal → binário (3 bits)"
-
-[node name="BtnFaseRawMochila" type="Button" parent="VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Fase 4: Mochila + Tipagem (RAW)"
-
-[node name="BtnInventario" type="Button" parent="VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Inventário livre"
-
-[node name="BtnGlossary" type="Button" parent="VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Glossário"
+text = "Começar"
 
 [node name="BtnGerador" type="Button" parent="VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "� Criar Sequência de Fases"
+theme_override_font_sizes/font_size = 24
+text = "Criador de Fases"
 
-[connection signal="pressed" from="VBox/BtnFase1" to="." method="_on_fase1_pressed"]
-[connection signal="pressed" from="VBox/BtnFase2" to="." method="_on_fase2_pressed"]
-[connection signal="pressed" from="VBox/BtnFase2Classic" to="." method="_on_fase2_classic_pressed"]
-[connection signal="pressed" from="VBox/BtnFase3" to="." method="_on_fase3_pressed"]
-[connection signal="pressed" from="VBox/BtnFaseRawMochila" to="." method="_on_fase_raw_mochila_pressed"]
-[connection signal="pressed" from="VBox/BtnInventario" to="." method="_on_inventario_livre_pressed"]
-[connection signal="pressed" from="VBox/BtnGlossary" to="." method="_on_glossary_pressed"]
+[connection signal="pressed" from="VBox/BtnComecar" to="." method="_on_comecar_pressed"]
 [connection signal="pressed" from="VBox/BtnGerador" to="." method="_on_gerador_pressed"]

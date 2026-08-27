@@ -4,10 +4,10 @@ signal slot_entered(slot)
 signal slot_exited(slot)
 
 const SLOT_PX := 64
-const PATH_FRAME := "res://Inventory/Art/UI/slot_frame.png"
-const PATH_FRAME_FREE := "res://Inventory/Art/UI/slot_frame_free.png"
-const PATH_FRAME_PARTIAL := "res://Inventory/Art/UI/slot_frame_partial.png"
-const PATH_FRAME_TAKEN := "res://Inventory/Art/UI/slot_frame_taken.png"
+const PATH_FRAME := "res://Inventory/Art/UI/slot.png"
+const PATH_FRAME_FREE := "res://Inventory/Art/UI/slot.png"
+const PATH_FRAME_PARTIAL := "res://Inventory/Art/UI/slot.png"
+const PATH_FRAME_TAKEN := "res://Inventory/Art/UI/slot.png"
 
 @onready var filter = $StatusFilter
 

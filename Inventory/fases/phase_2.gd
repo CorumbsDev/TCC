@@ -57,13 +57,7 @@ func _ready():
 
 func _update_phase_title() -> void:
 	if phase_title:
-		phase_title.text = "Mochila | Cap: %d | Slots: %d | Pool: %d | Valores: %d-%d" % [
-			config.capacity_bytes,
-			config.backpack_slot_count,
-			config.pool_slot_count,
-			config.spawn_int_min,
-			config.spawn_int_max
-		]
+		phase_title.visible = false
 
 
 func _apply_challenge_exports(grid: InventoryGrid):
@@ -137,7 +131,6 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 			if config.allow_fp16: converter_option_btn.add_item("FP16")
 			converter_option_btn.add_item("Int") # Sempre permitir a volta pro Int
 			
-			converter_option_btn.item_selected.connect(_on_converter_type_changed)
 			hbox.add_child(converter_option_btn)
 			
 			var center = CenterContainer.new()
@@ -150,6 +143,8 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 			
 			converter_slot.slot_entered.connect(_on_slot_entered)
 			converter_slot.slot_exited.connect(_on_slot_exited)
+			
+			converter = ConverterTool.new(self, converter_slot, converter_option_btn)
 			
 			# Só adiciona o painel de conversão se houver mais de uma opção (Int + pelo menos 1 ativado)
 			if converter_option_btn.item_count > 1:
@@ -218,7 +213,7 @@ func _create_calculator_ui():
 	calc_op_btn.add_theme_font_size_override("font_size", 24)
 	calc_op_btn.pressed.connect(func():
 		calc_op_btn.text = "-" if calc_op_btn.text == "+" else "+"
-		_clear_calc_result()
+		if calculator: calculator.clear_result()
 	)
 	hbox.add_child(calc_op_btn)
 	
@@ -248,6 +243,8 @@ func _create_calculator_ui():
 	for calc_slot in [calc_slot_1, calc_slot_2, calc_slot_result]:
 		calc_slot.slot_entered.connect(_on_slot_entered)
 		calc_slot.slot_exited.connect(_on_slot_exited)
+		
+	calculator = CalculatorTool.new(self, calc_slot_1, calc_slot_2, calc_slot_result, calc_op_btn)
 	
 	var tools_container = VBoxContainer.new()
 	tools_container.name = "BottomToolsContainer"

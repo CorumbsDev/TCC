@@ -123,13 +123,18 @@ static func apply_info_label(label: Label, font_size: int = 13) -> void:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_color_override("font_color", Color(0.82, 0.88, 0.94))
 	label.add_theme_font_size_override("font_size", font_size)
-
+	label.add_theme_constant_override("outline_size", 1)
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
 
 static func apply_info_richtext(rt: RichTextLabel, font_size: int = 14) -> void:
 	if rt == null:
 		return
 	rt.add_theme_color_override("default_color", Color(0.82, 0.88, 0.94))
 	rt.add_theme_font_size_override("normal_font_size", font_size)
+	rt.add_theme_constant_override("outline_size", 1)
+	rt.add_theme_constant_override("shadow_offset_x", 1)
+	rt.add_theme_constant_override("shadow_offset_y", 1)
 
 
 static func make_in(parent: Control, before: Node = null) -> OrbHoverBar:

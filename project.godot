@@ -22,6 +22,11 @@ LearningPrefs="*res://Inventory/learning/learning_prefs.gd"
 PhaseRunner="*res://Inventory/fases/phase_runner.gd"
 OrbUI="*res://Inventory/ui/orb_ui.gd"
 
+[display]
+
+window/size/mode=2
+window/stretch/mode="viewport"
+
 [global_group]
 
 item_1x1=""
@@ -33,6 +38,11 @@ item_operator_plus=""
 item_number_7=""
 slot=""
 item_number_10=""
+
+[gui]
+
+theme/custom="res://Inventory/default_theme.tres"
+theme/custom_font="uid://dky06jrgxp7nq"
 
 [input]
 
