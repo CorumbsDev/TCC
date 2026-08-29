@@ -13,3 +13,5 @@ enum Kind { MOCHILA, BINARIO, TYPE_BOX, RAW_MOCHILA }
 @export var config_type_box: TypeBoxPhaseConfig
 ## Preencher quando kind == RAW_MOCHILA (mochila + orbes RAW para tipar).
 @export var config_raw_mochila: RawKnapsackPhaseConfig
+## Texto customizado do tutorial. Se vazio durante a execução da sequência, o tutorial não aparece.
+@export_multiline var custom_tutorial_text: String = ""

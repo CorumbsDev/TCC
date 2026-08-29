@@ -10,6 +10,7 @@ extends Control
 
 # Phase UI Containers and Controls
 @onready var option_type: OptionButton = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/PhaseTypeHBox/OptionType
+@onready var tutorial_text_edit: TextEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/TutorialTextVBox/TutorialTextEdit
 @onready var grid_mochila: GridContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer
 @onready var hbox_mochila: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxMochila
 @onready var hbox_valores: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxValores
@@ -73,11 +74,20 @@ func _ready() -> void:
 	if line_edit_csv and not line_edit_csv.focus_exited.is_connected(_on_csv_focus_exited):
 		line_edit_csv.focus_exited.connect(_on_csv_focus_exited)
 	
+	if tutorial_text_edit and not tutorial_text_edit.text_changed.is_connected(_on_tutorial_text_changed):
+		tutorial_text_edit.text_changed.connect(_on_tutorial_text_changed)
+	
 	_load_all_sequences()
 	_show_empty()
 	
 	PanelArtLoader.skin_all_buttons(self)
 	PanelArtLoader.apply_background(self)
+	
+	# Apply 20% zoom out to the main container
+	var main_vbox = $Panel/VBoxContainer
+	main_vbox.scale = Vector2(0.8, 0.8)
+	main_vbox.pivot_offset = main_vbox.size / 2.0
+	main_vbox.resized.connect(func(): main_vbox.pivot_offset = main_vbox.size / 2.0)
 
 func _load_all_sequences() -> void:
 	for c in _root.get_children():
@@ -148,6 +158,8 @@ func _show_phase_editor(step: PhaseSequenceStep) -> void:
 	sequence_editor_ui.visible = false
 	phase_editor_ui.visible = true
 	option_type.selected = step.kind
+	if tutorial_text_edit.text != step.custom_tutorial_text:
+		tutorial_text_edit.text = step.custom_tutorial_text
 	
 	if panels.has(step.kind):
 		var panel = panels[step.kind]
@@ -206,6 +218,7 @@ func _flush_active_phase_editor() -> void:
 
 func _apply_ui_to_step(step: PhaseSequenceStep) -> void:
 	if step == null: return
+	step.custom_tutorial_text = tutorial_text_edit.text
 	if panels.has(step.kind):
 		var panel = panels[step.kind]
 		if step.kind == PhaseSequenceStep.Kind.MOCHILA:
@@ -377,6 +390,9 @@ func _on_param_changed(_value: float) -> void:
 	_trigger_ui_save()
 
 func _on_text_param_changed(_new_text: String) -> void:
+	_trigger_ui_save()
+
+func _on_tutorial_text_changed() -> void:
 	_trigger_ui_save()
 
 func _on_bool_param_changed(_toggled: bool) -> void:

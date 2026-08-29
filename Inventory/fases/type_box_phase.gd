@@ -44,6 +44,7 @@ func _ready():
 	_populate_pool()
 	_update_bytes_label()
 	_update_hint()
+	call_deferred("_apply_panel_art")
 
 func _process(delta):
 	if _is_finishing:

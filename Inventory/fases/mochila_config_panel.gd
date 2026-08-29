@@ -18,7 +18,8 @@ func show_data(step: PhaseSequenceStep) -> void:
 	ui.spin_cols.value = cfg.pool_grid_columns
 	ui.spin_min.value = cfg.spawn_int_min
 	ui.spin_max.value = cfg.spawn_int_max
-	ui.line_edit_csv.text = cfg.initial_backpack_csv
+	if ui.line_edit_csv.text != cfg.initial_backpack_csv:
+		ui.line_edit_csv.text = cfg.initial_backpack_csv
 	ui.spin_rnd_pool.value = cfg.random_pool.size()
 	ui.check_float.button_pressed = cfg.use_converter
 	ui.check_double.button_pressed = cfg.allow_double
@@ -28,7 +29,8 @@ func show_data(step: PhaseSequenceStep) -> void:
 	ui.check_fp_cust.button_pressed = cfg.allow_fp_customization
 	ui.check_calc.button_pressed = cfg.allow_calc
 	ui.spin_star2_moves.value = cfg.star2_max_moves
-	ui.line_edit_star3_solution.text = cfg.star3_best_solution_csv
+	if ui.line_edit_star3_solution.text != cfg.star3_best_solution_csv:
+		ui.line_edit_star3_solution.text = cfg.star3_best_solution_csv
 
 func apply_to_step(step: PhaseSequenceStep, last_rnd_pool_size: int) -> int:
 	var cfg: PhaseConfig = step.config_mochila

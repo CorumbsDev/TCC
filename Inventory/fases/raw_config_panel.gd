@@ -15,7 +15,9 @@ func show_data(step: PhaseSequenceStep) -> void:
 	ui.spin_slots_m.value = cfg.backpack_slot_count
 	ui.spin_slots_p.value = cfg.pool_slot_count
 	ui.spin_cols.value = cfg.pool_grid_columns
-	ui.line_edit_csv.text = ",".join(cfg.initial_raw_values)
+	var joined := ",".join(cfg.initial_raw_values)
+	if ui.line_edit_csv.text != joined:
+		ui.line_edit_csv.text = joined
 	ui.spin_rnd_pool.value = 1 if cfg.randomize_values else 0
 	ui.check_float.button_pressed = cfg.allow_float
 	ui.check_double.button_pressed = cfg.allow_double

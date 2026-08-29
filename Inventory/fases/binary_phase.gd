@@ -29,6 +29,8 @@ var icon_anchor: Vector2
 var BINARY_LEFT := "1"
 var BINARY_RIGHT := "0"
 
+var _custom_tutorial_text: String = ""
+var _uses_custom_tutorial: bool = false
 
 func _resolve_binary_config() -> BinaryPhaseConfig:
 	var injected := PhaseRunner.take_binary_config_if_any()
@@ -40,6 +42,10 @@ func _resolve_binary_config() -> BinaryPhaseConfig:
 
 
 func _ready():
+	if PhaseRunner.has_custom_tutorial():
+		_uses_custom_tutorial = true
+		_custom_tutorial_text = PhaseRunner.take_tutorial_text_if_any()
+
 	var cfg := _resolve_binary_config()
 	cfg.apply_constraints()
 	BINARY_LEFT = cfg.left_digit_string()
@@ -113,11 +119,21 @@ func _apply_phase_panels() -> void:
 
 
 func _try_show_intro() -> void:
+	if _uses_custom_tutorial:
+		if not _custom_tutorial_text.is_empty():
+			TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+		return
+
 	var k := TutorialTexts.KEY_PHASE_BINARY
 	TutorialOverlay.open(self, k, TutorialTexts.title_for(k), TutorialTexts.body_for(k), false)
 
 
 func _on_help_pressed() -> void:
+	if _uses_custom_tutorial:
+		if not _custom_tutorial_text.is_empty():
+			TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+		return
+
 	var k := TutorialTexts.KEY_PHASE_BINARY
 	TutorialOverlay.open(self, k, TutorialTexts.title_for(k), TutorialTexts.body_for(k), false)
 

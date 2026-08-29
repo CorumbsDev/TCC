@@ -15,6 +15,8 @@ var _pending_backpack: PhaseConfig = null
 var _pending_binary: BinaryPhaseConfig = null
 var _pending_type_box: TypeBoxPhaseConfig = null
 var _pending_raw_mochila: RawKnapsackPhaseConfig = null
+var _pending_tutorial_text: String = ""
+var _has_pending_tutorial: bool = false
 
 
 func is_sequence_active() -> bool:
@@ -84,6 +86,16 @@ func take_raw_knapsack_config_if_any() -> RawKnapsackPhaseConfig:
 	return c
 
 
+func has_custom_tutorial() -> bool:
+	return _has_pending_tutorial
+
+func take_tutorial_text_if_any() -> String:
+	var t := _pending_tutorial_text
+	_pending_tutorial_text = ""
+	_has_pending_tutorial = false
+	return t
+
+
 func abort_sequence() -> void:
 	_active = false
 	_steps.clear()
@@ -92,12 +104,16 @@ func abort_sequence() -> void:
 	_pending_binary = null
 	_pending_type_box = null
 	_pending_raw_mochila = null
+	_pending_tutorial_text = ""
+	_has_pending_tutorial = false
 
 
 func _go_step(i: int) -> void:
 	if i < 0 or i >= _steps.size():
 		return
 	var step: PhaseSequenceStep = _steps[i]
+	_pending_tutorial_text = step.custom_tutorial_text
+	_has_pending_tutorial = true
 	match step.kind:
 		PhaseSequenceStep.Kind.MOCHILA:
 			var cfg: PhaseConfig = step.config_mochila if step.config_mochila else PhaseConfig.new()

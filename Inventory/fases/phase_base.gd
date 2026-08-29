@@ -38,8 +38,15 @@ var _is_finishing: bool = false
 var calculator: CalculatorTool = null
 var converter: ConverterTool = null
 
+var _custom_tutorial_text: String = ""
+var _uses_custom_tutorial: bool = false
+
 func _ready():
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	
+	if PhaseRunner.has_custom_tutorial():
+		_uses_custom_tutorial = true
+		_custom_tutorial_text = PhaseRunner.take_tutorial_text_if_any()
 	
 	btn_voltar.pressed.connect(_on_voltar_pressed)
 	if btn_help:
@@ -74,6 +81,11 @@ func _update_phase_title() -> void:
 		phase_title.text = "Fase"
 
 func _try_show_intro() -> void:
+	if _uses_custom_tutorial:
+		if not _custom_tutorial_text.is_empty():
+			TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+		return
+
 	var tid := _tutorial_intro_id()
 	if tid.is_empty():
 		return
@@ -82,6 +94,11 @@ func _try_show_intro() -> void:
 	TutorialOverlay.open(self, tid, TutorialTexts.title_for(tid), TutorialTexts.body_for(tid), true)
 
 func _on_help_pressed() -> void:
+	if _uses_custom_tutorial:
+		if not _custom_tutorial_text.is_empty():
+			TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+		return
+
 	var tid := _tutorial_intro_id()
 	if tid.is_empty():
 		return
