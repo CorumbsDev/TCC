@@ -48,11 +48,14 @@ func _ready():
 		_uses_custom_tutorial = true
 		_custom_tutorial_text = PhaseRunner.take_tutorial_text_if_any()
 	
-	btn_voltar.pressed.connect(_on_voltar_pressed)
+	if btn_voltar:
+		btn_voltar.text = "Voltar"
+		btn_voltar.pressed.connect(_on_voltar_pressed)
 	if btn_help:
 		btn_help.pressed.connect(_on_help_pressed)
 	if btn_proxima:
 		btn_proxima.visible = PhaseRunner.should_show_next_button()
+		btn_proxima.disabled = true # só libera quando is_phase_success()
 		btn_proxima.pressed.connect(_on_proxima_pressed)
 		call_deferred("_update_next_button_state")
 	if btn_spawn:
@@ -81,22 +84,19 @@ func _update_phase_title() -> void:
 		phase_title.text = "Fase"
 
 func _try_show_intro() -> void:
-	if _uses_custom_tutorial:
-		if not _custom_tutorial_text.is_empty():
-			TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+	if _uses_custom_tutorial and not _custom_tutorial_text.is_empty():
+		TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
 		return
 
 	var tid := _tutorial_intro_id()
 	if tid.is_empty():
 		return
-	if LearningPrefs.has_seen_tutorial(tid):
-		return
-	TutorialOverlay.open(self, tid, TutorialTexts.title_for(tid), TutorialTexts.body_for(tid), true)
+	# Sempre abre o tutorial ao começar a fase (não pula se já viu).
+	TutorialOverlay.open(self, tid, TutorialTexts.title_for(tid), TutorialTexts.body_for(tid), false)
 
 func _on_help_pressed() -> void:
-	if _uses_custom_tutorial:
-		if not _custom_tutorial_text.is_empty():
-			TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+	if _uses_custom_tutorial and not _custom_tutorial_text.is_empty():
+		TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
 		return
 
 	var tid := _tutorial_intro_id()
@@ -202,37 +202,46 @@ func _on_voltar_pressed():
 func _on_proxima_pressed():
 	if _is_finishing:
 		return
-		
-	if has_method("is_phase_success") and not is_phase_success():
-		_show_not_ready_modal()
+
+	_update_next_button_state()
+	# Sem interação / objetivo incompleto: nunca avança nem mostra estrelas.
+	if moves_count <= 0 or not is_phase_success():
+		_show_not_ready_modal(
+			"Complete o objetivo da fase antes de avançar.\n(É preciso interagir e cumprir o que a fase pede.)"
+		)
 		return
-	
+
 	_is_finishing = true
 	_show_victory_overlay()
 
 func _show_victory_overlay():
 	var cfg = _get_phase_config()
 	if not cfg or not ("star2_max_moves" in cfg):
+		# Fases sem sistema de estrelas: só avançam se o objetivo já foi validado acima.
 		PhaseRunner.advance_from_phase()
 		return
-		
-	var s1 = true
-	var s2 = (cfg.star2_max_moves == 0) or (moves_count <= cfg.star2_max_moves)
-	
-	var s3 = false
-	var star3_csv = ""
+
+	# Só chega aqui se is_phase_success() == true (objetivo feito de verdade).
+	# Estrela 1: sempre, pois completou a fase.
+	var s1 := true
+	# Estrela 2: se não houver limite configurado (0), conta como ok;
+	# se houver (> 0), precisa ter feito em no máximo N movimentos.
+	var s2 := true
+	if cfg.star2_max_moves > 0:
+		s2 = moves_count <= cfg.star2_max_moves
+	# Estrela 3: se não houver solução ideal no criador, conta como ok;
+	# se houver, o inventário precisa bater com ela.
+	var s3 := true
+	var star3_csv := ""
 	if "star3_best_solution_csv" in cfg:
-		star3_csv = cfg.star3_best_solution_csv.strip_edges()
-		
-	if star3_csv == "":
-		s3 = true
-	else:
+		star3_csv = str(cfg.star3_best_solution_csv).strip_edges()
+	if star3_csv != "":
 		s3 = _check_star3_solution(star3_csv)
-		
+
 	var desc = "Movimentos: %d" % moves_count
 	if cfg.star2_max_moves > 0:
-		desc += " / %d (Mínimo para Estrela 2)" % cfg.star2_max_moves
-	
+		desc += " (meta estrela 2: ≤ %d)" % cfg.star2_max_moves
+
 	var overlay = preload("res://Inventory/fases/victory_overlay.tscn").instantiate()
 	add_child(overlay)
 	overlay.show_victory(s1, s2, s3, desc)
@@ -312,10 +321,11 @@ func _show_not_ready_modal(custom_message: String = ""):
 func _update_next_button_state():
 	if not btn_proxima:
 		return
-	if has_method("is_phase_success"):
-		btn_proxima.disabled = not is_phase_success()
-	else:
-		btn_proxima.disabled = false
+	btn_proxima.disabled = not is_phase_success()
+
+func is_phase_success() -> bool:
+	# Default seguro: não permite avançar até a fase sobrescrever a regra.
+	return false
 
 func _on_spawn_pressed():
 	pass
@@ -493,9 +503,6 @@ func _update_hint() -> void:
 		hint_label.text = ""
 		hint_label.visible = false
 	_update_next_button_state()
-
-func is_phase_success() -> bool:
-	return true
 
 func _wait_for_dialog(dlg: ConfirmationDialog) -> bool:
 	var result = [false]

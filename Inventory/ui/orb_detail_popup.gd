@@ -26,6 +26,7 @@ func _init() -> void:
 	_body.custom_minimum_size = Vector2(240, 0)
 	_body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_body)
+	OrbHoverBar.apply_info_richtext(_body, 14)
 
 
 func show_for_item(item: Node, near_global: Vector2, pin: bool = false) -> void:
@@ -33,7 +34,7 @@ func show_for_item(item: Node, near_global: Vector2, pin: bool = false) -> void:
 		hide_popup()
 		return
 	_pinned_item = item if pin else null
-	_body.text = OrbValueFormat.detail_bbcode(item)
+	_body.text = ReadableBbcode.for_ui(OrbValueFormat.detail_bbcode(item))
 	visible = true
 	call_deferred("_place_at", near_global)
 

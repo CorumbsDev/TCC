@@ -23,7 +23,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Panel" type="PanelContainer" parent="CenterContainer"]
-custom_minimum_size = Vector2(520, 320)
+custom_minimum_size = Vector2(560, 340)
 script = ExtResource("2_info")
 
 [node name="Margin" type="MarginContainer" parent="CenterContainer/Panel"]

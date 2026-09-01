@@ -14,8 +14,8 @@ var _mark_on_close: bool = false
 
 func _ready():
 	btn_ok.pressed.connect(_on_ok)
-	OrbHoverBar.apply_info_label(title_label, 18)
-	OrbHoverBar.apply_info_richtext(body_label)
+	OrbHoverBar.apply_info_label(title_label, 20)
+	OrbHoverBar.apply_info_richtext(body_label, 16)
 	visible = false
 
 
@@ -23,7 +23,7 @@ func present(pref_key: String, title: String, bbcode_body: String, mark_on_close
 	_pref_key = pref_key
 	_mark_on_close = mark_on_close
 	title_label.text = title
-	body_label.text = bbcode_body
+	body_label.text = ReadableBbcode.for_ui(bbcode_body)
 	visible = true
 
 

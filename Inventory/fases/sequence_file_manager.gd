@@ -2,6 +2,8 @@ class_name SequenceFileManager
 extends RefCounted
 
 const SEQUENCES_DIR = "user://sequences"
+## Mesma sequência usada pelo botão Começar no menu (cópia no editor fica em user://sequences/).
+const BUNDLED_PEDAGOGICAL_SEQUENCE := "res://Inventory/fases/scenarios/sequencia_base.tres"
 var sequences: Dictionary = {}
 
 func _init() -> void:
@@ -31,23 +33,26 @@ func load_all_sequences() -> Dictionary:
 	return sequences
 
 func _create_base_sequence(file_name: String) -> PhaseSequenceList:
+	# Preferir a sequência pedagógica embutida no projeto.
+	var bundled := load(BUNDLED_PEDAGOGICAL_SEQUENCE) as PhaseSequenceList
+	if bundled != null and not bundled.steps.is_empty():
+		ResourceSaver.save(bundled, SEQUENCES_DIR + "/" + file_name)
+		sequences[file_name] = bundled
+		return bundled
+
 	var seq = PhaseSequenceList.new()
-	
+
 	var step1 = PhaseSequenceStep.new()
-	step1.kind = PhaseSequenceStep.Kind.TYPE_BOX
-	step1.config_type_box = ConfigGenerator.generate_type_box_config()
+	step1.kind = PhaseSequenceStep.Kind.MOCHILA
+	step1.config_mochila = ConfigGenerator.generate_knapsack_config(8, 8, 10, 4, 1, 10, "", 6, false)
 	seq.steps.append(step1)
-	
+
 	var step2 = PhaseSequenceStep.new()
-	step2.kind = PhaseSequenceStep.Kind.MOCHILA
-	step2.config_mochila = ConfigGenerator.generate_knapsack_config()
+	step2.kind = PhaseSequenceStep.Kind.TYPE_BOX
+	step2.config_type_box = ConfigGenerator.generate_type_box_config(12, ["7", "3.14", "1"])
+	step2.config_type_box.expected_solution_types = PackedStringArray(["int", "float", "int"])
 	seq.steps.append(step2)
-	
-	var step3 = PhaseSequenceStep.new()
-	step3.kind = PhaseSequenceStep.Kind.RAW_MOCHILA
-	step3.config_raw_mochila = ConfigGenerator.generate_raw_knapsack_config()
-	seq.steps.append(step3)
-	
+
 	ResourceSaver.save(seq, SEQUENCES_DIR + "/" + file_name)
 	sequences[file_name] = seq
 	return seq

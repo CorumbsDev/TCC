@@ -1,7 +1,7 @@
 extends Node2D
 
 @onready var value_label: Label = $ColorRect/value_label
-@onready var cylinder_visual: Control = $CylinderVisual
+@onready var cylinder_visual: Node2D = $CylinderVisual
 
 # Enum para identificar o tipo de dado do orb
 enum DataType {INT, FLOAT, STRING, OPERATOR, DOUBLE, BINARY, SHORT_INT, FP8, FP16, RAW}
@@ -77,7 +77,8 @@ func get_item_info() -> Dictionary:
 	return ItemData.get_item_info(self)
 
 func load_item(a_ItemID: String) -> void:
-	ItemData.load_item(self, a_ItemID, get_node_or_null("/root/DataHandler"))
+	# Não usar get_node("/root/...") aqui: o item ainda pode estar fora da árvore.
+	ItemData.load_item(self, a_ItemID, DataHandler)
 	update_label_display()
 
 func set_value_directly(new_value: int):
@@ -117,10 +118,13 @@ func update_label_display():
 	if not value_label:
 		push_error("Nenhuma Label encontrada no item!")
 		return
-		
+
+	if cylinder_visual == null:
+		cylinder_visual = get_node_or_null("CylinderVisual") as Node2D
+
 	var color_rect = value_label.get_parent() if value_label.get_parent() is ColorRect else null
-	var icon = get_node_or_null("Icon")
-	
+	var icon = get_node_or_null("Icon") as TextureRect
+
 	ItemVisuals.update_label_display(self, value_label, icon, cylinder_visual, color_rect)
 	call_deferred("_ensure_centered_in_slot_parent")
 
@@ -140,6 +144,8 @@ func _slot_item_count(slot: TextureRect) -> int:
 	return n
 
 func shrink_orb_for_tool_slot() -> void:
+	if cylinder_visual == null:
+		cylinder_visual = get_node_or_null("CylinderVisual") as Node2D
 	var color_rect = value_label.get_parent() if value_label else null
 	ItemVisuals.shrink_orb_for_tool_slot(self, value_label, cylinder_visual, color_rect)
 

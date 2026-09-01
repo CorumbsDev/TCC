@@ -4,7 +4,7 @@ extends RefCounted
 const SLOT_PX := 64
 const ORB_SLOT_MARGIN := 12
 
-static func update_label_display(item, value_label: Label, icon: TextureRect, cylinder_visual: Control, color_rect: ColorRect) -> void:
+static func update_label_display(item, value_label: Label, icon: TextureRect, cylinder_visual: Node2D, color_rect: ColorRect) -> void:
 	if not value_label:
 		return
 	
@@ -81,10 +81,10 @@ static func operator_display_label(item) -> String:
 		return item.operator
 	return item.operator.substr(0, 5)
 
-static func shrink_orb_for_tool_slot(item, value_label: Label, cylinder_visual: Control, color_rect: ColorRect) -> void:
+static func shrink_orb_for_tool_slot(item, value_label: Label, cylinder_visual: Node2D, color_rect: ColorRect) -> void:
 	if item.data_type != item.DataType.DOUBLE:
 		return
-	var dims := Vector2(SLOT_PX - ORB_SLOT_MARGIN * 2.0, SLOT_PX - ORB_SLOT_MARGIN * 2.0)
+	var dims := Vector2(SLOT_PX * 0.48, SLOT_PX * 0.48)
 	if color_rect:
 		_resize_visual(item, color_rect, dims, value_label)
 		_apply_double_cylinder(item, dims, null, cylinder_visual, color_rect, value_label)
@@ -122,7 +122,7 @@ static func _base_type_slot_scale(item) -> float:
 		_:
 			return 1.0
 
-static func _apply_orb_sprite(item, dims: Vector2, icon: TextureRect, cylinder_visual: Control, color_rect: ColorRect, value_label: Label) -> bool:
+static func _apply_orb_sprite(item, dims: Vector2, icon: TextureRect, cylinder_visual: Node2D, color_rect: ColorRect, value_label: Label) -> bool:
 	if dims == Vector2.ZERO:
 		dims = _compute_orb_dimensions(item, value_label.text if value_label else "")
 	if item.data_type == item.DataType.DOUBLE:
@@ -165,37 +165,58 @@ static func _apply_orb_sprite(item, dims: Vector2, icon: TextureRect, cylinder_v
 			color_rect.color = Color(0.24, 0.17, 0.08, 1)
 	return tex != null
 
-static func _apply_double_cylinder(item, dims: Vector2, icon: TextureRect, cylinder_visual: Control, color_rect: ColorRect, value_label: Label) -> bool:
+static func _apply_double_cylinder(_item, dims: Vector2, icon: TextureRect, cylinder_visual: Node2D, color_rect: ColorRect, value_label: Label) -> bool:
 	if icon:
 		icon.visible = false
 		icon.texture = null
 	if cylinder_visual == null:
 		return false
 	cylinder_visual.visible = true
-	_fit_visual_rect(item, cylinder_visual, dims, value_label)
-	cylinder_visual.queue_redraw()
+	cylinder_visual.position = Vector2.ZERO
+	cylinder_visual.z_index = 0
+	if cylinder_visual.has_method("set_draw_size"):
+		cylinder_visual.set_draw_size(dims)
+	elif "draw_size" in cylinder_visual:
+		cylinder_visual.draw_size = dims
+		cylinder_visual.queue_redraw()
 	if color_rect:
 		color_rect.color = Color(0, 0, 0, 0)
+		color_rect.z_index = 1
 	if value_label:
 		value_label.z_index = 2
-		value_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+		value_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+		value_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		_center_double_label(value_label)
 	return true
 
+static func _center_double_label(value_label: Label) -> void:
+	value_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	value_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	value_label.grow_vertical = Control.GROW_DIRECTION_BOTH
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# Empurra o centro óptico ~2–3px para baixo (entre os dois aros do cilindro).
+	value_label.offset_left = 0
+	value_label.offset_right = 0
+	value_label.offset_top = 3
+	value_label.offset_bottom = -1
+
 static func _double_capsule_size() -> Vector2:
-	var width := SLOT_PX * 2.0 - ORB_SLOT_MARGIN
-	var height := SLOT_PX - ORB_SLOT_MARGIN * 2.0
+	# Um pouco menor que 2 slots cheios pra não “estourar” a grade.
+	var width := SLOT_PX * 1.45
+	var height := SLOT_PX * 0.45
 	return Vector2(width, height)
 
 static func _fit_visual_rect(item, node: Control, dims: Vector2, value_label: Label) -> void:
 	var width := clampf(dims.x, 18.0, SLOT_PX * 4.0)
 	var height := clampf(dims.y, 18.0, SLOT_PX * 2.0)
-	var half_w: float = width * 0.5
-	var half_h: float = height * 0.5
-	node.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	node.offset_left = -half_w
-	node.offset_top = -half_h
-	node.offset_right = half_w
-	node.offset_bottom = half_h
+	# Parent do Item é Node2D: position/size, não anchors de Control.
+	node.anchor_left = 0.0
+	node.anchor_top = 0.0
+	node.anchor_right = 0.0
+	node.anchor_bottom = 0.0
+	node.position = Vector2(-width * 0.5, -height * 0.5)
+	node.size = Vector2(width, height)
 	node.custom_minimum_size = Vector2(width, height)
 	if node is TextureRect:
 		var icon := node as TextureRect
@@ -206,6 +227,11 @@ static func _fit_visual_rect(item, node: Control, dims: Vector2, value_label: La
 	if value_label and item.data_type != item.DataType.DOUBLE:
 		value_label.z_index = 1
 		value_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+		value_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		value_label.offset_left = 0
+		value_label.offset_top = 0
+		value_label.offset_right = 0
+		value_label.offset_bottom = 0
 
 static func _orb_label_fit_size(value_label: Label) -> Vector2:
 	var cr = value_label.get_parent() if value_label else null
@@ -232,11 +258,16 @@ static func _apply_label_fit(item, value_label: Label) -> void:
 	if item.data_type == item.DataType.OPERATOR:
 		fs = 22 if item.operator.length() <= 2 else 13
 		fs = mini(fs, _orb_font_size(value_label.text, dims.x, dims.y))
+	elif item.data_type == item.DataType.DOUBLE:
+		# Um pouco menor pra caber bem no corpo do cilindro entre os aros.
+		fs = clampi(_orb_font_size(value_label.text, dims.x * 0.85, dims.y * 0.55), 11, 16)
 	else:
 		fs = _orb_font_size(value_label.text, dims.x, dims.y)
 	value_label.add_theme_font_size_override("font_size", fs)
 	var outline: int = 2 if fs <= 12 else 3
 	value_label.add_theme_constant_override("outline_size", outline)
+	if item.data_type == item.DataType.DOUBLE:
+		_center_double_label(value_label)
 
 static func _resize_visual(_item, color_rect, dims: Vector2, value_label: Label) -> void:
 	var width := dims.x

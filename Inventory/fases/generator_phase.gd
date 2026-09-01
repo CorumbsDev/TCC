@@ -48,6 +48,19 @@ func _ready():
 	converter_checkbox = CheckBox.new()
 	converter_checkbox.text = "Permitir Conversor de Orbes (Int <-> Float)"
 	config_vbox.add_child(converter_checkbox)
+
+	var diff_group := ButtonGroup.new()
+	radio_easy.button_group = diff_group
+	radio_medium.button_group = diff_group
+	radio_hard.button_group = diff_group
+	if not radio_easy.button_pressed and not radio_medium.button_pressed and not radio_hard.button_pressed:
+		radio_easy.button_pressed = true
+
+	if num_phases_spinbox and not num_phases_spinbox.value_changed.is_connected(_on_num_phases_changed):
+		num_phases_spinbox.value_changed.connect(_on_num_phases_changed)
+
+	PanelArtLoader.skin_all_buttons(self)
+	PanelArtLoader.apply_background(self)
 	_update_preview()
 
 

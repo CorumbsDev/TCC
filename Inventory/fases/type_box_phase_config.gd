@@ -31,6 +31,10 @@ extends Resource
 ## Solução ideal (CSV de atalhos) para ganhar a 3ª estrela. Vazio significa que não é exigido.
 @export var star3_best_solution_csv: String = ""
 
+## Tipos esperados por valor RAW (paralelo a initial_raw_values). Ex.: int,float,int
+## Vazio = só valida bytes totais.
+@export var expected_solution_types: PackedStringArray = PackedStringArray()
+
 func apply_constraints() -> void:
 	capacity_bytes = clampi(capacity_bytes, 1, 4096)
 	box_slot_count = clampi(box_slot_count, 1, 64)

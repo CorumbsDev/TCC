@@ -6,27 +6,31 @@
     },
     {
       "termo": "Byte (neste projeto)",
-      "definicao": "Unidade de 'peso' usada na fase da mochila. Cada tipo de orb pode consumir 1 ou mais bytes conforme o DataHandler (ex.: INT frequentemente 1 byte; DOUBLE pode valer 2)."
+      "definicao": "Unidade de 'peso' da mochila. Usamos uma palavra de 4 bytes como referência: 1 INT = 1 FLOAT = ½ DOUBLE = 4 FP8."
     },
     {
       "termo": "INT",
-      "definicao": "Número inteiro (sem parte fracionária), representado visualmente como orb numérico."
+      "definicao": "Número inteiro. Neste OA ocupa 4 bytes (1 palavra)."
     },
     {
       "termo": "FLOAT",
-      "definicao": "Número com parte decimal (ponto flutuante), em geral com 1 byte de peso neste OA, salvo configuração contrária."
+      "definicao": "Número com parte decimal (ponto flutuante). Neste OA também ocupa 4 bytes (1 palavra)."
     },
     {
       "termo": "DOUBLE",
-      "definicao": "Número de ponto flutuante com mais precisão; neste OA costuma ocupar 2 slots/bytes na grade."
+      "definicao": "Ponto flutuante com mais precisão. Neste OA ocupa 8 bytes — o dobro de um INT/FLOAT (2 palavras)."
+    },
+    {
+      "termo": "FP8",
+      "definicao": "Formato de ponto flutuante curto (8 bits). Neste OA ocupa 1 byte: cabem 4 FP8 no espaço de 1 INT."
     },
     {
       "termo": "Operador",
-      "definicao": "Símbolo de operação (+, -, *, /, etc.) representado como orb de operador."
+      "definicao": "Símbolo de operação (+, -, *, /, ++, to_float…) representado como orb de operador."
     },
     {
       "termo": "Pool",
-      "definicao": "Área com itens disponíveis para arrastar até a mochila do desafio na fase 2."
+      "definicao": "Área com itens disponíveis para arrastar até a mochila ou as caixas de tipagem."
     },
     {
       "termo": "DataHandler",
@@ -42,23 +46,23 @@
     },
     {
       "termo": "  • Slots Disponíveis",
-      "definicao": "Número de espaços na grade para itens (ex: 8, 16, 20 slots). Mais slots = mais liberdade."
+      "definicao": "Número de espaços na grade para itens (ex: 8, 16, 20 slots). Mais slots = mais liberdade visual."
     },
     {
       "termo": "  • Slots no Pool",
-      "definicao": "Quantidade de itens oferecidos para escolher (ex: 10, 15, 20 itens). Mais itens = mais opções."
+      "definicao": "Quantidade de itens oferecidos para escolher. Mais itens = mais opções."
     },
     {
       "termo": "  • Intervalo de Valores",
-      "definicao": "Faixa de valores dos itens gerados dinamicamente (ex: 1-10, 50-100). Define o nível de variação."
+      "definicao": "Faixa de valores dos itens gerados dinamicamente (ex: 1-10). Define a variação."
     },
     {
       "termo": "  • Tipo de Fase",
-      "definicao": "Escolher entre MOCHILA (knapsack) ou BINÁRIO (completar padrões). Permite misturar tipos em sequências."
+      "definicao": "MOCHILA, BINÁRIO, TYPE_BOX, RAW_MOCHILA ou CONVERSÃO. Dá para misturar em sequências."
     },
     {
       "termo": "  • Sequências",
-      "definicao": "Criar múltiplas fases seguidas com parâmetros diferentes. Ex: 5 fases de mochila + binário intercaladas."
+      "definicao": "Várias fases seguidas com parâmetros diferentes. O botão Começar usa a Sequencia_Base pedagógica."
     }
   ]
 }

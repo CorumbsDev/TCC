@@ -11,16 +11,15 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="Panel" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1, 0.09, 0.12, 1)
 
-[node name="Margin" type="MarginContainer" parent="."]
+[node name="Margin" type="MarginContainer" parent="Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -32,20 +31,22 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBox" type="VBoxContainer" parent="Margin"]
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Margin/VBox"]
+[node name="Title" type="Label" parent="Panel/Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
+theme_override_constants/outline_size = 4
 text = "Glossário"
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Margin/VBox"]
+[node name="RichTextLabel" type="RichTextLabel" parent="Panel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
 
-[node name="BtnVoltar" type="Button" parent="Margin/VBox"]
+[node name="BtnVoltar" type="Button" parent="Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "← Voltar ao menu"
+text = "Voltar"

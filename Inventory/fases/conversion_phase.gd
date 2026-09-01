@@ -1,6 +1,7 @@
 extends Control
-## Fase 3: sequência de desafios decimal -> binário (MSB à esquerda).
+## Fase: sequência de desafios decimal -> binário (MSB à esquerda).
 
+@export var config: ConversionPhaseConfig
 @export var num_bits: int = 3
 @export var challenge_decimals: Array[int] = [5, 3, 6]
 @export var advance_delay_seconds: float = 2.4
@@ -15,6 +16,8 @@ extends Control
 @onready var explanation_label = $HBox/RightPanel/MarginContainer/VBox/PhaseInfoBar/MarginContainer/VBoxContainer/ExplanationLabel
 @onready var btn_voltar = $TopBar/BtnVoltar
 @onready var btn_help = $TopBar/BtnHelp
+@onready var btn_proxima = $TopBar/BtnProxima
+@onready var title_label: Label = $TopBar/Title
 @onready var bits_info_label: Label = $TopBar/BitsInfoLabel
 @onready var orb_hover_bar: OrbHoverBar = $HBox/RightPanel/MarginContainer/VBox/OrbHoverBar
 
@@ -27,11 +30,44 @@ var challenge_idx := 0
 var suppress_check := false
 var is_advancing := false
 var _configured_num_bits := 0
+var _is_finishing: bool = false
+var _phase_completed: bool = false
+var _custom_tutorial_text: String = ""
+var _uses_custom_tutorial: bool = false
+
+
+func _resolve_conversion_config() -> ConversionPhaseConfig:
+	var injected := PhaseRunner.take_conversion_config_if_any()
+	if injected != null:
+		return injected
+	if config != null:
+		return config
+	var fallback := ConversionPhaseConfig.new()
+	fallback.num_bits = num_bits
+	fallback.challenge_decimals = challenge_decimals.duplicate()
+	fallback.advance_delay_seconds = advance_delay_seconds
+	return fallback
 
 
 func _ready():
+	if PhaseRunner.has_custom_tutorial():
+		_uses_custom_tutorial = true
+		_custom_tutorial_text = PhaseRunner.take_tutorial_text_if_any()
+
+	var cfg := _resolve_conversion_config()
+	cfg.apply_constraints()
+	num_bits = cfg.num_bits
+	challenge_decimals = cfg.challenge_decimals.duplicate()
+	advance_delay_seconds = cfg.advance_delay_seconds
+
 	btn_voltar.pressed.connect(_on_voltar_pressed)
 	btn_help.pressed.connect(_on_help_pressed)
+	if btn_proxima:
+		btn_proxima.visible = PhaseRunner.should_show_next_button()
+		btn_proxima.disabled = true
+		btn_proxima.pressed.connect(_on_proxima_pressed)
+		call_deferred("_update_next_button_state")
+
 	_apply_phase_panels()
 	if challenge_decimals.is_empty():
 		challenge_decimals = [5, 3, 6]
@@ -43,6 +79,10 @@ func _ready():
 	if advance_delay_seconds < 0.3:
 		advance_delay_seconds = 0.3
 	challenge_idx = 0
+
+	if title_label:
+		title_label.text = "Decimal → binário (%d bits)" % num_bits
+
 	for i in range(6):
 		var s = slot_scene.instantiate()
 		s.slot_ID = i
@@ -60,24 +100,11 @@ func _ready():
 		ts.slot_entered.connect(_on_slot_entered)
 		ts.slot_exited.connect(_on_slot_exited)
 		ts.item_changed.connect(_on_target_changed)
-	_hide_instruction_panels()
+
 	_refresh_challenge_ui()
 	call_deferred("_try_show_intro")
 	call_deferred("_relayout_all_bits")
 	call_deferred("_wire_bits_hover")
-
-
-func _hide_instruction_panels() -> void:
-	var left_bar := get_node_or_null("HBox/LeftPanel/MarginContainer/VBox/PhaseInfoBar") as Control
-	if left_bar:
-		left_bar.visible = false
-	if progress_label:
-		progress_label.visible = false
-	if goal_label:
-		goal_label.visible = false
-	if bits_info_label:
-		bits_info_label.visible = false
-	_clear_completion_labels()
 
 
 func _relayout_all_bits() -> void:
@@ -101,17 +128,46 @@ func _apply_phase_panels() -> void:
 
 
 func _try_show_intro() -> void:
+	if _uses_custom_tutorial and not _custom_tutorial_text.is_empty():
+		TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+		return
 	var k := TutorialTexts.KEY_PHASE_CONVERSION
 	TutorialOverlay.open(self, k, TutorialTexts.title_for(k), TutorialTexts.body_for(k), false)
 
 
 func _on_help_pressed() -> void:
+	if _uses_custom_tutorial and not _custom_tutorial_text.is_empty():
+		TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+		return
 	var k := TutorialTexts.KEY_PHASE_CONVERSION
 	TutorialOverlay.open(self, k, TutorialTexts.title_for(k), TutorialTexts.body_for(k), false)
 
 
 func _on_voltar_pressed() -> void:
+	PhaseRunner.abort_sequence()
 	get_tree().change_scene_to_file("res://Inventory/fases/main_menu.tscn")
+
+
+func _on_proxima_pressed() -> void:
+	if _is_finishing:
+		return
+	if not is_phase_success():
+		_update_next_button_state()
+		var dlg := AcceptDialog.new()
+		dlg.dialog_text = "Conclua todos os desafios de conversão antes de avançar."
+		add_child(dlg)
+		dlg.popup_centered(Vector2(420, 120))
+		return
+	PhaseRunner.advance_from_phase()
+
+
+func is_phase_success() -> bool:
+	return _phase_completed
+
+
+func _update_next_button_state() -> void:
+	if btn_proxima and btn_proxima.visible:
+		btn_proxima.disabled = not is_phase_success()
 
 
 func _spawn_bit_at_slot(slot_idx: int, bit_value: int) -> void:
@@ -169,7 +225,7 @@ func _on_target_changed(_slot):
 
 
 func _check_solution() -> void:
-	if is_advancing:
+	if is_advancing or _phase_completed:
 		return
 	var target := _current_target_decimal()
 	for t in target_slots:
@@ -192,7 +248,9 @@ func _check_solution() -> void:
 			_refresh_challenge_ui()
 			is_advancing = false
 		else:
+			_phase_completed = true
 			_show_completion_message()
+			_update_next_button_state()
 	else:
 		_clear_completion_labels()
 
@@ -211,8 +269,8 @@ func _show_completion_message() -> void:
 		result_label.text = "Objetivo concluído!"
 		result_label.visible = true
 	if explanation_label:
-		explanation_label.text = ""
-		explanation_label.visible = false
+		explanation_label.text = "Todos os desafios convertidos."
+		explanation_label.visible = true
 
 
 func _current_target_decimal() -> int:
@@ -229,7 +287,6 @@ func _effective_challenges() -> Array[int]:
 
 
 func _normalize_challenges() -> void:
-	# Garante inteiros nao-negativos para evitar casos invalidos.
 	var normalized: Array[int] = []
 	for v in challenge_decimals:
 		normalized.append(max(0, int(v)))
@@ -237,7 +294,6 @@ func _normalize_challenges() -> void:
 
 
 func _autoadjust_num_bits_for_challenges() -> void:
-	# Se existir valor que nao cabe em num_bits, aumenta automaticamente.
 	var max_value := 0
 	for v in _effective_challenges():
 		if v > max_value:
@@ -252,10 +308,11 @@ func _autoadjust_num_bits_for_challenges() -> void:
 func _update_bits_info_label() -> void:
 	if not bits_info_label:
 		return
+	bits_info_label.visible = true
 	if num_bits > _configured_num_bits:
-		bits_info_label.text = "Bits configurados: %d -> ajustado automaticamente para %d" % [_configured_num_bits, num_bits]
+		bits_info_label.text = "Bits: %d → ajustado p/ %d" % [_configured_num_bits, num_bits]
 	else:
-		bits_info_label.text = "Bits usados: %d" % num_bits
+		bits_info_label.text = "Bits: %d" % num_bits
 
 
 func _challenge_count() -> int:
@@ -264,6 +321,17 @@ func _challenge_count() -> int:
 
 func _refresh_challenge_ui() -> void:
 	_clear_completion_labels()
+	_update_bits_info_label()
+	var target := _current_target_decimal()
+	var total := _challenge_count()
+	if goal_label:
+		goal_label.visible = true
+		goal_label.text = "Converta %d para binário (%d bits)." % [target, num_bits]
+	if progress_label:
+		progress_label.visible = true
+		progress_label.text = "Desafio %d de %d" % [challenge_idx + 1, total]
+	if title_label:
+		title_label.text = "Decimal → binário: %d" % target
 
 
 func _clear_target_slots_to_pool() -> void:
@@ -309,28 +377,6 @@ func _decimal_to_binary_bits(value: int, bit_count: int) -> String:
 	return out
 
 
-func _binary_expansion_explanation(full_binary: String, decimal: int) -> String:
-	var n := full_binary.length()
-	var parts: PackedStringArray = PackedStringArray()
-	for i in range(n):
-		var bit := full_binary[i]
-		var power: int = n - 1 - i
-		parts.append("%s×2^%d" % [bit, power])
-	var joined := ""
-	for i in range(parts.size()):
-		if i > 0:
-			joined += " + "
-		joined += parts[i]
-	return "Expansão posicional: " + joined + " = %d. " % decimal
-
-
-func _binary_string_to_int(bin_str: String) -> int:
-	var r := 0
-	for i in range(bin_str.length()):
-		r = r * 2 + int(bin_str[i])
-	return r
-
-
 func _refill_pool_if_empty() -> void:
 	for i in range(left_slots.size()):
 		if left_slots[i].item_stored == null:
@@ -341,7 +387,6 @@ func _refill_pool_if_empty() -> void:
 func _process(_delta):
 	if _is_finishing:
 		return
-		
 	if item_held:
 		if Input.is_action_just_pressed("select_item"):
 			_try_place_item()

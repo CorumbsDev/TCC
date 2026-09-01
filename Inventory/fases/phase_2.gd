@@ -173,6 +173,7 @@ func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):
 	_generate_extra_pool_items(pool, min_extra)
 	_update_bytes_label()
 	_update_hint()
+	_update_next_button_state()
 	call_deferred("_anchor_orb_hover_above_pool")
 
 
@@ -421,10 +422,13 @@ func _on_spawn_pressed():
 
 
 func is_phase_success() -> bool:
-	# Considera concluída quando os bytes usados na mochila atingem ou ultrapassam a capacidade
+	# Precisa interagir E encher exatamente a capacidade (não conta estouro nem mochila vazia).
 	if not backpack_grid:
 		return false
-	return backpack_grid.total_bytes_used() >= backpack_grid.capacity_bytes
+	if moves_count <= 0:
+		return false
+	var used := backpack_grid.total_bytes_used()
+	return used == backpack_grid.capacity_bytes
 
 func _on_btn_inspect_pressed():
 	if not inspect_slot or inspect_slot.item_stored == null:

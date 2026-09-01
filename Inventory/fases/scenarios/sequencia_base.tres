@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="PhaseSequenceList" load_steps=8 format=3 uid="uid://cseqbase01"]
+
+[ext_resource type="Script" path="res://Inventory/fases/phase_sequence_list.gd" id="1_list"]
+[ext_resource type="Script" path="res://Inventory/fases/phase_sequence_step.gd" id="2_step"]
+[ext_resource type="Script" path="res://Inventory/fases/phase_config.gd" id="3_pc"]
+[ext_resource type="Script" path="res://Inventory/fases/type_box_phase_config.gd" id="6_tb"]
+
+[sub_resource type="Resource" id="m2"]
+script = ExtResource("3_pc")
+capacity_bytes = 8
+grid_columns = 4
+backpack_slot_count = 8
+pool_slot_count = 10
+pool_grid_columns = 5
+spawn_int_min = 1
+spawn_int_max = 10
+initial_backpack_items = PackedStringArray()
+initial_backpack_csv = ""
+initial_pool_items = PackedStringArray()
+random_pool = PackedStringArray("item_number_1", "item_number_2", "item_number_3", "item_number_5", "item_number_7", "item_number_10")
+min_bytes_random_pool = 0
+use_converter = false
+allow_calc = false
+
+[sub_resource type="Resource" id="step_1"]
+script = ExtResource("2_step")
+kind = 0
+config_mochila = SubResource("m2")
+
+[sub_resource type="Resource" id="tbcfg_2"]
+script = ExtResource("6_tb")
+capacity_bytes = 12
+initial_raw_values = PackedStringArray("7", "3.14", "1")
+randomize_values = false
+box_slot_count = 5
+allow_int = true
+allow_short = true
+allow_float = true
+allow_double = true
+allow_fp8 = false
+allow_fp16 = false
+expected_solution_types = PackedStringArray("int", "float", "int")
+
+[sub_resource type="Resource" id="step_2"]
+script = ExtResource("2_step")
+kind = 2
+config_type_box = SubResource("tbcfg_2")
+
+[resource]
+script = ExtResource("1_list")
+steps = Array[ExtResource("2_step")]([SubResource("step_1"), SubResource("step_2")])

@@ -74,7 +74,7 @@ static func python_repr_string(item: Node) -> String:
 		item.DataType.DOUBLE:
 			return _float_full(item.value_double)
 		item.DataType.STRING:
-			return "repr: " + item.value_string
+			return '"' + str(item.value_string).replace('\\', '\\\\').replace('"', '\\"') + '"'
 		item.DataType.OPERATOR:
 			return item.operator
 		item.DataType.BINARY:

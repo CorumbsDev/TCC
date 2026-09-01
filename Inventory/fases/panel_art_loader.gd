@@ -49,10 +49,10 @@ static func _flat_style(bg: Color, border: Color, shadow: Color, shadow_sz: int)
 	sb.border_color = border
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(8)
-	sb.content_margin_left = 12
-	sb.content_margin_top = 10
-	sb.content_margin_right = 12
-	sb.content_margin_bottom = 10
+	sb.content_margin_left = 16
+	sb.content_margin_top = 12
+	sb.content_margin_right = 16
+	sb.content_margin_bottom = 14
 	sb.shadow_color = shadow
 	sb.shadow_size = shadow_sz
 	sb.shadow_offset = Vector2(0, 2)
@@ -164,8 +164,14 @@ static func apply_button_style(btn: Button) -> void:
 	btn.add_theme_stylebox_override("pressed", sb_pressed)
 	btn.add_theme_stylebox_override("focus", sb)
 	btn.add_theme_stylebox_override("disabled", sb_disabled)
-	btn.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
+	btn.add_theme_color_override("font_color", Color(1, 1, 1))
 	btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.72, 0.72, 0.9))
+	btn.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	btn.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	btn.add_theme_constant_override("outline_size", 3)
+	btn.add_theme_constant_override("shadow_offset_x", 1)
+	btn.add_theme_constant_override("shadow_offset_y", 1)
 
 
 static func skin_all_buttons(root: Node) -> void:
@@ -176,17 +182,12 @@ static func skin_all_buttons(root: Node) -> void:
 		skin_all_buttons(root.get_child(i))
 
 static func apply_background(root: Node, custom_path: String = "") -> void:
-	if not root is Control: 
-		print("DEBUG: root is not Control")
+	if not root is Control:
 		return
 	var path_to_load = custom_path if custom_path != "" else PATH_BACKGROUND
-	print("DEBUG: applying background from path: ", path_to_load)
 	var tex = _load_if_exists(path_to_load)
-	if not tex: 
-		print("DEBUG: tex is null for path: ", path_to_load)
+	if not tex:
 		return
-	
-	print("DEBUG: loaded texture: ", tex)
 	var existing_bg = root.get_node_or_null("Background")
 	if existing_bg is ColorRect:
 		existing_bg.color = Color(0, 0, 0, 0)

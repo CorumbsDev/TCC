@@ -158,7 +158,7 @@ func _update_inspector_text():
 	else:
 		text += "Não possui representação binária detalhada."
 		
-	insp_rt_label.text = text
+	insp_rt_label.text = ReadableBbcode.for_ui(text)
 
 func _format_bytes(bin_str: String) -> String:
 	var out = ""

@@ -11,8 +11,13 @@ func show_data(step: PhaseSequenceStep) -> void:
 	if not bc:
 		bc = ConfigGenerator.generate_binary_config()
 		step.config_binario = bc
+	ui.spin_bin_left.min_value = 0
+	ui.spin_bin_left.max_value = 1
+	ui.spin_bin_right.min_value = 0
+	ui.spin_bin_right.max_value = 1
 	ui.spin_bin_left.value = bc.fixed_left_bit
 	ui.spin_bin_right.value = bc.fixed_right_bit
+	_set_binary_labels("Bit fixo esquerda:", "Bit fixo direita:")
 
 func apply_to_step(step: PhaseSequenceStep) -> void:
 	var bc: BinaryPhaseConfig = step.config_binario
@@ -21,6 +26,14 @@ func apply_to_step(step: PhaseSequenceStep) -> void:
 		step.config_binario = bc
 	bc.fixed_left_bit = int(ui.spin_bin_left.value)
 	bc.fixed_right_bit = int(ui.spin_bin_right.value)
+
+func _set_binary_labels(left_txt: String, right_txt: String) -> void:
+	var left_lbl = ui.spin_bin_left.get_parent().get_node_or_null("LblBinLeft")
+	var right_lbl = ui.spin_bin_right.get_parent().get_node_or_null("LblBinRight")
+	if left_lbl:
+		left_lbl.text = left_txt
+	if right_lbl:
+		right_lbl.text = right_txt
 
 func get_visibility_rules() -> Dictionary:
 	return {

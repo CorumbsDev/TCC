@@ -31,6 +31,8 @@ var BINARY_RIGHT := "0"
 
 var _custom_tutorial_text: String = ""
 var _uses_custom_tutorial: bool = false
+var _is_finishing: bool = false
+var _phase_completed: bool = false
 
 func _resolve_binary_config() -> BinaryPhaseConfig:
 	var injected := PhaseRunner.take_binary_config_if_any()
@@ -59,7 +61,9 @@ func _ready():
 	btn_voltar.pressed.connect(_on_voltar_pressed)
 	btn_help.pressed.connect(_on_help_pressed)
 	btn_proxima.visible = PhaseRunner.should_show_next_button()
+	btn_proxima.disabled = true
 	btn_proxima.pressed.connect(_on_proxima_pressed)
+	call_deferred("_update_next_button_state")
 	_apply_phase_panels()
 	# Cria 2 slots à esquerda (inventário de bits)
 	for i in range(2):
@@ -119,9 +123,8 @@ func _apply_phase_panels() -> void:
 
 
 func _try_show_intro() -> void:
-	if _uses_custom_tutorial:
-		if not _custom_tutorial_text.is_empty():
-			TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+	if _uses_custom_tutorial and not _custom_tutorial_text.is_empty():
+		TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
 		return
 
 	var k := TutorialTexts.KEY_PHASE_BINARY
@@ -129,9 +132,8 @@ func _try_show_intro() -> void:
 
 
 func _on_help_pressed() -> void:
-	if _uses_custom_tutorial:
-		if not _custom_tutorial_text.is_empty():
-			TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+	if _uses_custom_tutorial and not _custom_tutorial_text.is_empty():
+		TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
 		return
 
 	var k := TutorialTexts.KEY_PHASE_BINARY
@@ -169,6 +171,15 @@ func _on_voltar_pressed():
 
 
 func _on_proxima_pressed():
+	if _is_finishing:
+		return
+	if not is_phase_success():
+		_update_next_button_state()
+		var dlg := AcceptDialog.new()
+		dlg.dialog_text = "Complete o binário antes de avançar."
+		add_child(dlg)
+		dlg.popup_centered(Vector2(400, 120))
+		return
 	PhaseRunner.advance_from_phase()
 
 func _on_slot_entered(s):
@@ -193,6 +204,7 @@ func _on_target_item_changed(slot):
 	if slot != target_slot:
 		return
 	if slot.item_stored == null:
+		_phase_completed = false
 		if feedback_info_bar:
 			feedback_info_bar.visible = false
 		if result_label:
@@ -200,10 +212,12 @@ func _on_target_item_changed(slot):
 		if explanation_label:
 			explanation_label.text = ""
 		_update_binary_display(null)
+		_update_next_button_state()
 		return
 	var item = slot.item_stored
 	var bit_str = item.value_binary if item.value_binary.length() == 1 else str(item.value)
 	_update_binary_display(bit_str)
+	_phase_completed = true
 	if feedback_info_bar:
 		feedback_info_bar.visible = true
 	if result_label:
@@ -211,6 +225,17 @@ func _on_target_item_changed(slot):
 	if explanation_label:
 		explanation_label.text = ""
 	_refill_bits_if_empty()
+	_update_next_button_state()
+
+
+func is_phase_success() -> bool:
+	# Precisa ter colocado um bit no slot alvo.
+	return _phase_completed and target_slot != null and target_slot.item_stored != null
+
+
+func _update_next_button_state() -> void:
+	if btn_proxima and btn_proxima.visible:
+		btn_proxima.disabled = not is_phase_success()
 
 
 func _binary_expansion_explanation(full_binary: String, decimal: int) -> String:

@@ -11,30 +11,53 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="Subtitle" type="Label" parent="."]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -79.0
-offset_right = 180.0
-offset_bottom = 121.0
+anchors_preset = -1
+anchor_top = 0.34
+anchor_right = 1.0
+anchor_bottom = 0.4
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.96, 0.91, 0.78, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.03, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
+text = "A jornada pelos dados"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.42
+anchor_right = 1.0
+anchor_bottom = 0.92
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 20
 
-[node name="BtnComecar" type="Button" parent="VBox"]
+[node name="VBox" type="VBoxContainer" parent="Center"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="BtnComecar" type="Button" parent="Center/VBox"]
+custom_minimum_size = Vector2(320, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
 text = "Começar"
 
-[node name="BtnGerador" type="Button" parent="VBox"]
+[node name="BtnGerador" type="Button" parent="Center/VBox"]
+custom_minimum_size = Vector2(320, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Criador de Fases"
 
-[connection signal="pressed" from="VBox/BtnComecar" to="." method="_on_comecar_pressed"]
-[connection signal="pressed" from="VBox/BtnGerador" to="." method="_on_gerador_pressed"]
+[node name="BtnGlossario" type="Button" parent="Center/VBox"]
+custom_minimum_size = Vector2(320, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Glossário"
+
+[connection signal="pressed" from="Center/VBox/BtnComecar" to="." method="_on_comecar_pressed"]
+[connection signal="pressed" from="Center/VBox/BtnGerador" to="." method="_on_gerador_pressed"]
+[connection signal="pressed" from="Center/VBox/BtnGlossario" to="." method="_on_glossario_pressed"]

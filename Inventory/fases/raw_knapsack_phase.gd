@@ -293,6 +293,7 @@ func _place_on_type_station(slot) -> void:
 	if slot.get_meta("item_stored") != null:
 		_show_not_ready_modal("Esta estação já tem um orbe. Retire-o antes de tipar outro.")
 		return
+	var was_raw: bool = item_held.data_type == ItemRef.DataType.RAW
 	var target_name: String = slot.get_meta("box_name")
 	var target_type = slot.get_meta("box_type")
 	var val := _numeric_from_item(item_held)
@@ -313,6 +314,8 @@ func _place_on_type_station(slot) -> void:
 	item_held.selected = false
 	item_held = null
 	can_place = false
+	if was_raw:
+		pending_raw_count = maxi(0, pending_raw_count - 1)
 	_update_bytes_label()
 	_update_phase_title()
 	_update_hint()
@@ -375,8 +378,6 @@ func _pick_item_custom() -> void:
 	elif slot in pool_grid.slots_array:
 		item = slot.item_stored
 		pool_grid.remove_item(item)
-		if item and item.data_type == ItemRef.DataType.RAW:
-			pending_raw_count = maxi(0, pending_raw_count - 1)
 	if item == null:
 		return
 	item.selected = true
@@ -492,11 +493,16 @@ func _update_hint() -> void:
 
 
 func is_phase_success() -> bool:
+	if moves_count <= 0:
+		return false
+	if item_held != null and is_instance_valid(item_held) and item_held.data_type == ItemRef.DataType.RAW:
+		return false
 	if pending_raw_count > 0:
 		return false
 	if not backpack_grid:
 		return false
-	if backpack_grid.total_bytes_used() < config.capacity_bytes:
+	# Encher exatamente a capacidade, sem estourar.
+	if backpack_grid.total_bytes_used() != config.capacity_bytes:
 		return false
 	for slot in backpack_grid.slots_array:
 		for it in slot.items_stored:

@@ -98,14 +98,14 @@ func _apply_style() -> void:
 
 static func info_stylebox() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.12, 0.11, 0.16, 0.92)
-	sb.border_color = Color(0.35, 0.55, 0.7, 0.45)
+	sb.bg_color = Color(0.08, 0.08, 0.12, 0.96)
+	sb.border_color = Color(0.45, 0.65, 0.8, 0.55)
 	sb.set_border_width_all(1)
 	sb.set_corner_radius_all(6)
-	sb.content_margin_left = 8
-	sb.content_margin_right = 8
-	sb.content_margin_top = 6
-	sb.content_margin_bottom = 6
+	sb.content_margin_left = 10
+	sb.content_margin_right = 10
+	sb.content_margin_top = 8
+	sb.content_margin_bottom = 8
 	return sb
 
 
@@ -115,26 +115,38 @@ static func apply_info_panel(panel: Control) -> void:
 	panel.add_theme_stylebox_override("panel", info_stylebox())
 
 
-static func apply_info_label(label: Label, font_size: int = 13) -> void:
+static func apply_info_label(label: Label, font_size: int = 14) -> void:
 	if label == null:
 		return
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_color_override("font_color", Color(0.82, 0.88, 0.94))
+	label.add_theme_color_override("font_color", Color(0.95, 0.96, 0.98))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
 	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_constant_override("outline_size", 1)
+	label.add_theme_constant_override("outline_size", 3)
+	label.add_theme_constant_override("letter_spacing", 1)
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
 
-static func apply_info_richtext(rt: RichTextLabel, font_size: int = 14) -> void:
+static func apply_info_richtext(rt: RichTextLabel, font_size: int = 16) -> void:
 	if rt == null:
 		return
-	rt.add_theme_color_override("default_color", Color(0.82, 0.88, 0.94))
+	rt.add_theme_color_override("default_color", Color(0.95, 0.96, 0.98))
+	rt.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	rt.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
 	rt.add_theme_font_size_override("normal_font_size", font_size)
-	rt.add_theme_constant_override("outline_size", 1)
+	rt.add_theme_font_size_override("bold_font_size", font_size)
+	rt.add_theme_constant_override("outline_size", 3)
+	rt.add_theme_constant_override("line_separation", 5)
 	rt.add_theme_constant_override("shadow_offset_x", 1)
 	rt.add_theme_constant_override("shadow_offset_y", 1)
+	# Mesma face no "bold" → evita negrito sintético ilegível da KiwiSoda.
+	var face: Font = rt.get_theme_font("normal_font")
+	if face:
+		rt.add_theme_font_override("bold_font", face)
+		rt.add_theme_font_override("bold_italics_font", face)
 
 
 static func make_in(parent: Control, before: Node = null) -> OrbHoverBar:

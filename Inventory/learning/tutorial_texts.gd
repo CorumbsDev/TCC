@@ -6,6 +6,7 @@ const KEY_PHASE_BACKPACK := "phase_backpack_v1"
 const KEY_PHASE_CONVERSION := "phase_conversion_v1"
 const KEY_GLOSSARY := "glossary_v1"
 const KEY_RAW_KNAPSACK := "raw_knapsack_phase_intro"
+const KEY_TYPE_BOX := "type_box_phase_intro"
 
 
 static func title_for(key: String) -> String:
@@ -20,6 +21,8 @@ static func title_for(key: String) -> String:
 			return "Glossário rápido"
 		KEY_RAW_KNAPSACK:
 			return "Mochila + Tipagem (RAW)"
+		KEY_TYPE_BOX:
+			return "Caixas de Tipagem"
 		_:
 			return "Ajuda"
 
@@ -37,11 +40,11 @@ static func body_for(key: String) -> String:
 		KEY_PHASE_BACKPACK:
 			return (
 				"[b]Objetivo:[/b] encher a [b]mochila do desafio[/b] até o limite de [b]bytes[/b].\n\n"
-				+ "[b]Byte (neste OA):[/b] “peso” do item. Nesta fase, usamos apenas [b]INT (1 byte cada)[/b].\n\n"
-				+ "[b]Pool:[/b] área à direita com itens para arrastar para a mochila.\n\n"
-				+ "[b]Como jogar:[/b] clique em um INT do pool e arraste para um slot vazio da mochila do desafio.\n\n"
-				+ "[b]Cheio:[/b] quando a soma dos bytes na mochila atinge o máximo. "
-				+ "Ao concluir, um texto explica como a soma fecha."
+				+ "[b]Modelo de pesos:[/b] 1 “palavra” = [b]4 bytes[/b]. "
+				+ "Assim: [b]1 INT = 4[/b], [b]1 FLOAT = 4[/b], [b]1 DOUBLE = 8[/b] (ocupa 2 palavras), [b]1 FP8 = 1[/b] (cabem 4 FP8 numa palavra).\n\n"
+				+ "[b]Pool:[/b] área com itens para arrastar para a mochila.\n\n"
+				+ "[b]Como jogar:[/b] clique em um INT do pool e arraste para um slot vazio da mochila.\n\n"
+				+ "[b]Cheio:[/b] quando a soma dos bytes na mochila atinge exatamente o máximo."
 			)
 		KEY_PHASE_CONVERSION:
 			return (
@@ -50,7 +53,7 @@ static func body_for(key: String) -> String:
 				+ "Quando estiverem preenchidos, o jogo confere o valor e mostra a soma 2²+2¹+2⁰."
 			)
 		KEY_GLOSSARY:
-			return "Abra o glossário pelo menu principal para ver definições dos termos usados no projeto."
+			return "Use o botão Glossário no menu principal para ver definições dos termos usados no projeto."
 		KEY_RAW_KNAPSACK:
 			return (
 				"[b]Objetivo:[/b] encher a mochila até o limite de bytes, mas os valores chegam [b]sem tipo (RAW)[/b].\n\n"
@@ -58,6 +61,15 @@ static func body_for(key: String) -> String:
 				+ "[b]2)[/b] Solte numa [b]estação de tipagem[/b] (Int, Float, etc.). Se o valor não couber no tipo, a conversão falha.\n"
 				+ "[b]3)[/b] Arraste o orbe tipado para a mochila. Cada tipo ocupa bytes diferentes.\n\n"
 				+ "RAW não pode ir direto para a mochila — é o desafio extra desta fase."
+			)
+		KEY_TYPE_BOX:
+			return (
+				"[b]Objetivo:[/b] tipar todos os RAW nas [b]caixas de tipagem[/b] até somar exatamente a capacidade em bytes.\n\n"
+				+ "[b]1)[/b] Arraste um RAW do pool para uma das caixas: [b]Int[/b], [b]Short[/b], [b]Float[/b] ou [b]Double[/b].\n"
+				+ "[b]2)[/b] Cada caixa ocupa bytes diferentes — escolha o tipo que combina com o valor.\n"
+				+ "[b]3)[/b] A soma nas caixas deve fechar [b]exatamente[/b] o limite (12 bytes nesta fase).\n\n"
+				+ "[b]Pense com os bytes:[/b] Int = 4, Short = 2, Float = 4, Double = 8. "
+				+ "[b]7[/b] e [b]1[/b] são inteiros; [b]3.14[/b] é decimal. Qual combinação fecha 12?"
 			)
 		_:
 			return ""

@@ -85,6 +85,7 @@ func _tutorial_intro_id() -> String:
 	return "type_box_phase_intro"
 
 func _create_boxes():
+	const BOX_TITLE_WIDTH := 136
 	var types = []
 	if config.allow_int: types.append({"type": ItemRef.DataType.INT, "name": "Int", "color": Color.BLUE})
 	if config.allow_short: types.append({"type": ItemRef.DataType.SHORT_INT, "name": "Short", "color": Color.CYAN})
@@ -95,12 +96,21 @@ func _create_boxes():
 	
 	for t in types:
 		var box_container = HBoxContainer.new()
+		box_container.add_theme_constant_override("separation", 8)
+		
+		var title_holder := Control.new()
+		title_holder.custom_minimum_size = Vector2(BOX_TITLE_WIDTH, 32)
+		title_holder.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		
 		var title = Label.new()
 		title.text = "Caixa " + t.name
 		title.add_theme_color_override("font_color", t.color)
-		title.custom_minimum_size = Vector2(120, 0)
-		box_container.add_child(title)
+		title.set_anchors_preset(Control.PRESET_FULL_RECT)
+		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		title.clip_text = true
+		title_holder.add_child(title)
+		box_container.add_child(title_holder)
 		
 		var slot_container = GridContainer.new()
 		slot_container.columns = min(config.box_slot_count, 8) # Quebra linha após 8
@@ -174,13 +184,56 @@ func _populate_pool():
 
 func _on_box_slot_entered(slot):
 	current_slot = slot
-	if item_held:
-		can_place = true
+	can_place = _can_place_in_slot(slot)
 
 func _on_pool_slot_entered(slot):
 	current_slot = slot
-	if item_held:
-		can_place = true
+	can_place = _can_place_in_slot(slot)
+
+func _can_place_in_slot(slot) -> bool:
+	if not item_held or not is_instance_valid(item_held):
+		return false
+	if slot.has_meta("is_type_box"):
+		if slot.item_stored != null:
+			return false
+		if item_held.data_type == ItemRef.DataType.RAW:
+			return true
+		return true
+	if slot.has_meta("is_pool"):
+		return slot.item_stored == null
+	return false
+
+func _byte_size_for_type(target_type, val: float) -> int:
+	var probe := preload("res://Inventory/Items/Item.tscn").instantiate()
+	probe.set_value_by_type(val, target_type)
+	var size_bytes: int = int(probe.get_size_bytes()) if probe.has_method("get_size_bytes") else 0
+	probe.queue_free()
+	return size_bytes
+
+func _projected_bytes_if_typed(target_type, val: float) -> int:
+	return total_bytes_used() + _byte_size_for_type(target_type, val)
+
+func _show_capacity_dialog(used: int, add: int) -> void:
+	var dlg := AcceptDialog.new()
+	dlg.title = "Capacidade excedida"
+	var extra := ""
+	if used >= global_capacity and pending_raw_values > 0:
+		extra = (
+			"\n\nAinda falta tipar %d orb(s). Os bytes já estão no limite — "
+			% pending_raw_values
+			+ "retire um orbe das caixas e escolha o tipo certo (Int para inteiros, Float para decimais)."
+		)
+	dlg.dialog_text = (
+		"Não cabe nesta fase!\n\n"
+		+ "Você tem %d / %d bytes nas caixas.\n" % [used, global_capacity]
+		+ "Este orbe tipado ocuparia mais %d bytes.\n\n" % add
+		+ "Use o tipo adequado ao valor ou tire um orbe das caixas."
+		+ extra
+	)
+	add_child(dlg)
+	dlg.popup_centered(Vector2(420, 180))
+	await _wait_accept_dialog(dlg)
+	dlg.queue_free()
 
 func _on_box_slot_exited(slot):
 	if current_slot == slot:
@@ -197,6 +250,7 @@ func _place_item():
 		if current_slot.item_stored != null:
 			return
 			
+		var was_raw: bool = item_held.data_type == ItemRef.DataType.RAW
 		var target_type = current_slot.get_meta("box_type")
 		var target_name = current_slot.get_meta("box_name")
 		
@@ -218,7 +272,7 @@ func _place_item():
 			dlg.title = "Erro de Tipagem"
 			add_child(dlg)
 			dlg.popup_centered(Vector2(400, 150))
-			await dlg.confirmed
+			await _wait_accept_dialog(dlg)
 			dlg.queue_free()
 			
 			# Retorna item pro pool (simplesmente resetar a posição para o mouse não basta, precisa de um slot do pool)
@@ -226,6 +280,13 @@ func _place_item():
 			return
 		
 		var final_val = deg.degraded_value
+		var used_before := total_bytes_used()
+		var projected := _projected_bytes_if_typed(target_type, final_val)
+		if projected > global_capacity:
+			var add_bytes: int = _byte_size_for_type(target_type, final_val)
+			await _show_capacity_dialog(used_before, add_bytes)
+			return
+
 		item_held.set_value_by_type(final_val, target_type)
 		item_held.update_label_display()
 		
@@ -238,7 +299,8 @@ func _place_item():
 		item_held.selected = false
 		item_held = null
 		can_place = false
-		pending_raw_values -= 1
+		if was_raw:
+			pending_raw_values = maxi(0, pending_raw_values - 1)
 		
 		_update_bytes_label()
 		_update_hint()
@@ -302,7 +364,7 @@ func _update_bytes_label():
 	var used = total_bytes_used()
 	var cap = global_capacity
 	if bytes_label:
-		bytes_label.text = "Mochila: %d / %d bytes" % [used, cap]
+		bytes_label.text = "Total nas caixas: %d / %d bytes" % [used, cap]
 	_update_hint()
 
 func _update_hint() -> void:
@@ -312,15 +374,124 @@ func _update_hint() -> void:
 		hint_label.text = "Objetivo concluído!"
 		hint_label.visible = true
 	else:
-		hint_label.text = ""
-		hint_label.visible = false
+		var used := total_bytes_used()
+		if pending_raw_values > 0 and used >= global_capacity:
+			hint_label.text = (
+				"%d / %d bytes, mas ainda falta tipar %d orb(s). "
+				% [used, global_capacity, pending_raw_values]
+				+ "Clique num orbe nas caixas para devolver ao pool e tipar o que falta."
+			)
+			hint_label.visible = true
+		elif pending_raw_values > 0:
+			hint_label.text = "Falta tipar %d orb(s) nas caixas." % pending_raw_values
+			hint_label.visible = true
+		elif used == global_capacity and pending_raw_values == 0 and not _solution_types_valid():
+			hint_label.text = "Bytes corretos, mas algum valor está na caixa errada — use Int nos inteiros e Float no decimal."
+			hint_label.visible = true
+		elif used > global_capacity:
+			hint_label.text = "Capacidade excedida — retire um orbe ou use o tipo certo para cada valor."
+			hint_label.visible = true
+		else:
+			hint_label.visible = false
 	_update_next_button_state()
 
 func is_phase_success() -> bool:
-	var used = total_bytes_used()
-	if used > global_capacity: return false
-	if pending_raw_values > 0: return false
+	# Precisa tipar todos os RAW, interagir e encher exatamente a capacidade.
+	if moves_count <= 0:
+		return false
+	if pending_raw_values > 0:
+		return false
+	if item_held != null and is_instance_valid(item_held) and item_held.data_type == ItemRef.DataType.RAW:
+		return false
+	var used := total_bytes_used()
+	if used > global_capacity:
+		return false
+	if used != global_capacity:
+		return false
+	return _solution_types_valid()
+
+func _typed_items_in_boxes() -> Array:
+	var items: Array = []
+	for type_info in type_boxes.values():
+		for slot in type_info.slots:
+			if not is_instance_valid(slot):
+				continue
+			var item = slot.item_stored
+			if item and is_instance_valid(item) and item.data_type != ItemRef.DataType.RAW:
+				items.append(item)
+	return items
+
+func _item_numeric_value(item) -> float:
+	if item.data_type in [ItemRef.DataType.FLOAT, ItemRef.DataType.DOUBLE, ItemRef.DataType.FP8, ItemRef.DataType.FP16, ItemRef.DataType.RAW]:
+		return float(item.value_float)
+	return float(item.value)
+
+func _raw_values_match(item_val: float, target_str: String) -> bool:
+	var target := float(target_str)
+	if is_equal_approx(item_val, target):
+		return true
+	var tolerance: float = maxf(0.0001, absf(target) * 1e-4)
+	return absf(item_val - target) <= tolerance
+
+func _parse_expected_type(type_str: String) -> int:
+	match type_str.strip_edges().to_lower():
+		"int":
+			return ItemRef.DataType.INT
+		"short", "short_int":
+			return ItemRef.DataType.SHORT_INT
+		"float":
+			return ItemRef.DataType.FLOAT
+		"double":
+			return ItemRef.DataType.DOUBLE
+		"fp8":
+			return ItemRef.DataType.FP8
+		"fp16":
+			return ItemRef.DataType.FP16
+		_:
+			return -1
+
+func _solution_types_valid() -> bool:
+	if config == null or config.expected_solution_types.is_empty():
+		return true
+	if config.randomize_values:
+		return true
+	var expected := config.expected_solution_types
+	var raw_vals := config.initial_raw_values
+	var n := mini(expected.size(), raw_vals.size())
+	if n == 0:
+		return true
+	var placed := _typed_items_in_boxes()
+	if placed.size() != n:
+		return false
+	var used_indices: Dictionary = {}
+	for i in range(n):
+		var target_type := _parse_expected_type(str(expected[i]))
+		if target_type < 0:
+			continue
+		var found := false
+		for j in range(placed.size()):
+			if used_indices.has(j):
+				continue
+			var item = placed[j]
+			if item.data_type != target_type:
+				continue
+			if not _raw_values_match(_item_numeric_value(item), str(raw_vals[i])):
+				continue
+			used_indices[j] = true
+			found = true
+			break
+		if not found:
+			return false
 	return true
+
+func _wait_accept_dialog(dlg: AcceptDialog) -> void:
+	var done := [false]
+	dlg.confirmed.connect(func(): done[0] = true)
+	dlg.close_requested.connect(func(): done[0] = true)
+	if dlg.has_signal("canceled"):
+		dlg.canceled.connect(func(): done[0] = true)
+	while not done[0]:
+		await get_tree().process_frame
 
 func _get_type_name(dt) -> String:
 	if dt == ItemRef.DataType.INT: return "Int"

@@ -158,22 +158,13 @@ text = "Tipo de Fase:"
 
 [node name="OptionType" type="OptionButton" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/PhaseTypeHBox"]
 layout_mode = 2
-item_count = 4
-popup/item_0/text = "Mochila (Knapsack)"
-popup/item_0/id = 0
-popup/item_1/text = "Binário"
-popup/item_1/id = 1
-popup/item_2/text = "Caixas de Tipagem"
-popup/item_2/id = 2
-popup/item_3/text = "Mochila + Tipagem (RAW)"
-popup/item_3/id = 3
 
 [node name="TutorialTextVBox" type="VBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
 layout_mode = 2
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/TutorialTextVBox"]
 layout_mode = 2
-text = "Texto do Tutorial (deixe vazio p/ não exibir):"
+text = "Texto do Tutorial (vazio = tutorial padrão da fase):"
 
 [node name="TutorialTextEdit" type="TextEdit" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/TutorialTextVBox"]
 custom_minimum_size = Vector2(0, 80)

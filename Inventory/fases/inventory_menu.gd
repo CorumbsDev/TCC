@@ -1,5 +1,18 @@
 extends Control
 
+func _dbg(a=null, b=null, c=null, d=null) -> void:
+	if not OS.is_debug_build():
+		return
+	if d != null:
+		print(a, b, c, d)
+	elif c != null:
+		print(a, b, c)
+	elif b != null:
+		print(a, b)
+	elif a != null:
+		print(a)
+
+
 @onready var slot_scene = preload("res://Inventory/slots/slot.tscn")
 @onready var grid_container = $Background/MarginContainer/VBoxContainer/ScrollContainer/GridContainer
 @onready var item_scene = preload("res://Inventory/Items/Item.tscn")
@@ -25,9 +38,9 @@ var ultima_expressao = ""         # Armazena a última expressão processada
 func _ready():
 	if controlador_externo and controlador_externo.has_signal("expressao_processada"):
 		controlador_externo.expressao_processada.connect(_on_expressao_processada)
-		print("Controlador externo conectado")
+		_dbg("Controlador externo conectado")
 	else:
-		print("Controlador externo não encontrado, usando fallback")
+		_dbg("Controlador externo não encontrado, usando fallback")
 	
 	# Conecta sinais de hover dos itens
 	connect_items_hover_signals()
@@ -71,10 +84,10 @@ func connect_items_hover_signals():
 				item_held.mouse_exited_item.connect(_on_item_mouse_exited)
 
 func _on_expressao_processada(resultado: Variant, tipo_resultado: String, codigo: String):
-	print("=== EXPRESSÃO PROCESSADA ===")
-	print("Resultado: ", resultado)
-	print("Tipo: ", tipo_resultado)
-	print("Código: ", codigo)
+	_dbg("=== EXPRESSÃO PROCESSADA ===")
+	_dbg("Resultado: ", resultado)
+	_dbg("Tipo: ", tipo_resultado)
+	_dbg("Código: ", codigo)
 	
 	# Consome os itens usados na expressão ANTES de criar o novo item
 	consumir_itens_expressao()
@@ -93,7 +106,7 @@ func create_slot():
 	new_slot.item_changed.connect(_on_item_changed)
 
 func _on_item_changed(slot):
-	print("Item mudou no slot:", slot.slot_ID)
+	_dbg("Item mudou no slot:", slot.slot_ID)
 	check_combinations()
 
 @warning_ignore("unused_parameter")
@@ -141,7 +154,7 @@ func create_item_on_hand_randomly():
 		if new_item.has_method("load_item"):
 			new_item.load_item(random_item)
 		else:
-			print("Item não tem método load_item")
+			_dbg("Item não tem método load_item")
 		
 		# Conecta sinais de hover (verifica se já está conectado)
 		if new_item.has_signal("mouse_entered_item"):
@@ -302,18 +315,7 @@ func check_combinations():
 							slots_na_sequencia.append(slot)
 					# Verifica se é um valor (qualquer tipo)
 					elif item.get("data_type") != null:
-						# Usa o método get_value_as_string() para obter o valor formatado
-						if item.has_method("get_value_as_string"):
-							sequence.append(item.get_value_as_string())
-						else:
-							# Fallback para compatibilidade
-							match item.data_type:
-								item.DataType.INT:
-									sequence.append(str(item.value))
-								item.DataType.FLOAT:
-									sequence.append(str(item.value_float))
-								item.DataType.STRING:
-									sequence.append('"' + item.value_string + '"')
+						sequence.append(OrbValueFormat.python_repr_string(item))
 						slots_na_sequencia.append(slot)
 					# Fallback para itens antigos (compatibilidade)
 					elif item.get("operator") != null and item.operator != "":
@@ -358,18 +360,7 @@ func check_combinations():
 							slots_na_sequencia.append(slot)
 					# Verifica se é um valor (qualquer tipo)
 					elif item.get("data_type") != null:
-						# Usa o método get_value_as_string() para obter o valor formatado
-						if item.has_method("get_value_as_string"):
-							sequence.append(item.get_value_as_string())
-						else:
-							# Fallback para compatibilidade
-							match item.data_type:
-								item.DataType.INT:
-									sequence.append(str(item.value))
-								item.DataType.FLOAT:
-									sequence.append(str(item.value_float))
-								item.DataType.STRING:
-									sequence.append('"' + item.value_string + '"')
+						sequence.append(OrbValueFormat.python_repr_string(item))
 						slots_na_sequencia.append(slot)
 					# Fallback para itens antigos (compatibilidade)
 					elif item.get("operator") != null and item.operator != "":
@@ -399,17 +390,17 @@ func _process_sequence(seq: Array):
 	if seq.size() >= 3:
 		var expr = "".join(seq)
 		ultima_expressao = expr
-		print("Expressão formada:", expr)
+		_dbg("Expressão formada:", expr)
 		
 		var validacao = validar_tipos_expressao(seq)
 		if not validacao.valido:
-			print("AVISO: ", validacao.mensagem)
+			_dbg("AVISO: ", validacao.mensagem)
 		
 		if controlador_externo and controlador_externo.has_method("processar_expressao_assincrona"):
 			controlador_externo.processar_expressao_assincrona(expr)
 		else:
 			var resultado_info = avaliar_expressao_com_tipo(expr)
-			print("Resultado (fallback):", resultado_info.resultado, " Tipo:", resultado_info.tipo)
+			_dbg("Resultado (fallback):", resultado_info.resultado, " Tipo:", resultado_info.tipo)
 			
 			consumir_itens_expressao()
 			create_result_item_typed(resultado_info.resultado, resultado_info.tipo)
@@ -438,7 +429,7 @@ func create_result_item(resultado: float):
 		
 		new_item.selected = true
 		item_held = new_item
-		print("Item de resultado criado com valor: ", valor_inteiro)
+		_dbg("Item de resultado criado com valor: ", valor_inteiro)
 
 func create_result_item_typed(resultado: Variant, tipo_resultado: String):
 	"""Cria um item de resultado com o tipo correto"""
@@ -501,7 +492,7 @@ func create_result_item_typed(resultado: Variant, tipo_resultado: String):
 	
 	new_item.selected = true
 	item_held = new_item
-	print("Item de resultado criado - Valor: ", resultado, " Tipo: ", tipo_resultado)
+	_dbg("Item de resultado criado - Valor: ", resultado, " Tipo: ", tipo_resultado)
 	
 	# Força a verificação de disponibilidade para o novo item
 	# (o mouse já está sobre um slot, mas o sinal slot_entered não vai disparar novamente)
@@ -511,7 +502,7 @@ func create_result_item_typed(resultado: Variant, tipo_resultado: String):
 
 func consumir_itens_expressao():
 	"""Remove os itens usados na expressão do grid"""
-	print("Consumindo ", ultimos_slots_expressao.size(), " itens da expressão")
+	_dbg("Consumindo ", ultimos_slots_expressao.size(), " itens da expressão")
 	
 	for slot in ultimos_slots_expressao:
 		for item in slot.items_stored.duplicate():
@@ -533,9 +524,9 @@ func consumir_itens_expressao():
 
 # Função para debug - mostra os slots que serão consumidos
 func debug_slots_expressao():
-	print("Slots marcados para consumo:")
+	_dbg("Slots marcados para consumo:")
 	for slot in ultimos_slots_expressao:
-		print(" - Slot ", slot.slot_ID)
+		_dbg(" - Slot ", slot.slot_ID)
 
 func _on_item_mouse_entered(item):
 	"""Chamado quando o mouse entra em um item"""

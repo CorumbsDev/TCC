@@ -13,16 +13,17 @@ func _ready():
 
 
 func _init_item_data():
+	# Modelo pedagógico (palavra de 4 bytes): 1 INT = 1 FLOAT = ½ DOUBLE = 4 FP8.
 	item_data = {
-		"item_number_1": {"Value": 1, "DataType": "INT", "Bytes": 1},
-		"item_number_2": {"Value": 2, "DataType": "INT", "Bytes": 1},
-		"item_number_3": {"Value": 3, "DataType": "INT", "Bytes": 1},
-		"item_number_5": {"Value": 5, "DataType": "INT", "Bytes": 1},
-		"item_number_7": {"Value": 7, "DataType": "INT", "Bytes": 1},
-		"item_number_10": {"Value": 10, "DataType": "INT", "Bytes": 1},
+		"item_number_1": {"Value": 1, "DataType": "INT", "Bytes": 4},
+		"item_number_2": {"Value": 2, "DataType": "INT", "Bytes": 4},
+		"item_number_3": {"Value": 3, "DataType": "INT", "Bytes": 4},
+		"item_number_5": {"Value": 5, "DataType": "INT", "Bytes": 4},
+		"item_number_7": {"Value": 7, "DataType": "INT", "Bytes": 4},
+		"item_number_10": {"Value": 10, "DataType": "INT", "Bytes": 4},
 		"item_operator_plus": {"Operator": "+"},
 		"item_operator_increment": {"Operator": "++"},
-		"item_double_3.14159": {"Value": 3.14159, "DataType": "FLOAT", "Bytes": 8},
+		"item_double_3.14159": {"Value": 3.14159, "DataType": "FLOAT", "Bytes": 4},
 		"item_binary_10": {"Value": 10, "DataType": "BINARY", "Bits": 4, "Bytes": 1},
 		"item_binary_42": {"Value": 42, "DataType": "BINARY", "Bits": 6, "Bytes": 1},
 		"item_binary_0": {"Value": 0, "DataType": "BINARY", "Bits": 1, "Bytes": 1},
@@ -72,7 +73,7 @@ func get_item_bytes(item_id: String) -> int:
 
 
 # Generator methods
-func generate_knapsack_config(capacity: int = 8, backpack_slots: int = 8, pool_slots: int = 10, grid_cols: int = 4, int_min: int = 1, int_max: int = 10, initial_csv: String = "1_i,2_i", random_pool_size: int = 4, use_converter: bool = false) -> PhaseConfig:
+func generate_knapsack_config(capacity: int = 8, backpack_slots: int = 8, pool_slots: int = 10, grid_cols: int = 4, int_min: int = 1, int_max: int = 10, initial_csv: String = "", random_pool_size: int = 4, use_converter: bool = false) -> PhaseConfig:
 	return ConfigGenerator.generate_knapsack_config(capacity, backpack_slots, pool_slots, grid_cols, int_min, int_max, initial_csv, random_pool_size, use_converter)
 
 func generate_sequence(num_phases: int, mix_types: bool = true, base_params: Dictionary = {}) -> Array:

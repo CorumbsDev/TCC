@@ -1,10 +1,14 @@
 extends Control
 
-@onready var rich: RichTextLabel = $Margin/VBox/RichTextLabel
-@onready var btn_voltar: Button = $Margin/VBox/BtnVoltar
+@onready var rich: RichTextLabel = $Panel/Margin/VBox/RichTextLabel
+@onready var btn_voltar: Button = $Panel/Margin/VBox/BtnVoltar
 
 
 func _ready():
+	# Mesma ordem/arte do criador: fundo + Panel por cima (tonalidade escurecida).
+	PanelArtLoader.apply_background(self)
+	PanelArtLoader.skin_all_buttons(self)
+	OrbHoverBar.apply_info_richtext(rich, 16)
 	btn_voltar.pressed.connect(_on_voltar)
 	_load_glossary()
 
@@ -32,7 +36,7 @@ func _load_glossary() -> void:
 		if i > 0:
 			out += "\n\n"
 		out += blocks[i]
-	rich.text = out
+	rich.text = ReadableBbcode.for_ui(out)
 
 
 func _on_voltar() -> void:

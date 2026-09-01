@@ -68,6 +68,7 @@ func _ready() -> void:
 	panels[PhaseSequenceStep.Kind.TYPE_BOX] = TypeboxConfigPanel.new(ui_elements)
 	panels[PhaseSequenceStep.Kind.RAW_MOCHILA] = RawConfigPanel.new(ui_elements)
 	panels[PhaseSequenceStep.Kind.BINARIO] = BinaryConfigPanel.new(ui_elements)
+	panels[PhaseSequenceStep.Kind.CONVERSAO] = ConversionConfigPanel.new(ui_elements)
 	
 	tree.columns = 1
 	_root = tree.create_item()
@@ -76,6 +77,8 @@ func _ready() -> void:
 	
 	if tutorial_text_edit and not tutorial_text_edit.text_changed.is_connected(_on_tutorial_text_changed):
 		tutorial_text_edit.text_changed.connect(_on_tutorial_text_changed)
+	
+	_configure_phase_type_options()
 	
 	_load_all_sequences()
 	_show_empty()
@@ -88,6 +91,17 @@ func _ready() -> void:
 	main_vbox.scale = Vector2(0.8, 0.8)
 	main_vbox.pivot_offset = main_vbox.size / 2.0
 	main_vbox.resized.connect(func(): main_vbox.pivot_offset = main_vbox.size / 2.0)
+
+func _configure_phase_type_options() -> void:
+	option_type.clear()
+	option_type.add_item("Mochila (Knapsack)", PhaseSequenceStep.Kind.MOCHILA)
+	if PhaseSequenceStep.binary_phases_enabled():
+		option_type.add_item("Binário", PhaseSequenceStep.Kind.BINARIO)
+	option_type.add_item("Caixas de Tipagem", PhaseSequenceStep.Kind.TYPE_BOX)
+	option_type.add_item("Mochila + Tipagem (RAW)", PhaseSequenceStep.Kind.RAW_MOCHILA)
+	if PhaseSequenceStep.conversion_phases_enabled():
+		option_type.add_item("Conversão Decimal → Binário", PhaseSequenceStep.Kind.CONVERSAO)
+
 
 func _load_all_sequences() -> void:
 	for c in _root.get_children():
@@ -157,7 +171,15 @@ func _show_phase_editor(step: PhaseSequenceStep) -> void:
 	empty_label.visible = false
 	sequence_editor_ui.visible = false
 	phase_editor_ui.visible = true
-	option_type.selected = step.kind
+	var kind_idx := option_type.get_item_index(step.kind)
+	if kind_idx >= 0:
+		option_type.selected = kind_idx
+	elif step.kind == PhaseSequenceStep.Kind.BINARIO:
+		_set_status("Fase Binário desabilitada no jogo. Escolha outro tipo acima.")
+	elif step.kind == PhaseSequenceStep.Kind.CONVERSAO:
+		_set_status("Fase Conversão desabilitada no jogo. Escolha outro tipo acima.")
+	else:
+		option_type.selected = 0
 	if tutorial_text_edit.text != step.custom_tutorial_text:
 		tutorial_text_edit.text = step.custom_tutorial_text
 	
@@ -207,6 +229,7 @@ func _kind_label(kind: PhaseSequenceStep.Kind) -> String:
 		PhaseSequenceStep.Kind.BINARIO: return "Binário"
 		PhaseSequenceStep.Kind.TYPE_BOX: return "Tipagem"
 		PhaseSequenceStep.Kind.RAW_MOCHILA: return "Mochila+RAW"
+		PhaseSequenceStep.Kind.CONVERSAO: return "Conversão"
 		_: return "Mochila"
 
 func _flush_active_phase_editor() -> void:
@@ -332,7 +355,6 @@ func _on_btn_salvar_tudo_pressed() -> void:
 	var seq_item = _selected_item if _selected_item.get_metadata(0).type == "sequence" else _selected_item.get_parent()
 	file_manager.save_sequence(seq_item.get_metadata(0).file, seq_item.get_metadata(0).data)
 	_set_status("Sequência salva: " + seq_item.get_metadata(0).file)
-	print("Sequência salva com sucesso!")
 
 func _on_file_name_changed(new_text: String) -> void:
 	_flush_active_phase_editor()
@@ -364,7 +386,7 @@ func _on_phase_type_selected(index: int) -> void:
 	if not sel or sel.get_metadata(0).type != "phase": return
 	
 	var step: PhaseSequenceStep = sel.get_metadata(0).step
-	step.kind = index as PhaseSequenceStep.Kind
+	step.kind = option_type.get_item_id(index) as PhaseSequenceStep.Kind
 	if step.kind == PhaseSequenceStep.Kind.MOCHILA and not step.config_mochila:
 		step.config_mochila = ConfigGenerator.generate_knapsack_config()
 	elif step.kind == PhaseSequenceStep.Kind.BINARIO and not step.config_binario:
@@ -373,6 +395,8 @@ func _on_phase_type_selected(index: int) -> void:
 		step.config_type_box = ConfigGenerator.generate_type_box_config()
 	elif step.kind == PhaseSequenceStep.Kind.RAW_MOCHILA and not step.config_raw_mochila:
 		step.config_raw_mochila = ConfigGenerator.generate_raw_knapsack_config()
+	elif step.kind == PhaseSequenceStep.Kind.CONVERSAO and not step.config_conversao:
+		step.config_conversao = ConfigGenerator.generate_conversion_config()
 		
 	var idx = sel.get_index() + 1
 	sel.set_text(0, "📄 Fase %d (%s)" % [idx, _kind_label(step.kind)])
@@ -445,3 +469,223 @@ func _on_btn_jogar_pressed() -> void:
 
 func _on_btn_voltar_pressed() -> void:
 	get_tree().change_scene_to_file("res://Inventory/fases/main_menu.tscn")
+
+
+func _on_btn_export_csv_pressed() -> void:
+	_flush_active_phase_editor()
+	var sel = tree.get_selected()
+	if not sel:
+		_show_dialog("Exportar CSV", "Selecione uma sequência (ou uma fase dela) para exportar.")
+		return
+	var seq_item = sel if sel.get_metadata(0).type == "sequence" else sel.get_parent()
+	if seq_item == null:
+		return
+	var seq_list: PhaseSequenceList = seq_item.get_metadata(0).data
+	var csv_str = "KIND,CAPACITY,SLOTS_M,SLOTS_P,COLS,MIN,MAX,CSV_ITEMS,RND_POOL,FLOAT,DOUBLE,SHORT,BOOL,FP8,FP16,CALC,FP_CUST,FP8_E,FP8_M,FP16_E,FP16_M\n"
+	for step in seq_list.steps:
+		if step.kind == PhaseSequenceStep.Kind.MOCHILA:
+			var c = step.config_mochila
+			if not c:
+				c = PhaseConfig.new()
+			var items_field := SequenceCsvCodec.items_field_from_backpack_csv(c.initial_backpack_csv)
+			csv_str += "M,%d,%d,%d,%d,%d,%d,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d\n" % [
+				c.capacity_bytes, c.backpack_slot_count, c.pool_slot_count, c.pool_grid_columns,
+				c.spawn_int_min, c.spawn_int_max,
+				SequenceCsvCodec.escape_field(items_field), c.random_pool.size(),
+				str(c.use_converter), str(c.allow_double), str(c.allow_short), "false",
+				str(c.allow_fp8), str(c.allow_fp16), str(c.allow_calc), str(c.allow_fp_customization),
+				c.fp8_exp_bits, c.fp8_mant_bits, c.fp16_exp_bits, c.fp16_mant_bits
+			]
+		elif step.kind == PhaseSequenceStep.Kind.TYPE_BOX:
+			var tc = step.config_type_box
+			if not tc:
+				tc = TypeBoxPhaseConfig.new()
+			var raw_field := SequenceCsvCodec.ITEMS_SEP.join(tc.initial_raw_values)
+			csv_str += "T,%d,%d,0,0,0,0,%s,%d,%s,%s,%s,%s,%s,%s,false,false,%d,%d,%d,%d\n" % [
+				tc.capacity_bytes, tc.box_slot_count,
+				SequenceCsvCodec.escape_field(raw_field),
+				1 if tc.randomize_values else 0,
+				str(tc.allow_float), str(tc.allow_double), str(tc.allow_short), "false",
+				str(tc.allow_fp8), str(tc.allow_fp16),
+				tc.fp8_exp_bits, tc.fp8_mant_bits, tc.fp16_exp_bits, tc.fp16_mant_bits
+			]
+		elif step.kind == PhaseSequenceStep.Kind.RAW_MOCHILA:
+			var rc: RawKnapsackPhaseConfig = step.config_raw_mochila
+			if not rc:
+				rc = RawKnapsackPhaseConfig.new()
+			var raw_field2 := SequenceCsvCodec.ITEMS_SEP.join(rc.initial_raw_values)
+			csv_str += "R,%d,%d,%d,%d,0,0,%s,%d,%s,%s,%s,%s,%s,%s,false,false,%d,%d,%d,%d\n" % [
+				rc.capacity_bytes, rc.backpack_slot_count, rc.pool_slot_count, rc.pool_grid_columns,
+				SequenceCsvCodec.escape_field(raw_field2),
+				1 if rc.randomize_values else 0,
+				str(rc.allow_float), str(rc.allow_double), str(rc.allow_short), "false",
+				str(rc.allow_fp8), str(rc.allow_fp16),
+				rc.fp8_exp_bits, rc.fp8_mant_bits, rc.fp16_exp_bits, rc.fp16_mant_bits
+			]
+		elif step.kind == PhaseSequenceStep.Kind.CONVERSAO and PhaseSequenceStep.conversion_phases_enabled():
+			var cc: ConversionPhaseConfig = step.config_conversao
+			if not cc:
+				cc = ConfigGenerator.generate_conversion_config()
+			var chal_parts: PackedStringArray = PackedStringArray()
+			for v in cc.challenge_decimals:
+				chal_parts.append(str(int(v)))
+			var chal := SequenceCsvCodec.ITEMS_SEP.join(chal_parts)
+			csv_str += "C,%d,%d,0,0,0,0,%s,0,false,false,false,false,false,false,false,false,4,3,5,10\n" % [
+				cc.num_bits, int(cc.advance_delay_seconds * 10.0),
+				SequenceCsvCodec.escape_field(chal)
+			]
+		elif step.kind == PhaseSequenceStep.Kind.BINARIO and PhaseSequenceStep.binary_phases_enabled():
+			var bc: BinaryPhaseConfig = step.config_binario
+			if not bc:
+				bc = ConfigGenerator.generate_binary_config()
+			csv_str += "B,%d,%d,0,0,0,0,,0,false,false,false,false,false,false,false,false,4,3,5,10\n" % [
+				bc.fixed_left_bit, bc.fixed_right_bit
+			]
+	DisplayServer.clipboard_set(csv_str)
+	_show_dialog("Exportar CSV", "Sequência copiada para a área de transferência.\nCole com Ctrl+V onde quiser.")
+
+
+func _on_btn_import_csv_pressed() -> void:
+	var csv_str = DisplayServer.clipboard_get().strip_edges()
+	if csv_str == "" or not csv_str.begins_with("KIND,"):
+		_show_dialog("Erro de Importação", "Nenhum CSV válido encontrado na área de transferência.\nExporte antes ou cole um CSV que comece com KIND,")
+		return
+	var lines = csv_str.split("\n")
+	var seq_list = PhaseSequenceList.new()
+	for i in range(1, lines.size()):
+		var line = lines[i].strip_edges()
+		if line == "":
+			continue
+		var parts: PackedStringArray = SequenceCsvCodec.parse_csv_line(line)
+		if parts.size() < 8:
+			continue
+		var step = PhaseSequenceStep.new()
+		if parts[0] == "M":
+			step.kind = PhaseSequenceStep.Kind.MOCHILA
+			var c = PhaseConfig.new()
+			c.capacity_bytes = int(parts[1])
+			c.backpack_slot_count = int(parts[2])
+			c.pool_slot_count = int(parts[3])
+			c.pool_grid_columns = int(parts[4])
+			c.spawn_int_min = int(parts[5])
+			c.spawn_int_max = int(parts[6])
+			c.initial_backpack_csv = SequenceCsvCodec.backpack_csv_from_items_field(parts[7])
+			var rp_size = int(parts[8]) if parts.size() > 8 else 0
+			if rp_size > 0:
+				c.random_pool = ConfigGenerator._random_int_items(rp_size)
+			if parts.size() > 9:
+				c.use_converter = (parts[9] == "true")
+			if parts.size() > 10:
+				c.allow_double = (parts[10] == "true")
+			if parts.size() > 11:
+				c.allow_short = (parts[11] == "true")
+			# parts[12] = BOOL legado (ignorado)
+			if parts.size() > 13:
+				c.allow_fp8 = (parts[13] == "true")
+			if parts.size() > 14:
+				c.allow_fp16 = (parts[14] == "true")
+			if parts.size() > 15:
+				c.allow_calc = (parts[15] == "true")
+			if parts.size() >= 21:
+				c.allow_fp_customization = (parts[16] == "true")
+				c.fp8_exp_bits = int(parts[17])
+				c.fp8_mant_bits = int(parts[18])
+				c.fp16_exp_bits = int(parts[19])
+				c.fp16_mant_bits = int(parts[20])
+			step.config_mochila = c
+		elif parts[0] == "R":
+			step.kind = PhaseSequenceStep.Kind.RAW_MOCHILA
+			var rc := RawKnapsackPhaseConfig.new()
+			rc.capacity_bytes = int(parts[1])
+			rc.backpack_slot_count = int(parts[2])
+			rc.pool_slot_count = int(parts[3])
+			rc.pool_grid_columns = int(parts[4])
+			var raw_vals2: PackedStringArray = PackedStringArray()
+			var raw_field_r := SequenceCsvCodec.backpack_csv_from_items_field(parts[7])
+			for p in raw_field_r.split(",", false):
+				var s2 := p.strip_edges()
+				if not s2.is_empty():
+					raw_vals2.append(s2)
+			rc.initial_raw_values = raw_vals2
+			rc.randomize_values = (int(parts[8]) > 0) if parts.size() > 8 else false
+			if parts.size() > 9:
+				rc.allow_float = (parts[9] == "true")
+			if parts.size() > 10:
+				rc.allow_double = (parts[10] == "true")
+			if parts.size() > 11:
+				rc.allow_short = (parts[11] == "true")
+			if parts.size() > 13:
+				rc.allow_fp8 = (parts[13] == "true")
+			if parts.size() > 14:
+				rc.allow_fp16 = (parts[14] == "true")
+			if parts.size() >= 21:
+				rc.fp8_exp_bits = int(parts[17])
+				rc.fp8_mant_bits = int(parts[18])
+				rc.fp16_exp_bits = int(parts[19])
+				rc.fp16_mant_bits = int(parts[20])
+			step.config_raw_mochila = rc
+		elif parts[0] == "T":
+			step.kind = PhaseSequenceStep.Kind.TYPE_BOX
+			var tbc = TypeBoxPhaseConfig.new()
+			tbc.capacity_bytes = int(parts[1])
+			tbc.box_slot_count = int(parts[2])
+			var vals: PackedStringArray = PackedStringArray()
+			var raw_field := SequenceCsvCodec.backpack_csv_from_items_field(parts[7])
+			for p in raw_field.split(",", false):
+				var s := p.strip_edges()
+				if not s.is_empty():
+					vals.append(s)
+			tbc.initial_raw_values = vals
+			tbc.randomize_values = (int(parts[8]) > 0) if parts.size() > 8 else false
+			if parts.size() > 9:
+				tbc.allow_float = (parts[9] == "true")
+			if parts.size() > 10:
+				tbc.allow_double = (parts[10] == "true")
+			if parts.size() > 11:
+				tbc.allow_short = (parts[11] == "true")
+			if parts.size() > 13:
+				tbc.allow_fp8 = (parts[13] == "true")
+			if parts.size() > 14:
+				tbc.allow_fp16 = (parts[14] == "true")
+			if parts.size() >= 21:
+				tbc.fp8_exp_bits = int(parts[17])
+				tbc.fp8_mant_bits = int(parts[18])
+				tbc.fp16_exp_bits = int(parts[19])
+				tbc.fp16_mant_bits = int(parts[20])
+			step.config_type_box = tbc
+		elif parts[0] == "C":
+			if not PhaseSequenceStep.conversion_phases_enabled():
+				continue
+			step.kind = PhaseSequenceStep.Kind.CONVERSAO
+			var cc := ConversionPhaseConfig.new()
+			cc.num_bits = int(parts[1]) if parts.size() > 1 else 3
+			cc.advance_delay_seconds = maxf(0.3, float(int(parts[2])) / 10.0) if parts.size() > 2 else 2.4
+			var chal_field := SequenceCsvCodec.backpack_csv_from_items_field(parts[7])
+			cc.set_challenges_from_csv(chal_field)
+			cc.apply_constraints()
+			step.config_conversao = cc
+		elif parts[0] == "B":
+			if not PhaseSequenceStep.binary_phases_enabled():
+				continue
+			step.kind = PhaseSequenceStep.Kind.BINARIO
+			var bc := BinaryPhaseConfig.new()
+			bc.fixed_left_bit = int(parts[1]) if parts.size() > 1 else 1
+			bc.fixed_right_bit = int(parts[2]) if parts.size() > 2 else 0
+			step.config_binario = bc
+		else:
+			continue
+		seq_list.steps.append(step)
+	if seq_list.steps.is_empty():
+		_show_dialog("Erro de Importação", "CSV sem fases válidas.")
+		return
+	var base_name = "Seq_Importada"
+	var idx = 1
+	var file_name = base_name + ".tres"
+	while file_manager.sequences.has(file_name):
+		file_name = base_name + "_" + str(idx) + ".tres"
+		idx += 1
+	file_manager.sequences[file_name] = seq_list
+	file_manager.save_sequence(file_name, seq_list)
+	var item = _add_sequence_to_tree(file_name, seq_list)
+	item.select(0)
+	_show_dialog("Sucesso", "Sequência importada: " + file_name)

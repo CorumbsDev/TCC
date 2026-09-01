@@ -11,16 +11,14 @@ static func generate_knapsack_config(
 	grid_cols: int = 4,
 	int_min: int = 1,
 	int_max: int = 10,
-	initial_csv: String = "1_i,2_i",
+	initial_csv: String = "",
 	random_pool_size: int = 4,
 	use_converter: bool = false
 ) -> PhaseConfig:
 	var config = PhaseConfig.new()
-	# Garantir coerência: a capacidade objetivo (bytes) deve corresponder
-	# ao número de slots da mochila para que a fase possa ser completada.
 	config.backpack_slot_count = clampi(backpack_slots, 1, 64)
-	# capacity_bytes igual ao número de slots (cada slot = 1 byte objetivo)
-	config.capacity_bytes = config.backpack_slot_count
+	# Capacidade em bytes independente dos slots (slots = grade visual).
+	config.capacity_bytes = clampi(_capacity, 1, 4096)
 	config.pool_slot_count = clampi(pool_slots, 8, 40)
 	config.grid_columns = clampi(grid_cols, 2, 8)
 	config.spawn_int_min = int_min
@@ -39,6 +37,22 @@ static func generate_binary_config(left_bit: int = 1, right_bit: int = 0) -> Bin
 	var config = BinaryPhaseConfig.new()
 	config.fixed_left_bit = clampi(left_bit, 0, 1)
 	config.fixed_right_bit = clampi(right_bit, 0, 1)
+	config.apply_constraints()
+	return config
+
+
+static func generate_conversion_config(
+	bits: int = 3,
+	decimals: Array = [5, 3, 6],
+	delay_s: float = 2.4
+) -> ConversionPhaseConfig:
+	var config := ConversionPhaseConfig.new()
+	config.num_bits = clampi(bits, 1, 16)
+	var vals: Array[int] = []
+	for v in decimals:
+		vals.append(maxi(0, int(v)))
+	config.challenge_decimals = vals if not vals.is_empty() else [5, 3, 6]
+	config.advance_delay_seconds = maxf(delay_s, 0.3)
 	config.apply_constraints()
 	return config
 
@@ -91,7 +105,7 @@ static func generate_sequence(num_phases: int, mix_types: bool = true, base_knap
 
 	for i in range(phase_count):
 		var step = PhaseSequenceStep.new()
-		var use_binary = mix_types and (i % 3 == 1)
+		var use_binary = PhaseSequenceStep.binary_phases_enabled() and mix_types and (i % 3 == 1)
 		var use_type_box = mix_types and (i % 3 == 2)
 		if use_binary:
 			step.kind = PhaseSequenceStep.Kind.BINARIO
