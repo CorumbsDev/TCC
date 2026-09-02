@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://tutoverlay001"]
+[gd_scene load_steps=2 format=3 uid="uid://tutoverlay001"]
 
 [ext_resource type="Script" path="res://Inventory/ui/tutorial_overlay.gd" id="1"]
-[ext_resource type="Script" path="res://Inventory/ui/phase_info_bar.gd" id="2_info"]
 
 [node name="TutorialOverlay" type="CanvasLayer"]
 layer = 100
@@ -24,18 +23,17 @@ grow_vertical = 2
 
 [node name="Panel" type="PanelContainer" parent="CenterContainer"]
 custom_minimum_size = Vector2(560, 340)
-script = ExtResource("2_info")
 
 [node name="Margin" type="MarginContainer" parent="CenterContainer/Panel"]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
 
 [node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 14
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/Panel/Margin/VBox"]
 layout_mode = 2
@@ -45,10 +43,13 @@ text = "Título"
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
-fit_content = false
+fit_content = true
 scroll_active = true
-custom_minimum_size = Vector2(0, 180)
+autowrap_mode = 3
+custom_minimum_size = Vector2(0, 120)
 
 [node name="BtnOk" type="Button" parent="CenterContainer/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(200, 48)
 layout_mode = 2
+size_flags_horizontal = 4
 text = "Entendi"

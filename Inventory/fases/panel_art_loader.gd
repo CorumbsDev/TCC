@@ -138,6 +138,29 @@ static func _load_if_exists(path: String) -> Texture2D:
 	return null
 
 
+static func dialog_panel_stylebox() -> StyleBox:
+	var tex := _load_if_exists("res://Inventory/Art/UI/botao_1.png")
+	if tex == null:
+		return gray_panel_stylebox()
+	var sb := StyleBoxTexture.new()
+	sb.texture = tex
+	sb.texture_margin_left = 10
+	sb.texture_margin_top = 10
+	sb.texture_margin_right = 10
+	sb.texture_margin_bottom = 10
+	sb.expand_margin_left = 4
+	sb.expand_margin_top = 4
+	sb.expand_margin_right = 4
+	sb.expand_margin_bottom = 4
+	return sb
+
+
+static func apply_dialog_panel(panel: Control) -> void:
+	if panel == null:
+		return
+	panel.add_theme_stylebox_override("panel", dialog_panel_stylebox())
+
+
 static func apply_button_style(btn: Button) -> void:
 	if btn == null: return
 	var tex = _load_if_exists("res://Inventory/Art/UI/botao_1.png")

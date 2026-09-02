@@ -122,6 +122,9 @@ func setup_grids(backpack: InventoryGrid, pool: InventoryGrid):
 func _get_phase_config():
 	return null
 
+func _solution_types_valid() -> bool:
+	return true
+
 func _apply_panel_art() -> void:
 	var bp := get_node_or_null("HBox/BackpackPanel") as Control
 	var bn := get_node_or_null("HBox/BancadaPanel") as Control
@@ -214,11 +217,20 @@ func _on_proxima_pressed():
 	_is_finishing = true
 	_show_victory_overlay()
 
+func _present_victory_overlay(s1: bool, s2: bool, s3: bool, desc: String) -> void:
+	var overlay = preload("res://Inventory/fases/victory_overlay.tscn").instantiate()
+	add_child(overlay)
+	overlay.show_victory(s1, s2, s3, desc)
+	overlay.advance_requested.connect(_on_victory_advance_requested)
+
+func _on_victory_advance_requested() -> void:
+	_is_finishing = false
+	PhaseRunner.advance_from_phase()
+
 func _show_victory_overlay():
 	var cfg = _get_phase_config()
 	if not cfg or not ("star2_max_moves" in cfg):
-		# Fases sem sistema de estrelas: só avançam se o objetivo já foi validado acima.
-		PhaseRunner.advance_from_phase()
+		_present_victory_overlay(true, true, true, "Movimentos: %d" % moves_count)
 		return
 
 	# Só chega aqui se is_phase_success() == true (objetivo feito de verdade).
@@ -237,15 +249,16 @@ func _show_victory_overlay():
 		star3_csv = str(cfg.star3_best_solution_csv).strip_edges()
 	if star3_csv != "":
 		s3 = _check_star3_solution(star3_csv)
+	elif "expected_solution_types" in cfg:
+		var expected: PackedStringArray = cfg.expected_solution_types
+		if not expected.is_empty():
+			s3 = _solution_types_valid()
 
 	var desc = "Movimentos: %d" % moves_count
 	if cfg.star2_max_moves > 0:
 		desc += " (meta estrela 2: ≤ %d)" % cfg.star2_max_moves
 
-	var overlay = preload("res://Inventory/fases/victory_overlay.tscn").instantiate()
-	add_child(overlay)
-	overlay.show_victory(s1, s2, s3, desc)
-	overlay.advance_requested.connect(PhaseRunner.advance_from_phase)
+	_present_victory_overlay(s1, s2, s3, desc)
 
 func _check_star3_solution(target_csv: String) -> bool:
 	var target_list = Array(target_csv.split(",", false))

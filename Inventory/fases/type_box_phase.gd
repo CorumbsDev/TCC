@@ -84,6 +84,9 @@ func _update_phase_title() -> void:
 func _tutorial_intro_id() -> String:
 	return "type_box_phase_intro"
 
+func _get_phase_config():
+	return config
+
 func _create_boxes():
 	const BOX_TITLE_WIDTH := 136
 	var types = []

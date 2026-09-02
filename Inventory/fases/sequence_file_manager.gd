@@ -2,7 +2,9 @@ class_name SequenceFileManager
 extends RefCounted
 
 const SEQUENCES_DIR = "user://sequences"
-## Mesma sequência usada pelo botão Começar no menu (cópia no editor fica em user://sequences/).
+## Arquivo padrão editado no Criador de Fases e usado pelo botão Começar.
+const DEFAULT_PLAY_SEQUENCE_FILE := "Sequencia_Base.tres"
+## Fallback embutido se user:// ainda não tiver sequência salva.
 const BUNDLED_PEDAGOGICAL_SEQUENCE := "res://Inventory/fases/scenarios/sequencia_base.tres"
 var sequences: Dictionary = {}
 
@@ -28,17 +30,46 @@ func load_all_sequences() -> Dictionary:
 			file_name = dir.get_next()
 			
 	if sequences.is_empty():
-		_create_base_sequence("Sequencia_Base.tres")
+		_create_base_sequence(DEFAULT_PLAY_SEQUENCE_FILE)
 		
 	return sequences
+
+func get_play_sequence() -> PhaseSequenceList:
+	load_all_sequences()
+	var seq := _find_default_sequence()
+	if seq != null and not seq.steps.is_empty():
+		return seq
+	return _create_base_sequence(DEFAULT_PLAY_SEQUENCE_FILE)
+
+func _find_default_sequence() -> PhaseSequenceList:
+	if sequences.has(DEFAULT_PLAY_SEQUENCE_FILE):
+		return sequences[DEFAULT_PLAY_SEQUENCE_FILE] as PhaseSequenceList
+	# Nomes alternativos (Linux é case-sensitive).
+	for file_name in sequences.keys():
+		if file_name.to_lower() == DEFAULT_PLAY_SEQUENCE_FILE.to_lower():
+			return sequences[file_name] as PhaseSequenceList
+	return null
+
+func get_play_steps() -> Array:
+	var seq := get_play_sequence()
+	if seq == null:
+		return []
+	var steps := seq.to_runtime_array()
+	if steps.is_empty():
+		push_warning("Sequência '%s' sem fases." % DEFAULT_PLAY_SEQUENCE_FILE)
+	return steps
 
 func _create_base_sequence(file_name: String) -> PhaseSequenceList:
 	# Preferir a sequência pedagógica embutida no projeto.
 	var bundled := load(BUNDLED_PEDAGOGICAL_SEQUENCE) as PhaseSequenceList
 	if bundled != null and not bundled.steps.is_empty():
-		ResourceSaver.save(bundled, SEQUENCES_DIR + "/" + file_name)
-		sequences[file_name] = bundled
-		return bundled
+		var to_save := bundled.duplicate(true) as PhaseSequenceList
+		var path := SEQUENCES_DIR + "/" + file_name
+		var err := ResourceSaver.save(to_save, path)
+		if err != OK:
+			push_warning("Não foi possível salvar %s (%s). Usando sequência embutida." % [path, error_string(err)])
+		sequences[file_name] = to_save
+		return to_save
 
 	var seq = PhaseSequenceList.new()
 

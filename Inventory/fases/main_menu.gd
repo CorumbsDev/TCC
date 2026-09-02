@@ -1,6 +1,5 @@
 extends Control
 
-const PATH_SEQUENCIA_BASE := SequenceFileManager.BUNDLED_PEDAGOGICAL_SEQUENCE
 const PATH_FONT := "res://Inventory/Art/font/KiwiSoda.ttf"
 const REF_SIZE := Vector2(1920.0, 1080.0)
 
@@ -67,16 +66,29 @@ func _apply_kiwi_font(ctrl: Control) -> void:
 
 
 func _on_comecar_pressed():
-	# Sempre a sequência pedagógica embutida no projeto — não depende de user://sequences.
-	var seq := load(PATH_SEQUENCIA_BASE) as PhaseSequenceList
-	if seq == null:
-		push_warning("Sequencia_Base não encontrada em %s" % PATH_SEQUENCIA_BASE)
-		return
-	var steps := seq.to_runtime_array()
+	var fm := SequenceFileManager.new()
+	var steps := fm.get_play_steps()
 	if steps.is_empty():
-		push_warning("Sequencia_Base vazia")
+		_show_menu_dialog(
+			"Sem fases para jogar",
+			"Não há fases em '%s'.\n\nAbra o Criador de Fases, adicione pelo menos uma fase e salve."
+			% SequenceFileManager.DEFAULT_PLAY_SEQUENCE_FILE.replace(".tres", "")
+		)
 		return
 	PhaseRunner.begin_with_steps(steps)
+	if not PhaseRunner.is_sequence_active():
+		_show_menu_dialog(
+			"Não foi possível iniciar",
+			"A sequência não tem fases jogáveis.\n(Verifique se há fases além de Binário/Conversão desabilitadas.)"
+		)
+
+
+func _show_menu_dialog(title: String, message: String) -> void:
+	var dlg := AcceptDialog.new()
+	dlg.title = title
+	dlg.dialog_text = message
+	add_child(dlg)
+	dlg.popup_centered(Vector2(460, 160))
 
 
 func _on_gerador_pressed():

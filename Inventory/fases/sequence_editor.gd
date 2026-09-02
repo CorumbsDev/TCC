@@ -436,11 +436,8 @@ func _trigger_ui_save() -> void:
 	_show_phase_editor(_active_phase_step)
 
 func _show_dialog(title: String, text: String) -> void:
-	var dlg = AcceptDialog.new()
-	dlg.title = title
-	dlg.dialog_text = text
-	add_child(dlg)
-	dlg.popup_centered()
+	# AcceptDialog como filho do editor ficava limitado ao painel esquerdo (~250px) e cortava o texto.
+	TutorialOverlay.open(self, "seq_editor_help", title, text, false)
 
 func _on_help_geral_pressed() -> void:
 	_show_dialog("Explorador de Sequências", "Uma 'Sequência' é um conjunto de fases na ordem. Você pode criar múltiplas sequências e cada uma é salva como um arquivo no seu computador.")
