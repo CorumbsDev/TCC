@@ -21,6 +21,8 @@ DataHandler="*res://Inventory/Data/data_handler.gd"
 LearningPrefs="*res://Inventory/learning/learning_prefs.gd"
 PhaseRunner="*res://Inventory/fases/phase_runner.gd"
 OrbUI="*res://Inventory/ui/orb_ui.gd"
+AchievementManager="*res://Inventory/Achievements/achievement_manager.gd"
+AchievementOverlay="*res://Inventory/Achievements/achievement_overlay.gd"
 
 [display]
 

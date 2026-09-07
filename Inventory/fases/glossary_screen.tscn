@@ -37,8 +37,8 @@ theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="Panel/Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
 theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 28
 text = "Glossário"
 
 [node name="RichTextLabel" type="RichTextLabel" parent="Panel/Margin/VBox"]

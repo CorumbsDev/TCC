@@ -49,6 +49,7 @@ func _style_menu_text() -> void:
 			clampi(int(26.0 * ui_scale), 20, 30),
 			clampi(int(24.0 * ui_scale), 18, 28),
 			clampi(int(24.0 * ui_scale), 18, 28),
+			clampi(int(24.0 * ui_scale), 18, 28),
 		]
 		var i := 0
 		for child in vbox.get_children():
@@ -97,3 +98,7 @@ func _on_gerador_pressed():
 
 func _on_glossario_pressed():
 	get_tree().change_scene_to_file("res://Inventory/fases/glossary_screen.tscn")
+
+func _on_conquistas_pressed():
+	var menu = preload("res://Inventory/Achievements/achievement_menu.tscn").instantiate()
+	add_child(menu)

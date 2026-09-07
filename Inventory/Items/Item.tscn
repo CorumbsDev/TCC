@@ -23,7 +23,6 @@ stretch_mode = 5
 
 [node name="CylinderVisual" type="Node2D" parent="."]
 visible = false
-z_index = 0
 script = ExtResource("2_cyl")
 
 [node name="ColorRect" type="ColorRect" parent="."]

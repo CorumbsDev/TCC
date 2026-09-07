@@ -40,6 +40,7 @@ var converter: ConverterTool = null
 
 var _custom_tutorial_text: String = ""
 var _uses_custom_tutorial: bool = false
+var _earned_stars: int = 0
 
 func _ready():
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -258,7 +259,11 @@ func _show_victory_overlay():
 	if cfg.star2_max_moves > 0:
 		desc += " (meta estrela 2: ≤ %d)" % cfg.star2_max_moves
 
+	_earned_stars = int(s1) + int(s2) + int(s3)
 	_present_victory_overlay(s1, s2, s3, desc)
+
+func get_earned_stars() -> int:
+	return _earned_stars
 
 func _check_star3_solution(target_csv: String) -> bool:
 	var target_list = Array(target_csv.split(",", false))

@@ -53,6 +53,47 @@ func advance_from_phase() -> void:
 		if not ok:
 			phase_advance_blocked.emit("Objetivo não concluído. Complete a fase antes de avançar.")
 			return
+	# Progresso de conquistas
+	if AchievementManager != null and _idx >= 0 and _idx < _steps.size():
+		var step: PhaseSequenceStep = _steps[_idx]
+		match step.kind:
+			PhaseSequenceStep.Kind.TYPE_BOX:
+				AchievementManager.add_progress("first_type_phase", 1)
+			PhaseSequenceStep.Kind.BINARIO:
+				AchievementManager.add_progress("binary_basics", 1)
+			PhaseSequenceStep.Kind.CONVERSAO:
+				AchievementManager.add_progress("conversion_expert", 1)
+			PhaseSequenceStep.Kind.MOCHILA, PhaseSequenceStep.Kind.RAW_MOCHILA:
+				AchievementManager.add_progress("backpack_explorer", 1)
+				AchievementManager.add_progress("int_master", 1) # Simplificação
+				
+				# Checagem de estrelas
+				if current_scene.has_method("get_earned_stars"):
+					if current_scene.get_earned_stars() >= 3:
+						AchievementManager.add_progress("star_collector", 1)
+						
+				# Checagem de Float Master e Primitive Collector
+				if "backpack_grid" in current_scene and current_scene.backpack_grid:
+					var has_float = false
+					var has_int = false
+					var has_double = false
+					
+					for b_slot in current_scene.backpack_grid.slots_array:
+						if b_slot.item_stored:
+							match b_slot.item_stored.data_type:
+								0: has_int = true       # INT
+								1: has_float = true     # FLOAT
+								4: has_double = true    # DOUBLE
+								6: has_int = true       # SHORT INT (conta como int na heuristica)
+								
+					if has_float:
+						AchievementManager.add_progress("float_master", 1)
+						AchievementManager.add_unique_progress("primitive_collector", "FLOAT")
+					if has_int:
+						AchievementManager.add_unique_progress("primitive_collector", "INT")
+					if has_double:
+						AchievementManager.add_unique_progress("primitive_collector", "DOUBLE")
+
 	_idx += 1
 	if _idx >= _steps.size():
 		_finish_sequence_to_menu()
