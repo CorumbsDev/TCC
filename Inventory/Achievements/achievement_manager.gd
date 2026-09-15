@@ -6,66 +6,129 @@ signal achievement_progressed(id: String, current: int, max_val: int)
 const SAVE_PATH = "user://achievements.json"
 
 var _achievements = {
-	"first_type_phase": {
-		"name": "Tipador Iniciante",
-		"desc": "Passou da sua primeira fase de tipagem.",
+	"basic_done_well": {
+		"name": "O Básico Bem Feito",
+		"desc": "Valores em uma faixa de valores compatível com um tipo de dado específico e em quantidade menor do que a quantidade de memória (slots) disponíveis.",
 		"icon": "res://icon.svg",
 		"max_progress": 1,
 		"current_progress": 0,
 		"unlocked": false
 	},
-	"int_master": {
-		"name": "Mestre dos Inteiros",
-		"desc": "Passou de 5 fases contendo itens INT.",
-		"icon": "res://icon.svg",
-		"max_progress": 5,
-		"current_progress": 0,
-		"unlocked": false
-	},
-	"binary_basics": {
-		"name": "O Despertar do Binário",
-		"desc": "Completou uma fase de representação binária.",
+	"jack_of_all_trades": {
+		"name": "Pau Pra Toda Obra",
+		"desc": "Valores em uma faixas de valores compatíveis com alguns tipos de dado e em quantidade menor do que a quantidade de memória (slots) disponíveis.",
 		"icon": "res://icon.svg",
 		"max_progress": 1,
 		"current_progress": 0,
 		"unlocked": false
 	},
-	"conversion_expert": {
-		"name": "Transmutador de Tipos",
-		"desc": "Completou uma fase de conversão de tipos (Cast).",
+	"square_peg": {
+		"name": "Pino Quadrado no Buraco Redondo",
+		"desc": "Valores em uma faixa de valor incompatível com um tipo de dado e em quantidade menor do que a quantidade de memória (slots) disponíveis.",
 		"icon": "res://icon.svg",
 		"max_progress": 1,
 		"current_progress": 0,
 		"unlocked": false
 	},
-	"backpack_explorer": {
-		"name": "Mochileiro da Memória",
-		"desc": "Encheu a memória com itens em uma fase clássica.",
+	"diet_operation": {
+		"name": "Operação Dieta",
+		"desc": "Valores em uma faixa de valor compatível com um tipo de dado, mas que poderia usar um tipo de dado mais simples, e em quantidade maior do que a quantidade de memória (slots) disponíveis (considerando o tipo de dado original) e menor se considerar o tipo de dado convertido.",
 		"icon": "res://icon.svg",
 		"max_progress": 1,
 		"current_progress": 0,
 		"unlocked": false
 	},
-	"float_master": {
-		"name": "Mestre Flutuante",
-		"desc": "Passou de 5 fases contendo itens FLOAT.",
+	"overflow": {
+		"name": "O Copo Transbordou",
+		"desc": "Valores resultantes de uma operação que excedem o limite máximo suportado pelo tipo de dado atual (overflow), e em quantidade menor do que a quantidade de memória (slots) disponíveis.",
 		"icon": "res://icon.svg",
-		"max_progress": 5,
+		"max_progress": 1,
 		"current_progress": 0,
 		"unlocked": false
 	},
-	"primitive_collector": {
-		"name": "Colecionador de Primitivos",
-		"desc": "Utilizou INT, FLOAT e DOUBLE em suas jornadas.",
+	"underflow": {
+		"name": "Fundo do Poço (e Além)",
+		"desc": "Valores resultantes de uma operação que caem abaixo do limite mínimo suportado pelo tipo de dado atual (underflow), e em quantidade menor do que a quantidade de memória (slots) disponíveis.",
 		"icon": "res://icon.svg",
-		"max_progress": 3,
+		"max_progress": 1,
 		"current_progress": 0,
-		"unlocked": false,
-		"flags": []
+		"unlocked": false
 	},
-	"star_collector": {
-		"name": "Mochila Perfeita",
-		"desc": "Completou uma fase de mochila ou bruta com 3 estrelas (eficiência máxima).",
+	"one_step_ahead": {
+		"name": "Um Passo à Frente",
+		"desc": "Valores próximos do limite de um tipo de dado que sofrem uma conversão prévia (upgrade de tipo) antes de uma operação para evitar overflow/underflow, respeitando a quantidade de memória (slots) disponíveis.",
+		"icon": "res://icon.svg",
+		"max_progress": 1,
+		"current_progress": 0,
+		"unlocked": false
+	},
+	"forced_cast": {
+		"name": "Forçando a Barra",
+		"desc": "Valores em um tipo de dado convertidos forçadamente para um tipo de dado de menor capacidade, resultando em perda de precisão, e em quantidade menor do que a quantidade de memória (slots) disponíveis.",
+		"icon": "res://icon.svg",
+		"max_progress": 1,
+		"current_progress": 0,
+		"unlocked": false
+	},
+	"code_chameleon": {
+		"name": "Camaleão de Código",
+		"desc": "Valores de tipos de dados diferentes alocados nos slots que exigem uma conversão automática pelo sistema para um tipo de dado comum a fim de resolver uma expressão.",
+		"icon": "res://icon.svg",
+		"max_progress": 1,
+		"current_progress": 0,
+		"unlocked": false
+	},
+	"compression_expert": {
+		"name": "Especialista em Compressão",
+		"desc": "Valores gerados em quantidade maior do que a memória (slots) disponíveis, mas que passam a caber perfeitamente após todos serem convertidos para o menor tipo de dado possível que suporte suas faixas de valor.",
+		"icon": "res://icon.svg",
+		"max_progress": 1,
+		"current_progress": 0,
+		"unlocked": false
+	},
+	"the_line_moves": {
+		"name": "A Fila Anda",
+		"desc": "Valores gerados continuamente em quantidade maior do que a quantidade de memória (slots) disponíveis, exigindo que os valores mais antigos desapareçam ao longo do tempo para permitir a alocação dos novos.",
+		"icon": "res://icon.svg",
+		"max_progress": 1,
+		"current_progress": 0,
+		"unlocked": false
+	},
+	"shooting_star": {
+		"name": "Estrela Cadente",
+		"desc": "Valores temporários que ocupam a memória (slots) apenas até serem consumidos por uma expressão, desaparecendo logo em seguida e liberando espaço no inventário.",
+		"icon": "res://icon.svg",
+		"max_progress": 1,
+		"current_progress": 0,
+		"unlocked": false
+	},
+	"digital_hoarder": {
+		"name": "Acumulador Digital",
+		"desc": "Valores em quantidade excessiva tentando ser armazenados simultaneamente em slots cheios antes que qualquer valor antigo tenha tempo de desaparecer.",
+		"icon": "res://icon.svg",
+		"max_progress": 1,
+		"current_progress": 0,
+		"unlocked": false
+	},
+	"data_alchemist": {
+		"name": "Alquimista de Dados",
+		"desc": "Valores de um tipo de dado inicial que, após passarem pela avaliação de uma expressão complexa, geram resultados de um tipo de dado totalmente novo e ocupam os slots disponíveis.",
+		"icon": "res://icon.svg",
+		"max_progress": 1,
+		"current_progress": 0,
+		"unlocked": false
+	},
+	"union_is_strength": {
+		"name": "A União Faz a Força",
+		"desc": "Múltiplos valores de tipos de dados simples combinados (consumidos) através de uma expressão para gerar um único valor de um tipo de dado mais complexo, reduzindo a quantidade de memória (slots) utilizada.",
+		"icon": "res://icon.svg",
+		"max_progress": 1,
+		"current_progress": 0,
+		"unlocked": false
+	},
+	"oil_and_water": {
+		"name": "Misturando Água e Óleo",
+		"desc": "Valores alocados na memória (slots) que são inseridos em uma expressão cuja natureza (matemática, lógica, string) é incompatível com os tipos de dados fornecidos, gerando um erro de avaliação.",
 		"icon": "res://icon.svg",
 		"max_progress": 1,
 		"current_progress": 0,

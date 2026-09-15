@@ -24,6 +24,13 @@ var is_hovered = false  # Nova variável para rastrear hover
 var fp_exp_bits: int = -1
 var fp_mant_bits: int = -1
 
+var _preview_active: bool = false
+var _preview_original_type: int = -1
+var _preview_original_value_float: float = 0.0
+var _preview_original_value: int = 0
+var _preview_original_value_str: String = ""
+var _preview_original_op: String = ""
+
 ## Tamanho visual de um slot na grade (deve bater com slot.gd).
 const SLOT_PX := 64
 const ORB_SLOT_MARGIN := 12
@@ -93,6 +100,36 @@ func set_value_directly(new_value: int):
 func set_value_by_type(new_value, tipo: DataType):
 	ItemData.set_value_by_type(self, new_value, tipo)
 	update_label_display()
+
+func show_typing_preview(target_type: DataType, preview_value: float, has_warning: bool) -> void:
+	if not _preview_active:
+		_preview_original_type = data_type
+		_preview_original_value = value
+		_preview_original_value_float = value_float
+		_preview_original_value_str = value_string
+		_preview_original_op = operator
+		_preview_active = true
+	
+	ItemData.set_value_by_type(self, preview_value, target_type)
+	update_label_display()
+	
+	if has_warning:
+		modulate = Color(1.0, 0.4, 0.4, 0.9)
+	else:
+		modulate = Color(0.6, 1.0, 0.6, 0.9)
+
+func hide_typing_preview() -> void:
+	if not _preview_active:
+		return
+	_preview_active = false
+	var is_float_type = _preview_original_type in [DataType.FLOAT, DataType.DOUBLE, DataType.FP8, DataType.FP16, DataType.RAW]
+	ItemData.set_value_by_type(self, _preview_original_value_float if is_float_type else _preview_original_value, _preview_original_type)
+	if _preview_original_type == DataType.STRING:
+		ItemData.set_value_by_type(self, _preview_original_value_str, _preview_original_type)
+	elif _preview_original_type == DataType.OPERATOR:
+		ItemData.set_value_by_type(self, _preview_original_op, _preview_original_type)
+	update_label_display()
+	modulate = Color(1, 1, 1, 1)
 
 func get_value_as_string() -> String:
 	return OrbValueFormat.full_value_string(self)

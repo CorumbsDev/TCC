@@ -3,53 +3,66 @@ extends Control
 @onready var tree: Tree = $Panel/VBoxContainer/HSplitContainer/LeftPanel/Tree
 @onready var empty_label: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/EmptyLabel
 @onready var sequence_editor_ui: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor
-@onready var phase_editor_ui: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor
+@onready var phase_editor_ui: HSplitContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor
 
 # Sequence UI
 @onready var file_name_edit: LineEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor/HBoxContainer/FileNameEdit
 
 # Phase UI Containers and Controls
-@onready var option_type: OptionButton = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/PhaseTypeHBox/OptionType
-@onready var tutorial_text_edit: TextEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/TutorialTextVBox/TutorialTextEdit
-@onready var grid_mochila: GridContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer
-@onready var hbox_mochila: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxMochila
-@onready var hbox_valores: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/HBoxValores
-@onready var grid_vals: GridContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2
-@onready var binary_panel: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel
-@onready var status_label: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StatusLabel
-@onready var sep_mochila: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/Sep1
-@onready var sep_valores: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/Sep2
-@onready var sep_tools: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/Sep3
-@onready var lbl_tools: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LabelFerramentas
-@onready var lbl_csv: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LblCSV
-@onready var line_edit_csv: LineEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LineEditCSV
-@onready var lbl_rnd_pool: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LblRndPool
-@onready var spin_rnd_pool: SpinBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/SpinRndPool
-@onready var sep_star: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/SepStar
-@onready var lbl_star: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LabelStarHeader
-@onready var star_grid: GridContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StarGrid
+@onready var phase_type_container: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/PhaseTypeVBox/PhaseTypeContainer
+@onready var check_custom_tutorial: CheckBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/TutorialTextVBox/CheckCustomTutorial
+@onready var custom_tutorial_container: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/TutorialTextVBox/CustomTutorialContainer
+@onready var tutorial_title_edit: LineEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/TutorialTextVBox/CustomTutorialContainer/TutorialTitleEdit
+@onready var tutorial_text_edit: TextEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/TutorialTextVBox/CustomTutorialContainer/TutorialTextEdit
+@onready var grid_mochila: GridContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer
+@onready var hbox_mochila: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/HBoxMochila
+@onready var hbox_valores: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/HBoxValores
+@onready var grid_vals: GridContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer2
+@onready var binary_panel: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/BinaryPanel
+@onready var status_label: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/StatusLabel
+@onready var sep_mochila: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/Sep1
+@onready var sep_valores: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/Sep2
+@onready var sep_tools: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/Sep3
+@onready var lbl_tools: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/LabelFerramentas
+@onready var lbl_csv: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/LblCSV
+@onready var line_edit_csv: LineEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/LineEditCSV
+@onready var lbl_rnd_pool: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/LblRndPool
+@onready var spin_rnd_pool: SpinBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/SpinRndPool
+
+# Visual Preview and Orb Creator
+@onready var visual_preview_vbox: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox
+@onready var preview_content: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/ScrollContainer/PreviewContent
+@onready var orb_creator_panel: PanelContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel
+@onready var option_button_type: OptionButton = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxType/OptionButtonType
+@onready var line_edit_value: LineEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxValue/LineEditValue
+@onready var btn_add_pool: Button = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons/BtnAddPool
+@onready var btn_add_solution: Button = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons/BtnAddSolution
+
+@onready var sep_star: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/SepStar
+@onready var lbl_star: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/LabelStarHeader
+@onready var star_grid: GridContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/StarGrid
 
 # For passing to panels
 @onready var ui_elements = {
-	"spin_cap": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/SpinCap,
-	"spin_slots_m": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/SpinSlotsM,
-	"spin_slots_p": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/SpinSlotsP,
-	"spin_cols": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer/SpinCols,
-	"spin_min": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2/SpinMin,
-	"spin_max": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/GridContainer2/SpinMax,
-	"line_edit_csv": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/LineEditCSV,
-	"spin_rnd_pool": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/SpinRndPool,
-	"check_float": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFloat,
-	"check_double": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckDouble,
-	"check_short": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckShort,
-	"check_fp8": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP8,
-	"check_fp16": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFP16,
-	"check_fp_cust": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckFPCust,
-	"check_calc": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/CheckCalc,
-	"spin_bin_left": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary/SpinBinLeft,
-	"spin_bin_right": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/BinaryPanel/GridBinary/SpinBinRight,
-	"spin_star2_moves": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StarGrid/SpinStar2Moves,
-	"line_edit_star3_solution": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/StarGrid/LineEditStar3Solution
+	"spin_cap": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/SpinCap,
+	"spin_slots_m": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/SpinSlotsM,
+	"spin_slots_p": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/SpinSlotsP,
+	"spin_cols": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/SpinCols,
+	"spin_min": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer2/SpinMin,
+	"spin_max": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer2/SpinMax,
+	"line_edit_csv": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/LineEditCSV,
+	"spin_rnd_pool": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/SpinRndPool,
+	"check_float": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/CheckFloat,
+	"check_double": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/CheckDouble,
+	"check_short": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/CheckShort,
+	"check_fp8": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/CheckFP8,
+	"check_fp16": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/CheckFP16,
+	"check_fp_cust": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/CheckFPCust,
+	"check_calc": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/CheckCalc,
+	"spin_bin_left": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/BinaryPanel/GridBinary/SpinBinLeft,
+	"spin_bin_right": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/BinaryPanel/GridBinary/SpinBinRight,
+	"spin_star2_moves": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/StarGrid/SpinStar2Moves,
+	"line_edit_star3_solution": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/StarGrid/LineEditStar3Solution
 }
 
 var file_manager: SequenceFileManager
@@ -62,7 +75,17 @@ var _active_phase_step: PhaseSequenceStep = null
 var _active_phase_parent_file: String = ""
 var _last_rnd_pool_size: int = -1
 
+var preview_mochila: Node = null
+var preview_bancada: Node = null
+
 func _ready() -> void:
+	if btn_add_pool and not btn_add_pool.pressed.is_connected(_on_btn_add_pool_pressed):
+		btn_add_pool.pressed.connect(_on_btn_add_pool_pressed)
+	if btn_add_solution and not btn_add_solution.pressed.is_connected(_on_btn_add_solution_pressed):
+		btn_add_solution.pressed.connect(_on_btn_add_solution_pressed)
+	
+	call_deferred("_setup_preview_grids")
+	
 	file_manager = SequenceFileManager.new()
 	panels[PhaseSequenceStep.Kind.MOCHILA] = MochilaConfigPanel.new(ui_elements)
 	panels[PhaseSequenceStep.Kind.TYPE_BOX] = TypeboxConfigPanel.new(ui_elements)
@@ -74,6 +97,12 @@ func _ready() -> void:
 	_root = tree.create_item()
 	if line_edit_csv and not line_edit_csv.focus_exited.is_connected(_on_csv_focus_exited):
 		line_edit_csv.focus_exited.connect(_on_csv_focus_exited)
+	
+	if check_custom_tutorial and not check_custom_tutorial.toggled.is_connected(_on_check_custom_tutorial_toggled):
+		check_custom_tutorial.toggled.connect(_on_check_custom_tutorial_toggled)
+	
+	if tutorial_title_edit and not tutorial_title_edit.text_changed.is_connected(_on_tutorial_text_changed):
+		tutorial_title_edit.text_changed.connect(_on_tutorial_text_changed)
 	
 	if tutorial_text_edit and not tutorial_text_edit.text_changed.is_connected(_on_tutorial_text_changed):
 		tutorial_text_edit.text_changed.connect(_on_tutorial_text_changed)
@@ -92,17 +121,106 @@ func _ready() -> void:
 	main_vbox.pivot_offset = main_vbox.size / 2.0
 	main_vbox.resized.connect(func(): main_vbox.pivot_offset = main_vbox.size / 2.0)
 
+var _phase_button_group: ButtonGroup = null
+
 func _configure_phase_type_options() -> void:
-	option_type.clear()
-	option_type.add_item("Mochila (Knapsack)", PhaseSequenceStep.Kind.MOCHILA)
+	for child in phase_type_container.get_children():
+		child.queue_free()
+	
+	_phase_button_group = ButtonGroup.new()
+	
+	_add_phase_option("Mochila", PhaseSequenceStep.Kind.MOCHILA)
 	if PhaseSequenceStep.binary_phases_enabled():
-		option_type.add_item("Binário", PhaseSequenceStep.Kind.BINARIO)
-	option_type.add_item("Caixas de Tipagem", PhaseSequenceStep.Kind.TYPE_BOX)
-	option_type.add_item("Mochila + Tipagem (RAW)", PhaseSequenceStep.Kind.RAW_MOCHILA)
+		_add_phase_option("Binário", PhaseSequenceStep.Kind.BINARIO)
+	_add_phase_option("Tipagem", PhaseSequenceStep.Kind.TYPE_BOX)
+	_add_phase_option("Mochila + Tipagem", PhaseSequenceStep.Kind.RAW_MOCHILA)
 	if PhaseSequenceStep.conversion_phases_enabled():
-		option_type.add_item("Conversão Decimal → Binário", PhaseSequenceStep.Kind.CONVERSAO)
+		_add_phase_option("Conversão", PhaseSequenceStep.Kind.CONVERSAO)
+
+func _add_phase_option(text: String, kind: PhaseSequenceStep.Kind) -> void:
+	var vbox = VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	var preview_panel = Panel.new()
+	preview_panel.custom_minimum_size = Vector2(0, 100)
+	
+	var texture_rect = TextureRect.new()
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	preview_panel.add_child(texture_rect)
+	
+	var lbl_empty = Label.new()
+	lbl_empty.text = "[Print]"
+	lbl_empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl_empty.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	preview_panel.add_child(lbl_empty)
+	
+	vbox.add_child(preview_panel)
+	
+	var btn = Button.new()
+	btn.text = text
+	btn.toggle_mode = true
+	btn.button_group = _phase_button_group
+	btn.set_meta("kind", kind)
+	btn.pressed.connect(_on_phase_type_button_pressed.bind(kind))
+	vbox.add_child(btn)
+	
+	var desc_label = Label.new()
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+	desc_label.add_theme_font_size_override("font_size", 15)
+	desc_label.text = _get_phase_desc(kind)
+	vbox.add_child(desc_label)
+	
+	vbox.set_meta("kind", kind)
+	vbox.set_meta("btn", btn)
+	
+	phase_type_container.add_child(vbox)
+
+func _get_phase_desc(kind: PhaseSequenceStep.Kind) -> String:
+	match kind:
+		PhaseSequenceStep.Kind.MOCHILA:
+			return "Mochila Clássica\nNeste desafio, você precisará preencher os slots de memória da mochila utilizando diferentes itens. Tenha muito cuidado para não ultrapassar o limite máximo de bytes disponíveis. A gestão eficiente é a chave!"
+		PhaseSequenceStep.Kind.TYPE_BOX:
+			return "Caixas de Tipagem\nTeste seus conhecimentos! Sua missão é analisar cada valor e alocá-lo na caixa que corresponde ao seu tipo correto (inteiros, reais, textos). Um exercício essencial para fixar os fundamentos."
+		PhaseSequenceStep.Kind.RAW_MOCHILA:
+			return "Mochila + Tipagem\nUma variação desafiadora da mochila clássica. Aqui, os tipos originais dos itens estão ocultos. Você precisará deduzir o tamanho em bytes de cada elemento antes de alocá-los, exigindo muito raciocínio."
+		PhaseSequenceStep.Kind.BINARIO:
+			return "Desafio Binário\nMergulhe na linguagem das máquinas! Neste puzzle, você deverá manipular e ajustar os bits individuais (0s e 1s) até que a combinação corresponda exatamente ao número decimal alvo exigido."
+		PhaseSequenceStep.Kind.CONVERSAO:
+			return "Mestre da Conversão\nPratique suas habilidades matemáticas realizando conversões diretas e precisas entre o sistema decimal tradicional e as representações binárias de baixo nível."
+	return ""
 
 
+func _get_default_tutorial(kind: PhaseSequenceStep.Kind) -> Dictionary:
+	match kind:
+		PhaseSequenceStep.Kind.MOCHILA:
+			return {"title": "Mochila Clássica", "body": "Neste desafio, você precisará preencher os slots de memória da mochila utilizando diferentes itens. Tenha muito cuidado para não ultrapassar o limite máximo de bytes disponíveis. A gestão eficiente é a chave!"}
+		PhaseSequenceStep.Kind.TYPE_BOX:
+			return {"title": "Caixas de Tipagem", "body": "Teste seus conhecimentos! Sua missão é analisar cada valor e alocá-lo na caixa que corresponde ao seu tipo correto (inteiros, reais, textos). Um exercício essencial para fixar os fundamentos."}
+		PhaseSequenceStep.Kind.RAW_MOCHILA:
+			return {"title": "Mochila + Tipagem", "body": "Uma variação desafiadora da mochila clássica. Aqui, os tipos originais dos itens estão ocultos. Você precisará deduzir o tamanho em bytes de cada elemento antes de alocá-los, exigindo muito raciocínio."}
+		PhaseSequenceStep.Kind.BINARIO:
+			return {"title": "Desafio Binário", "body": "Mergulhe na linguagem das máquinas! Neste puzzle, você deverá manipular e ajustar os bits individuais (0s e 1s) até que a combinação corresponda exatamente ao número decimal alvo exigido."}
+		PhaseSequenceStep.Kind.CONVERSAO:
+			return {"title": "Mestre da Conversão", "body": "Pratique suas habilidades matemáticas realizando conversões diretas e precisas entre o sistema decimal tradicional e as representações binárias de baixo nível."}
+	return {"title": "", "body": ""}
+
+
+func _setup_preview_grids() -> void:
+	if preview_mochila == null:
+		preview_mochila = preload("res://Inventory/InventoryGrid.tscn").instantiate()
+		preview_content.add_child(preview_mochila)
+		preview_mochila.custom_minimum_size = Vector2(0, 200) # give it some space
+	if preview_bancada == null:
+		preview_bancada = preload("res://Inventory/InventoryGrid.tscn").instantiate()
+		preview_content.add_child(preview_bancada)
+		preview_bancada.custom_minimum_size = Vector2(0, 200)
+
+	
 func _load_all_sequences() -> void:
 	for c in _root.get_children():
 		c.free()
@@ -171,27 +289,60 @@ func _show_phase_editor(step: PhaseSequenceStep) -> void:
 	empty_label.visible = false
 	sequence_editor_ui.visible = false
 	phase_editor_ui.visible = true
-	var kind_idx := option_type.get_item_index(step.kind)
-	if kind_idx >= 0:
-		option_type.selected = kind_idx
-	elif step.kind == PhaseSequenceStep.Kind.BINARIO:
-		_set_status("Fase Binário desabilitada no jogo. Escolha outro tipo acima.")
-	elif step.kind == PhaseSequenceStep.Kind.CONVERSAO:
-		_set_status("Fase Conversão desabilitada no jogo. Escolha outro tipo acima.")
-	else:
-		option_type.selected = 0
+	_update_phase_type_ui(step.kind)
+	
+	check_custom_tutorial.button_pressed = step.use_custom_tutorial
+	custom_tutorial_container.visible = step.use_custom_tutorial
+	
+	var def_t := _get_default_tutorial(step.kind)
+	
+	if step.custom_tutorial_title.is_empty():
+		step.custom_tutorial_title = def_t["title"]
+	
+	if step.custom_tutorial_text.is_empty():
+		step.custom_tutorial_text = def_t["body"]
+	elif step.custom_tutorial_text.begins_with("[center][b]"):
+		var end_b = step.custom_tutorial_text.find("[/center]")
+		if end_b != -1:
+			var stripped = step.custom_tutorial_text.substr(end_b + 9).strip_edges()
+			step.custom_tutorial_text = stripped
+	
+	if tutorial_title_edit.text != step.custom_tutorial_title:
+		tutorial_title_edit.text = step.custom_tutorial_title
+		
 	if tutorial_text_edit.text != step.custom_tutorial_text:
 		tutorial_text_edit.text = step.custom_tutorial_text
 	
 	if panels.has(step.kind):
 		var panel = panels[step.kind]
 		panel.show_data(step)
+		
+		_update_preview_grids()
 		_apply_visibility_rules(panel.get_visibility_rules())
 	
 	if step.kind == PhaseSequenceStep.Kind.MOCHILA:
 		_last_rnd_pool_size = int(ui_elements.spin_rnd_pool.value)
 	else:
 		_last_rnd_pool_size = -1
+
+func _update_phase_type_ui(kind: PhaseSequenceStep.Kind) -> void:
+	var found = false
+	for vbox in phase_type_container.get_children():
+		var btn = vbox.get_meta("btn")
+		if vbox.get_meta("kind") == kind:
+			btn.button_pressed = true
+			found = true
+			break
+			
+	if not found:
+		if kind == PhaseSequenceStep.Kind.BINARIO:
+			_set_status("Fase Binário desabilitada no jogo. Escolha outro tipo acima.")
+		elif kind == PhaseSequenceStep.Kind.CONVERSAO:
+			_set_status("Fase Conversão desabilitada no jogo. Escolha outro tipo acima.")
+		if phase_type_container.get_child_count() > 0:
+			var first_vbox = phase_type_container.get_child(0)
+			first_vbox.get_meta("btn").button_pressed = true
+			kind = first_vbox.get_meta("kind")
 
 func _apply_visibility_rules(rules: Dictionary) -> void:
 	grid_mochila.visible = rules.get("grid_mochila", true)
@@ -241,6 +392,8 @@ func _flush_active_phase_editor() -> void:
 
 func _apply_ui_to_step(step: PhaseSequenceStep) -> void:
 	if step == null: return
+	step.use_custom_tutorial = check_custom_tutorial.button_pressed
+	step.custom_tutorial_title = tutorial_title_edit.text
 	step.custom_tutorial_text = tutorial_text_edit.text
 	if panels.has(step.kind):
 		var panel = panels[step.kind]
@@ -380,13 +533,20 @@ func _on_file_name_changed(new_text: String) -> void:
 			child_meta.parent_file = new_file
 			c.set_metadata(0, child_meta)
 
-func _on_phase_type_selected(index: int) -> void:
+func _on_phase_type_button_pressed(kind: PhaseSequenceStep.Kind) -> void:
 	if _is_updating_ui: return
 	var sel = tree.get_selected()
 	if not sel or sel.get_metadata(0).type != "phase": return
 	
 	var step: PhaseSequenceStep = sel.get_metadata(0).step
-	step.kind = option_type.get_item_id(index) as PhaseSequenceStep.Kind
+	var old_kind = step.kind
+	
+	var old_def := _get_default_tutorial(old_kind)
+	if step.custom_tutorial_title == old_def["title"] and step.custom_tutorial_text == old_def["body"]:
+		step.custom_tutorial_title = ""
+		step.custom_tutorial_text = ""
+		
+	step.kind = kind
 	if step.kind == PhaseSequenceStep.Kind.MOCHILA and not step.config_mochila:
 		step.config_mochila = ConfigGenerator.generate_knapsack_config()
 	elif step.kind == PhaseSequenceStep.Kind.BINARIO and not step.config_binario:
@@ -427,6 +587,134 @@ func _on_binary_param_changed(_value: float) -> void:
 
 func _on_csv_focus_exited() -> void:
 	_trigger_ui_save()
+
+func _on_check_custom_tutorial_toggled(toggled_on: bool) -> void:
+	custom_tutorial_container.visible = toggled_on
+	_trigger_ui_save()
+
+func _on_btn_add_pool_pressed() -> void:
+	_append_orb_to_line_edit(line_edit_csv)
+
+func _on_btn_add_solution_pressed() -> void:
+	_append_orb_to_line_edit(ui_elements["line_edit_star3_solution"])
+
+func _append_orb_to_line_edit(le: LineEdit) -> void:
+	if not le: return
+	var t = option_button_type.get_selected_id()
+	var val = line_edit_value.text.strip_edges()
+	var suffix = "_i"
+	if t == 1: suffix = "_f"
+	elif t == 2: suffix = "_d"
+	elif t == 3: suffix = "_s"
+	elif t == 4: suffix = "_r"
+	
+	if val.is_empty() and t != 4:
+		val = "0"
+		
+	var orb_str = val + suffix
+	if t == 4:
+		orb_str = "raw"
+		
+	var current = le.text.strip_edges()
+	if current.is_empty():
+		le.text = orb_str
+	else:
+		if current.ends_with(","):
+			le.text = current + " " + orb_str
+		else:
+			le.text = current + ", " + orb_str
+	
+	_trigger_ui_save()
+	_update_preview_grids()
+
+func _update_preview_grids() -> void:
+	if _active_phase_step == null or preview_content == null:
+		return
+		
+	for c in preview_content.get_children():
+		c.queue_free()
+		
+	# Recreate grids
+	preview_mochila = preload("res://Inventory/InventoryGrid.tscn").instantiate()
+	preview_mochila.custom_minimum_size = Vector2(0, 200)
+	
+	preview_bancada = preload("res://Inventory/InventoryGrid.tscn").instantiate()
+	preview_bancada.custom_minimum_size = Vector2(0, 200)
+	
+	var cap_bytes = 8
+	if _active_phase_step.kind == PhaseSequenceStep.Kind.MOCHILA and _active_phase_step.config_mochila:
+		cap_bytes = _active_phase_step.config_mochila.capacity_bytes
+		preview_mochila.capacity_bytes = cap_bytes
+		preview_mochila.number_of_slots = _active_phase_step.config_mochila.backpack_slot_count
+		preview_mochila.grid_columns = _active_phase_step.config_mochila.grid_columns
+		var sol_csv = _active_phase_step.config_mochila.star3_best_solution_csv
+		preview_mochila.initial_items = _parse_csv_to_array(sol_csv)
+		
+		preview_bancada.capacity_bytes = 999
+		preview_bancada.number_of_slots = _active_phase_step.config_mochila.pool_slot_count
+		preview_bancada.grid_columns = _active_phase_step.config_mochila.pool_grid_columns
+		var ini_csv = _active_phase_step.config_mochila.initial_backpack_csv
+		preview_bancada.initial_items = _parse_csv_to_array(ini_csv)
+	elif _active_phase_step.kind == PhaseSequenceStep.Kind.RAW_MOCHILA and _active_phase_step.config_raw_mochila:
+		cap_bytes = _active_phase_step.config_raw_mochila.capacity_bytes
+		preview_mochila.capacity_bytes = cap_bytes
+		preview_mochila.number_of_slots = _active_phase_step.config_raw_mochila.backpack_slot_count
+		preview_mochila.grid_columns = _active_phase_step.config_raw_mochila.grid_columns
+		preview_mochila.initial_items = []
+		
+		preview_bancada.capacity_bytes = 999
+		preview_bancada.number_of_slots = _active_phase_step.config_raw_mochila.pool_slot_count
+		preview_bancada.grid_columns = _active_phase_step.config_raw_mochila.pool_grid_columns
+		preview_bancada.initial_items = []
+	elif _active_phase_step.kind == PhaseSequenceStep.Kind.TYPE_BOX and _active_phase_step.config_type_box:
+		cap_bytes = _active_phase_step.config_type_box.capacity_bytes
+		preview_mochila.capacity_bytes = cap_bytes
+		preview_mochila.number_of_slots = _active_phase_step.config_type_box.box_slot_count
+		preview_mochila.grid_columns = 4
+		preview_mochila.initial_items = []
+		
+		preview_bancada.capacity_bytes = 999
+		preview_bancada.number_of_slots = 0
+		preview_bancada.grid_columns = 4
+		preview_bancada.initial_items = []
+	else:
+		preview_mochila.capacity_bytes = 8
+		preview_mochila.number_of_slots = 8
+		preview_mochila.grid_columns = 4
+		preview_mochila.initial_items = []
+		
+		preview_bancada.capacity_bytes = 999
+		preview_bancada.number_of_slots = 8
+		preview_bancada.grid_columns = 4
+		preview_bancada.initial_items = []
+
+	var lbl_mochila = Label.new()
+	lbl_mochila.text = "Pré-visualização: Mochila (Capacidade: %d bytes)" % cap_bytes
+	lbl_mochila.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_mochila.add_theme_font_size_override("font_size", 16)
+	
+	var lbl_bancada = Label.new()
+	lbl_bancada.text = "Pré-visualização: Bancada"
+	lbl_bancada.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_bancada.add_theme_font_size_override("font_size", 16)
+
+	preview_content.add_child(lbl_mochila)
+	preview_content.add_child(preview_mochila)
+	
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 10)
+	preview_content.add_child(spacer)
+	
+	preview_content.add_child(lbl_bancada)
+	preview_content.add_child(preview_bancada)
+
+func _parse_csv_to_array(csv: String) -> Array[String]:
+	var arr: Array[String] = []
+	for p in csv.split(","):
+		var s = p.strip_edges()
+		if not s.is_empty():
+			arr.append(s)
+	return arr
 
 func _trigger_ui_save() -> void:
 	if _is_updating_ui or _active_phase_step == null: return

@@ -38,6 +38,7 @@ var _is_finishing: bool = false
 var calculator: CalculatorTool = null
 var converter: ConverterTool = null
 
+var _custom_tutorial_title: String = ""
 var _custom_tutorial_text: String = ""
 var _uses_custom_tutorial: bool = false
 var _earned_stars: int = 0
@@ -47,7 +48,9 @@ func _ready():
 	
 	if PhaseRunner.has_custom_tutorial():
 		_uses_custom_tutorial = true
-		_custom_tutorial_text = PhaseRunner.take_tutorial_text_if_any()
+		var t := PhaseRunner.take_tutorial_if_any()
+		_custom_tutorial_title = t["title"]
+		_custom_tutorial_text = t["body"]
 	
 	if btn_voltar:
 		btn_voltar.text = "Voltar"
@@ -85,8 +88,8 @@ func _update_phase_title() -> void:
 		phase_title.text = "Fase"
 
 func _try_show_intro() -> void:
-	if _uses_custom_tutorial and not _custom_tutorial_text.is_empty():
-		TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+	if _uses_custom_tutorial:
+		TutorialOverlay.open(self, "custom", _custom_tutorial_title, _custom_tutorial_text, false)
 		return
 
 	var tid := _tutorial_intro_id()
@@ -96,8 +99,8 @@ func _try_show_intro() -> void:
 	TutorialOverlay.open(self, tid, TutorialTexts.title_for(tid), TutorialTexts.body_for(tid), false)
 
 func _on_help_pressed() -> void:
-	if _uses_custom_tutorial and not _custom_tutorial_text.is_empty():
-		TutorialOverlay.open(self, "custom", "Tutorial da Fase", _custom_tutorial_text, false)
+	if _uses_custom_tutorial:
+		TutorialOverlay.open(self, "custom", _custom_tutorial_title, _custom_tutorial_text, false)
 		return
 
 	var tid := _tutorial_intro_id()

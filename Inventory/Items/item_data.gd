@@ -85,7 +85,11 @@ static func load_item(item, a_ItemID: String, dh = null) -> void:
 	item.item_ID = a_ItemID
 	if dh == null:
 		dh = Engine.get_main_loop().root.get_node_or_null("DataHandler")
-	var data = dh.item_data[item.item_ID]
+		
+	if dh != null and not dh.item_data.has(item.item_ID):
+		_register_dynamic_orb(item.item_ID, dh)
+		
+	var data = dh.item_data.get(item.item_ID, {})
 
 	if data.has("Operator") and str(data["Operator"]) != "":
 		item.operator = str(data["Operator"])
@@ -275,3 +279,34 @@ static func get_binary_explanation(bin_str: String) -> String:
 	var formula = " + ".join(termos)
 	var decimal_val = binary_to_int(bin_str)
 	return bin_str + "₂ = " + formula + " = " + str(decimal_val)
+
+static func _register_dynamic_orb(item_id: String, dh: Node) -> void:
+	if dh == null or dh.item_data.has(item_id):
+		return
+		
+	var data := {}
+	var val_str = item_id
+	if item_id == "raw":
+		data = {"DataType": "RAW", "Value": 0.0}
+	elif item_id.ends_with("_i"):
+		val_str = item_id.trim_suffix("_i")
+		data = {"DataType": "INT", "Value": int(val_str), "Bytes": 4}
+	elif item_id.ends_with("_f"):
+		val_str = item_id.trim_suffix("_f")
+		data = {"DataType": "FLOAT", "Value": float(val_str), "Bytes": 4}
+	elif item_id.ends_with("_d"):
+		val_str = item_id.trim_suffix("_d")
+		data = {"DataType": "DOUBLE", "Value": float(val_str), "Bytes": 8}
+	elif item_id.ends_with("_s"):
+		val_str = item_id.trim_suffix("_s")
+		data = {"DataType": "SHORT_INT", "Value": int(val_str), "Bytes": 2}
+	elif item_id.ends_with("_b"):
+		val_str = item_id.trim_suffix("_b")
+		data = {"DataType": "BINARY", "Value": int(val_str), "Bits": 8, "Bytes": 1}
+	elif item_id.ends_with("_r"):
+		val_str = item_id.trim_suffix("_r")
+		data = {"DataType": "RAW", "Value": float(val_str), "Bytes": 0}
+	else:
+		return
+		
+	dh.item_data[item_id] = data

@@ -188,6 +188,8 @@ func _populate_pool():
 func _on_box_slot_entered(slot):
 	current_slot = slot
 	can_place = _can_place_in_slot(slot)
+	if can_place and item_held and slot.has_meta("is_type_box"):
+		_show_typing_preview(slot)
 
 func _on_pool_slot_entered(slot):
 	current_slot = slot
@@ -240,12 +242,33 @@ func _show_capacity_dialog(used: int, add: int) -> void:
 
 func _on_box_slot_exited(slot):
 	if current_slot == slot:
+		if item_held and item_held.has_method("hide_typing_preview"):
+			item_held.hide_typing_preview()
 		current_slot = null
 		can_place = false
 		_update_hint()
 
+func _show_typing_preview(slot) -> void:
+	if not item_held or not item_held.has_method("show_typing_preview"): return
+	var target_type = slot.get_meta("box_type")
+	var target_name = slot.get_meta("box_name")
+	
+	var val_to_convert = 0.0
+	if item_held.data_type == ItemRef.DataType.RAW:
+		val_to_convert = item_held.value_float
+	elif item_held.data_type in [ItemRef.DataType.FLOAT, ItemRef.DataType.DOUBLE, ItemRef.DataType.FP8, ItemRef.DataType.FP16]:
+		val_to_convert = item_held.value_float
+	else:
+		val_to_convert = float(item_held.value)
+		
+	var deg = TypeConversionSystem.check_degradation(target_name, val_to_convert, config)
+	item_held.show_typing_preview(target_type, deg.degraded_value, deg.has_warning)
+
 func _place_item():
 	if not can_place or not current_slot: return
+	
+	if item_held and item_held.has_method("hide_typing_preview"):
+		item_held.hide_typing_preview()
 	
 	var prev_source = _source_slot
 	

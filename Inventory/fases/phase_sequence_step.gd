@@ -49,5 +49,9 @@ static func filter_playable_steps(steps: Array) -> Array:
 @export var config_raw_mochila: RawKnapsackPhaseConfig
 ## Preencher quando kind == CONVERSAO (decimal → binário).
 @export var config_conversao: ConversionPhaseConfig
-## Texto customizado do tutorial. Vazio = usa o tutorial padrão da fase.
+## Habilita um tutorial personalizado
+@export var use_custom_tutorial: bool = false
+## Título customizado do tutorial.
+@export var custom_tutorial_title: String = ""
+## Texto customizado do tutorial (corpo).
 @export_multiline var custom_tutorial_text: String = ""

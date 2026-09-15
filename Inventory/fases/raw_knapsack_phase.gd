@@ -254,6 +254,8 @@ func _on_custom_slot_entered(slot) -> void:
 		return
 	if slot.has_meta("is_type_station"):
 		can_place = slot.get_meta("item_stored") == null
+		if can_place:
+			_show_typing_preview(slot)
 	elif slot in backpack_grid.slots_array:
 		if item_held.data_type == ItemRef.DataType.RAW:
 			can_place = false
@@ -268,13 +270,27 @@ func _on_custom_slot_entered(slot) -> void:
 
 
 func _on_custom_slot_exited(_slot) -> void:
+	if item_held and item_held.has_method("hide_typing_preview"):
+		item_held.hide_typing_preview()
 	can_place = false
 	_update_hint()
+
+func _show_typing_preview(slot) -> void:
+	if not item_held or not item_held.has_method("show_typing_preview"):
+		return
+	var target_name: String = slot.get_meta("box_name")
+	var target_type = slot.get_meta("box_type")
+	var val := _numeric_from_item(item_held)
+	var deg := TypeConversionSystem.check_degradation(target_name, val, config)
+	item_held.show_typing_preview(target_type, deg.degraded_value, deg.has_warning)
 
 
 func _place_item_custom() -> void:
 	if not current_slot or not item_held:
 		return
+		
+	if item_held.has_method("hide_typing_preview"):
+		item_held.hide_typing_preview()
 		
 	var prev_source = _source_slot
 	
