@@ -139,8 +139,15 @@ var _achievements = {
 func _ready() -> void:
 	_load_data()
 
+const AnalyzerScript = preload("res://Inventory/Achievements/achievement_analyzer.gd")
+
 func get_all_achievements() -> Dictionary:
 	return _achievements
+
+
+## Relatório de conquistas potencialmente alcançáveis numa sequência (configs/ferramentas).
+func analyze_sequence_steps(steps: Array) -> Dictionary:
+	return AnalyzerScript.analyze_steps(steps, _achievements)
 
 func add_progress(id: String, amount: int = 1) -> void:
 	if not _achievements.has(id):

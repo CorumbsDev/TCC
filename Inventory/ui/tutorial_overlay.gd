@@ -12,6 +12,7 @@ const PATH_FONT := "res://Inventory/Art/font/KiwiSoda.ttf"
 
 var _pref_key: String = ""
 var _mark_on_close: bool = false
+var _pending_present: Array = []
 
 
 func _ready():
@@ -20,8 +21,12 @@ func _ready():
 	PanelArtLoader.apply_dialog_panel(panel)
 	PanelArtLoader.apply_button_style(btn_ok)
 	_style_labels()
-	btn_ok.custom_minimum_size = Vector2(200, 48)
+	btn_ok.custom_minimum_size = Vector2(220, 52)
 	visible = false
+	if not _pending_present.is_empty():
+		var args: Array = _pending_present
+		_pending_present = []
+		present(args[0], args[1], args[2], args[3])
 
 
 func _style_labels() -> void:
@@ -43,25 +48,38 @@ func _style_labels() -> void:
 
 
 func present(pref_key: String, title: String, bbcode_body: String, mark_on_close: bool) -> void:
+	if title_label == null or body_label == null:
+		_pending_present = [pref_key, title, bbcode_body, mark_on_close]
+		return
 	_pref_key = pref_key
 	_mark_on_close = mark_on_close
 	title_label.text = title
 	body_label.text = ReadableBbcode.for_ui(bbcode_body)
 	var panel: PanelContainer = $CenterContainer/Panel
 	if panel:
-		var vp_w := get_viewport().get_visible_rect().size.x
-		panel.custom_minimum_size.x = clampf(minf(560.0, vp_w - 80.0), 320.0, 720.0)
+		var vp := get_viewport().get_visible_rect().size
+		panel.custom_minimum_size = Vector2(
+			clampf(minf(560.0, vp.x - 80.0), 320.0, 720.0),
+			clampf(minf(320.0, vp.y - 120.0), 220.0, 480.0)
+		)
 	visible = true
 
 
 func _on_ok() -> void:
 	if _mark_on_close and not _pref_key.is_empty():
 		LearningPrefs.mark_tutorial_seen(_pref_key)
-	visible = false
 	closed.emit()
+	queue_free()
 
 
 static func open(parent: Node, pref_key: String, title: String, bbcode_body: String, mark_on_close: bool) -> void:
+	var tree := parent.get_tree()
+	if tree == null:
+		return
+	# Evita empilhar vários overlays travando o mouse.
+	for child in tree.root.get_children():
+		if child is TutorialOverlay:
+			child.queue_free()
 	var inst = preload("res://Inventory/ui/tutorial_overlay.tscn").instantiate()
-	parent.get_tree().root.add_child(inst)
-	inst.call_deferred("present", pref_key, title, bbcode_body, mark_on_close)
+	tree.root.add_child(inst)
+	inst.present(pref_key, title, bbcode_body, mark_on_close)

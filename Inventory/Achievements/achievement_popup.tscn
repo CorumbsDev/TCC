@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://cxabcc38e8yv4"]
 
 [ext_resource type="Script" path="res://Inventory/Achievements/achievement_popup.gd" id="1_popup"]
-[ext_resource type="Texture2D" uid="uid://dw734f1y0y75l" path="res://icon.svg" id="2_icon"]
+[ext_resource type="Texture2D" uid="uid://c76pncf7qp2up" path="res://icon.svg" id="2_icon"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
 bg_color = Color(0.12, 0.12, 0.12, 0.95)

@@ -27,49 +27,44 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
+offset_left = -340.0
 offset_top = -250.0
-offset_right = 300.0
+offset_right = 340.0
 offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Title" type="Label" parent="Panel"]
+[node name="Header" type="HBoxContainer" parent="Panel"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 10.0
-offset_bottom = 50.0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = 52.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 24
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
 text = "Conquistas"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="CloseButton" type="Button" parent="Panel"]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -40.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = 40.0
-grow_horizontal = 0
-text = "X"
-
-[node name="ResetButton" type="Button" parent="Panel"]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -200.0
-offset_top = 10.0
-offset_right = -50.0
-offset_bottom = 40.0
-grow_horizontal = 0
+[node name="ResetButton" type="Button" parent="Panel/Header"]
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+size_flags_horizontal = 0
 theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 20
 text = "Reiniciar Conquistas"
+
+[node name="CloseButton" type="Button" parent="Panel/Header"]
+custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
+text = "X"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="Panel"]
 layout_mode = 1
@@ -88,5 +83,5 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
-[connection signal="pressed" from="Panel/CloseButton" to="." method="_on_close_button_pressed"]
-[connection signal="pressed" from="Panel/ResetButton" to="." method="_on_reset_button_pressed"]
+[connection signal="pressed" from="Panel/Header/CloseButton" to="." method="_on_close_button_pressed"]
+[connection signal="pressed" from="Panel/Header/ResetButton" to="." method="_on_reset_button_pressed"]

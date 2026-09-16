@@ -39,6 +39,7 @@ func _create_achievement_item(data: Dictionary) -> Control:
 	
 	var title = Label.new()
 	title.text = data["name"]
+	title.add_theme_font_size_override("font_size", 20)
 	if not data["unlocked"]:
 		title.text += " (Bloqueado)"
 		title.modulate = Color(0.5, 0.5, 0.5, 1.0)
@@ -47,7 +48,7 @@ func _create_achievement_item(data: Dictionary) -> Control:
 	var desc = Label.new()
 	desc.text = data["desc"]
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.add_theme_font_size_override("font_size", 14)
+	desc.add_theme_font_size_override("font_size", 16)
 	if not data["unlocked"]:
 		desc.modulate = Color(0.5, 0.5, 0.5, 1.0)
 	vbox.add_child(desc)

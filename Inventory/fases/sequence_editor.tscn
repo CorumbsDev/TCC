@@ -31,41 +31,64 @@ offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Header" type="HBoxContainer" parent="Panel/VBoxContainer"]
+[node name="Header" type="VBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TitleRow" type="HBoxContainer" parent="Panel/VBoxContainer/Header"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/Header"]
+[node name="Label" type="Label" parent="Panel/VBoxContainer/Header/TitleRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 text = "Criador de Fases"
 
-[node name="BtnExportarCSV" type="Button" parent="Panel/VBoxContainer/Header"]
-layout_mode = 2
-text = "📄 Copiar para CSV"
-
-[node name="BtnImportarCSV" type="Button" parent="Panel/VBoxContainer/Header"]
-layout_mode = 2
-text = "📥 Colar de CSV"
-
-[node name="BtnSalvarTudo" type="Button" parent="Panel/VBoxContainer/Header"]
-layout_mode = 2
-text = "💾 Salvar Sequência Selecionada"
-
-[node name="BtnJogar" type="Button" parent="Panel/VBoxContainer/Header"]
-layout_mode = 2
-text = "▶ Jogar Sequência Selecionada"
-
-[node name="BtnVoltar" type="Button" parent="Panel/VBoxContainer/Header"]
+[node name="BtnVoltar" type="Button" parent="Panel/VBoxContainer/Header/TitleRow"]
 layout_mode = 2
 text = "Voltar ao Menu"
+
+[node name="ActionsRow" type="HBoxContainer" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BtnExportarCSV" type="Button" parent="Panel/VBoxContainer/Header/ActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "📄 Copiar CSV"
+
+[node name="BtnImportarCSV" type="Button" parent="Panel/VBoxContainer/Header/ActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "📥 Colar CSV"
+
+[node name="BtnExportarQR" type="Button" parent="Panel/VBoxContainer/Header/ActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "📱 Mostrar QR"
+
+[node name="BtnImportarQR" type="Button" parent="Panel/VBoxContainer/Header/ActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "📷 Importar QR"
+
+[node name="BtnSalvarTudo" type="Button" parent="Panel/VBoxContainer/Header/ActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "💾 Salvar"
+
+[node name="BtnJogar" type="Button" parent="Panel/VBoxContainer/Header/ActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "▶ Jogar"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Panel/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-split_offset = 250
+split_offset = 300
 
 [node name="LeftPanel" type="VBoxContainer" parent="Panel/VBoxContainer/HSplitContainer"]
+custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 
 [node name="LabelHBox" type="HBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/LeftPanel"]
@@ -144,6 +167,27 @@ text = "Nome do Arquivo:"
 [node name="FileNameEdit" type="LineEdit" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="SepAchievements" type="HSeparator" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor"]
+layout_mode = 2
+
+[node name="AchievementsCountLabel" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Conquistas possíveis nesta sequência: 0 / 0"
+
+[node name="AchievementsHintLabel" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 18
+text = "Com base nos tipos de fase e ferramentas (conversor, calculadora, tipagem). Não garante o desbloqueio — depende do que o aluno fizer."
+autowrap_mode = 3
+
+[node name="AchievementsListLabel" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = ""
+autowrap_mode = 3
 
 [node name="PhaseEditor" type="HSplitContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer"]
 visible = false
@@ -485,11 +529,13 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "+ Mochila"
 
-[connection signal="pressed" from="Panel/VBoxContainer/Header/BtnExportarCSV" to="." method="_on_btn_export_csv_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Header/BtnImportarCSV" to="." method="_on_btn_import_csv_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Header/BtnSalvarTudo" to="." method="_on_btn_salvar_tudo_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Header/BtnJogar" to="." method="_on_btn_jogar_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Header/BtnVoltar" to="." method="_on_btn_voltar_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnExportarCSV" to="." method="_on_btn_export_csv_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnImportarCSV" to="." method="_on_btn_import_csv_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnExportarQR" to="." method="_on_btn_export_qr_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnImportarQR" to="." method="_on_btn_import_qr_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnSalvarTudo" to="." method="_on_btn_salvar_tudo_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnJogar" to="." method="_on_btn_jogar_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Header/TitleRow/BtnVoltar" to="." method="_on_btn_voltar_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/LabelHBox/BtnHelpGeral" to="." method="_on_help_geral_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar/BtnNovaSeq" to="." method="_on_btn_nova_seq_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar/BtnNovaFase" to="." method="_on_btn_nova_fase_pressed"]

@@ -122,8 +122,12 @@ func hide_typing_preview() -> void:
 	if not _preview_active:
 		return
 	_preview_active = false
-	var is_float_type = _preview_original_type in [DataType.FLOAT, DataType.DOUBLE, DataType.FP8, DataType.FP16, DataType.RAW]
-	ItemData.set_value_by_type(self, _preview_original_value_float if is_float_type else _preview_original_value, _preview_original_type)
+	var restore_val: Variant
+	if _preview_original_type in [DataType.FLOAT, DataType.DOUBLE, DataType.FP8, DataType.FP16, DataType.RAW]:
+		restore_val = _preview_original_value_float
+	else:
+		restore_val = _preview_original_value
+	ItemData.set_value_by_type(self, restore_val, _preview_original_type)
 	if _preview_original_type == DataType.STRING:
 		ItemData.set_value_by_type(self, _preview_original_value_str, _preview_original_type)
 	elif _preview_original_type == DataType.OPERATOR:

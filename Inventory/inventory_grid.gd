@@ -36,7 +36,7 @@ func _create_slots():
 
 
 func clear_initial_items():
-	initial_items = []
+	initial_items.clear()
 
 
 func _fill_initial_items():
@@ -216,7 +216,7 @@ func clear_all_items():
 		slot.clear_items()
 		slot.state = slot.States.FREE
 		slot.set_color(slot.state)
-	initial_items = []
+	initial_items.clear()
 
 
 func remove_item_single_slot(slot):

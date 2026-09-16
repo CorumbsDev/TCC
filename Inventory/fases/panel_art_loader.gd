@@ -139,20 +139,13 @@ static func _load_if_exists(path: String) -> Texture2D:
 
 
 static func dialog_panel_stylebox() -> StyleBox:
-	var tex := _load_if_exists("res://Inventory/Art/UI/botao_1.png")
-	if tex == null:
-		return gray_panel_stylebox()
-	var sb := StyleBoxTexture.new()
-	sb.texture = tex
-	sb.texture_margin_left = 10
-	sb.texture_margin_top = 10
-	sb.texture_margin_right = 10
-	sb.texture_margin_bottom = 10
-	sb.expand_margin_left = 4
-	sb.expand_margin_top = 4
-	sb.expand_margin_right = 4
-	sb.expand_margin_bottom = 4
-	return sb
+	# Painel escuro legível — NÃO usar botao_1.png aqui (vira um bloco vermelho gigante).
+	return _flat_style(
+		Color(0.10, 0.10, 0.14, 0.97),
+		Color(0.78, 0.55, 0.28, 0.95),
+		Color(0, 0, 0, 0.45),
+		8
+	)
 
 
 static func apply_dialog_panel(panel: Control) -> void:

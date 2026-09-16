@@ -52,7 +52,7 @@ func _setup_backpack_grid() -> void:
 	backpack.capacity_bytes = config.capacity_bytes
 	backpack.grid_columns = config.grid_columns
 	backpack.number_of_slots = config.backpack_slot_count
-	backpack.initial_items = []
+	backpack.clear_initial_items()
 	bp_vbox.add_child(backpack)
 	backpack.custom_minimum_size = Vector2(0, 0)
 	backpack.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -89,7 +89,7 @@ func _setup_bancada() -> void:
 	pool.capacity_bytes = 999999
 	pool.grid_columns = config.pool_grid_columns
 	pool.number_of_slots = config.pool_slot_count
-	pool.initial_items = []
+	pool.clear_initial_items()
 	pl_vbox.add_child(pool)
 	pool.custom_minimum_size = Vector2(0, 0)
 	pool.size_flags_vertical = Control.SIZE_EXPAND_FILL

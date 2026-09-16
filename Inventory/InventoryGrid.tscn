@@ -5,7 +5,7 @@
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_knrsg"]
 
 [node name="InventoryGrid" type="Panel"]
-custom_minimum_size = Vector2(400, 400)
+custom_minimum_size = Vector2(200, 160)
 script = ExtResource("1_inv")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]

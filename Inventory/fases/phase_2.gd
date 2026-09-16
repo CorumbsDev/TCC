@@ -64,14 +64,14 @@ func _apply_challenge_exports(grid: InventoryGrid):
 	grid.capacity_bytes = config.capacity_bytes
 	grid.grid_columns = config.grid_columns
 	grid.number_of_slots = config.backpack_slot_count
-	grid.initial_items = []
+	grid.clear_initial_items()
 
 
 func _apply_pool_exports(grid: InventoryGrid):
 	grid.capacity_bytes = 999999
 	grid.grid_columns = config.pool_grid_columns
 	grid.number_of_slots = config.pool_slot_count
-	grid.initial_items = []
+	grid.clear_initial_items()
 
 
 func _initialize_game(backpack: InventoryGrid, pool: InventoryGrid):

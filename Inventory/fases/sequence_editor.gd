@@ -1,5 +1,7 @@
 extends Control
 
+const QR_DIALOG_SCENE := preload("res://Inventory/fases/qr/sequence_qr_dialog.tscn")
+
 @onready var tree: Tree = $Panel/VBoxContainer/HSplitContainer/LeftPanel/Tree
 @onready var empty_label: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/EmptyLabel
 @onready var sequence_editor_ui: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor
@@ -7,6 +9,8 @@ extends Control
 
 # Sequence UI
 @onready var file_name_edit: LineEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor/HBoxContainer/FileNameEdit
+@onready var achievements_count_label: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor/AchievementsCountLabel
+@onready var achievements_list_label: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor/AchievementsListLabel
 
 # Phase UI Containers and Controls
 @onready var phase_type_container: HBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/PhaseTypeVBox/PhaseTypeContainer
@@ -77,6 +81,7 @@ var _last_rnd_pool_size: int = -1
 
 var preview_mochila: Node = null
 var preview_bancada: Node = null
+var _qr_dialog: AcceptDialog = null
 
 func _ready() -> void:
 	if btn_add_pool and not btn_add_pool.pressed.is_connected(_on_btn_add_pool_pressed):
@@ -111,15 +116,13 @@ func _ready() -> void:
 	
 	_load_all_sequences()
 	_show_empty()
+
+	_qr_dialog = QR_DIALOG_SCENE.instantiate()
+	add_child(_qr_dialog)
+	_qr_dialog.import_requested.connect(_on_qr_import_requested)
 	
 	PanelArtLoader.skin_all_buttons(self)
 	PanelArtLoader.apply_background(self)
-	
-	# Apply 20% zoom out to the main container
-	var main_vbox = $Panel/VBoxContainer
-	main_vbox.scale = Vector2(0.8, 0.8)
-	main_vbox.pivot_offset = main_vbox.size / 2.0
-	main_vbox.resized.connect(func(): main_vbox.pivot_offset = main_vbox.size / 2.0)
 
 var _phase_button_group: ButtonGroup = null
 
@@ -284,6 +287,39 @@ func _show_sequence_editor(file_name: String) -> void:
 	sequence_editor_ui.visible = true
 	phase_editor_ui.visible = false
 	file_name_edit.text = file_name.replace(".tres", "")
+	_update_sequence_achievements_ui(file_name)
+
+
+func _update_sequence_achievements_ui(file_name: String = "") -> void:
+	if achievements_count_label == null:
+		return
+	if file_name.is_empty():
+		if _selected_item and _selected_item.get_metadata(0).type == "sequence":
+			file_name = _selected_item.get_metadata(0).file
+		elif _selected_item and _selected_item.get_parent():
+			var pmeta = _selected_item.get_parent().get_metadata(0)
+			if pmeta and pmeta.type == "sequence":
+				file_name = pmeta.file
+	if file_name.is_empty() or not file_manager.sequences.has(file_name):
+		achievements_count_label.text = "Conquistas possíveis nesta sequência: —"
+		if achievements_list_label:
+			achievements_list_label.text = ""
+		return
+	var seq_list: PhaseSequenceList = file_manager.sequences[file_name]
+	var report: Dictionary = AchievementManager.analyze_sequence_steps(seq_list.steps)
+	achievements_count_label.text = "Conquistas possíveis nesta sequência: %d / %d" % [
+		int(report.get("count", 0)),
+		int(report.get("total", 0)),
+	]
+	if achievements_list_label:
+		var names: Array = report.get("reachable_names", [])
+		if names.is_empty():
+			achievements_list_label.text = "Nenhuma com as configurações atuais.\nDica: habilite tipagem (Type Box/RAW), vários tipos, conversor e/ou calculadora."
+		else:
+			var lines: PackedStringArray = PackedStringArray()
+			for n in names:
+				lines.append("• " + str(n))
+			achievements_list_label.text = "\n".join(lines)
 
 func _show_phase_editor(step: PhaseSequenceStep) -> void:
 	empty_label.visible = false
@@ -388,6 +424,7 @@ func _flush_active_phase_editor() -> void:
 		return
 	_apply_ui_to_step(_active_phase_step)
 	file_manager.save_sequence(_active_phase_parent_file, file_manager.sequences[_active_phase_parent_file])
+	_update_sequence_achievements_ui(_active_phase_parent_file)
 	_set_status("Salvo: " + _active_phase_parent_file)
 
 func _apply_ui_to_step(step: PhaseSequenceStep) -> void:
@@ -431,6 +468,7 @@ func _on_btn_nova_fase_pressed() -> void:
 	
 	_add_phase_to_tree(seq_item, new_step, seq_list.steps.size())
 	file_manager.save_sequence(meta.file, seq_list)
+	_update_sequence_achievements_ui(meta.file)
 
 func _on_btn_delete_pressed() -> void:
 	var sel = tree.get_selected()
@@ -456,6 +494,7 @@ func _on_btn_delete_pressed() -> void:
 			i += 1
 			
 		file_manager.save_sequence(seq_meta.file, seq_list)
+		_update_sequence_achievements_ui(seq_meta.file)
 		_show_empty()
 
 func _on_btn_move_up_pressed() -> void:
@@ -506,8 +545,10 @@ func _on_btn_salvar_tudo_pressed() -> void:
 	_flush_active_phase_editor()
 	if not _selected_item: return
 	var seq_item = _selected_item if _selected_item.get_metadata(0).type == "sequence" else _selected_item.get_parent()
-	file_manager.save_sequence(seq_item.get_metadata(0).file, seq_item.get_metadata(0).data)
-	_set_status("Sequência salva: " + seq_item.get_metadata(0).file)
+	var seq_file: String = seq_item.get_metadata(0).file
+	file_manager.save_sequence(seq_file, seq_item.get_metadata(0).data)
+	_update_sequence_achievements_ui(seq_file)
+	_set_status("Sequência salva: " + seq_file)
 
 func _on_file_name_changed(new_text: String) -> void:
 	_flush_active_phase_editor()
@@ -563,6 +604,7 @@ func _on_phase_type_button_pressed(kind: PhaseSequenceStep.Kind) -> void:
 	
 	var parent_file = sel.get_metadata(0).parent_file
 	file_manager.save_sequence(parent_file, file_manager.sequences[parent_file])
+	_update_sequence_achievements_ui(parent_file)
 	
 	_active_phase_parent_file = parent_file
 	_active_phase_step = step
@@ -630,97 +672,141 @@ func _append_orb_to_line_edit(le: LineEdit) -> void:
 func _update_preview_grids() -> void:
 	if _active_phase_step == null or preview_content == null:
 		return
-		
-	for c in preview_content.get_children():
-		c.queue_free()
-		
-	# Recreate grids
+
+	# Remove filhos imediatamente para não acumular grids antigos no mesmo frame.
+	while preview_content.get_child_count() > 0:
+		var c := preview_content.get_child(0)
+		preview_content.remove_child(c)
+		c.free()
+
 	preview_mochila = preload("res://Inventory/InventoryGrid.tscn").instantiate()
 	preview_mochila.custom_minimum_size = Vector2(0, 200)
-	
 	preview_bancada = preload("res://Inventory/InventoryGrid.tscn").instantiate()
 	preview_bancada.custom_minimum_size = Vector2(0, 200)
-	
-	var cap_bytes = 8
+
+	var empty_items: Array[String] = []
+	var cap_bytes := 8
+	var mochila_items: Array[String] = empty_items.duplicate()
+	var bancada_items: Array[String] = empty_items.duplicate()
+	var lbl_mochila_text := "Pré-visualização: Mochila"
+	var lbl_bancada_text := "Pré-visualização: Bancada"
+
 	if _active_phase_step.kind == PhaseSequenceStep.Kind.MOCHILA and _active_phase_step.config_mochila:
-		cap_bytes = _active_phase_step.config_mochila.capacity_bytes
+		var cfg = _active_phase_step.config_mochila
+		cap_bytes = cfg.capacity_bytes
 		preview_mochila.capacity_bytes = cap_bytes
-		preview_mochila.number_of_slots = _active_phase_step.config_mochila.backpack_slot_count
-		preview_mochila.grid_columns = _active_phase_step.config_mochila.grid_columns
-		var sol_csv = _active_phase_step.config_mochila.star3_best_solution_csv
-		preview_mochila.initial_items = _parse_csv_to_array(sol_csv)
-		
+		preview_mochila.number_of_slots = cfg.backpack_slot_count
+		preview_mochila.grid_columns = cfg.grid_columns
+		# Solução ideal (estrela 3) na mochila; itens iniciais / pool na bancada.
+		mochila_items = _parse_csv_to_array(str(cfg.star3_best_solution_csv))
+		bancada_items = _parse_csv_to_array(str(cfg.initial_backpack_csv))
+		if bancada_items.is_empty() and cfg.random_pool != null:
+			for id in cfg.random_pool:
+				bancada_items.append(str(id))
 		preview_bancada.capacity_bytes = 999
-		preview_bancada.number_of_slots = _active_phase_step.config_mochila.pool_slot_count
-		preview_bancada.grid_columns = _active_phase_step.config_mochila.pool_grid_columns
-		var ini_csv = _active_phase_step.config_mochila.initial_backpack_csv
-		preview_bancada.initial_items = _parse_csv_to_array(ini_csv)
+		preview_bancada.number_of_slots = maxi(cfg.pool_slot_count, bancada_items.size())
+		preview_bancada.grid_columns = cfg.pool_grid_columns
+		lbl_mochila_text = "Pré-visualização: Mochila (Capacidade: %d bytes)" % cap_bytes
+		lbl_bancada_text = "Pré-visualização: Bancada / Itens iniciais"
+
 	elif _active_phase_step.kind == PhaseSequenceStep.Kind.RAW_MOCHILA and _active_phase_step.config_raw_mochila:
-		cap_bytes = _active_phase_step.config_raw_mochila.capacity_bytes
+		var rcfg = _active_phase_step.config_raw_mochila
+		cap_bytes = rcfg.capacity_bytes
 		preview_mochila.capacity_bytes = cap_bytes
-		preview_mochila.number_of_slots = _active_phase_step.config_raw_mochila.backpack_slot_count
-		preview_mochila.grid_columns = _active_phase_step.config_raw_mochila.grid_columns
-		preview_mochila.initial_items = []
-		
+		preview_mochila.number_of_slots = rcfg.backpack_slot_count
+		preview_mochila.grid_columns = rcfg.grid_columns
+		bancada_items = _raw_values_to_preview_ids(rcfg.initial_raw_values)
 		preview_bancada.capacity_bytes = 999
-		preview_bancada.number_of_slots = _active_phase_step.config_raw_mochila.pool_slot_count
-		preview_bancada.grid_columns = _active_phase_step.config_raw_mochila.pool_grid_columns
-		preview_bancada.initial_items = []
+		preview_bancada.number_of_slots = maxi(rcfg.pool_slot_count, bancada_items.size())
+		preview_bancada.grid_columns = rcfg.pool_grid_columns
+		lbl_mochila_text = "Pré-visualização: Mochila RAW (Capacidade: %d bytes)" % cap_bytes
+		lbl_bancada_text = "Pré-visualização: Pool RAW"
+
 	elif _active_phase_step.kind == PhaseSequenceStep.Kind.TYPE_BOX and _active_phase_step.config_type_box:
-		cap_bytes = _active_phase_step.config_type_box.capacity_bytes
+		var tcfg = _active_phase_step.config_type_box
+		cap_bytes = tcfg.capacity_bytes
 		preview_mochila.capacity_bytes = cap_bytes
-		preview_mochila.number_of_slots = _active_phase_step.config_type_box.box_slot_count
+		preview_mochila.number_of_slots = maxi(tcfg.box_slot_count, 4)
 		preview_mochila.grid_columns = 4
-		preview_mochila.initial_items = []
-		
+		bancada_items = _raw_values_to_preview_ids(tcfg.initial_raw_values)
 		preview_bancada.capacity_bytes = 999
-		preview_bancada.number_of_slots = 0
-		preview_bancada.grid_columns = 4
-		preview_bancada.initial_items = []
+		preview_bancada.number_of_slots = maxi(bancada_items.size(), 4)
+		preview_bancada.grid_columns = mini(maxi(bancada_items.size(), 1), 5)
+		lbl_mochila_text = "Pré-visualização: Caixas (Capacidade: %d bytes)" % cap_bytes
+		lbl_bancada_text = "Pré-visualização: Valores RAW"
+
 	else:
 		preview_mochila.capacity_bytes = 8
 		preview_mochila.number_of_slots = 8
 		preview_mochila.grid_columns = 4
-		preview_mochila.initial_items = []
-		
 		preview_bancada.capacity_bytes = 999
 		preview_bancada.number_of_slots = 8
 		preview_bancada.grid_columns = 4
-		preview_bancada.initial_items = []
 
-	var lbl_mochila = Label.new()
-	lbl_mochila.text = "Pré-visualização: Mochila (Capacidade: %d bytes)" % cap_bytes
+	preview_mochila.initial_items = mochila_items
+	preview_bancada.initial_items = bancada_items
+
+	var lbl_mochila := Label.new()
+	lbl_mochila.text = lbl_mochila_text
 	lbl_mochila.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_mochila.add_theme_font_size_override("font_size", 16)
-	
-	var lbl_bancada = Label.new()
-	lbl_bancada.text = "Pré-visualização: Bancada"
+
+	var lbl_bancada := Label.new()
+	lbl_bancada.text = lbl_bancada_text
 	lbl_bancada.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_bancada.add_theme_font_size_override("font_size", 16)
 
 	preview_content.add_child(lbl_mochila)
 	preview_content.add_child(preview_mochila)
-	
-	var spacer = Control.new()
+
+	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 10)
 	preview_content.add_child(spacer)
-	
+
 	preview_content.add_child(lbl_bancada)
 	preview_content.add_child(preview_bancada)
 
+	# Reposiciona orbes (Double etc.) após o layout ter tamanho real.
+	call_deferred("_refresh_preview_item_positions")
+
+
+func _refresh_preview_item_positions() -> void:
+	if preview_mochila and is_instance_valid(preview_mochila) and preview_mochila.has_method("refresh_item_positions"):
+		preview_mochila.refresh_item_positions()
+	if preview_bancada and is_instance_valid(preview_bancada) and preview_bancada.has_method("refresh_item_positions"):
+		preview_bancada.refresh_item_positions()
+
+
+func _raw_values_to_preview_ids(values: PackedStringArray) -> Array[String]:
+	var out: Array[String] = []
+	for v in values:
+		var s := str(v).strip_edges()
+		if s.is_empty():
+			continue
+		if s.ends_with("_r") or s.ends_with("_i") or s.ends_with("_f") or s.ends_with("_d") or s.ends_with("_s"):
+			out.append(s)
+		else:
+			out.append(s + "_r")
+	return out
+
+
 func _parse_csv_to_array(csv: String) -> Array[String]:
 	var arr: Array[String] = []
-	for p in csv.split(","):
-		var s = p.strip_edges()
+	if csv == null or str(csv).strip_edges().is_empty():
+		return arr
+	for p in str(csv).split(","):
+		var s := p.strip_edges()
 		if not s.is_empty():
 			arr.append(s)
 	return arr
+
 
 func _trigger_ui_save() -> void:
 	if _is_updating_ui or _active_phase_step == null: return
 	_apply_ui_to_step(_active_phase_step)
 	if _active_phase_parent_file != "":
 		file_manager.save_sequence(_active_phase_parent_file, file_manager.sequences[_active_phase_parent_file])
+		_update_sequence_achievements_ui(_active_phase_parent_file)
 	_show_phase_editor(_active_phase_step)
 
 func _show_dialog(title: String, text: String) -> void:
@@ -728,7 +814,13 @@ func _show_dialog(title: String, text: String) -> void:
 	TutorialOverlay.open(self, "seq_editor_help", title, text, false)
 
 func _on_help_geral_pressed() -> void:
-	_show_dialog("Explorador de Sequências", "Uma 'Sequência' é um conjunto de fases na ordem. Você pode criar múltiplas sequências e cada uma é salva como um arquivo no seu computador.")
+	_show_dialog(
+		"Explorador de Sequências",
+		"Uma 'Sequência' é um conjunto de fases na ordem.\n\n"
+		+ "Compartilhar:\n"
+		+ "• CSV — copia/cola texto (Ctrl+V)\n"
+		+ "• QR — gera imagem escaneável; no outro PC use «Importar QR» e cole o texto COB1:... lido pelo celular"
+	)
 
 func _on_help_mochila_pressed() -> void:
 	_show_dialog("Mochila e Bancada", "- Capacidade: Quantos bytes a mochila suporta.\n- Slots: Quantos quadrados visíveis existem para soltar itens.\n- Bancada (Pool): A área onde os itens ficam disponíveis para escolha.")
@@ -740,32 +832,46 @@ func _on_btn_jogar_pressed() -> void:
 	_flush_active_phase_editor()
 	var sel = tree.get_selected()
 	if not sel:
+		_show_dialog("Jogar sequência", "Selecione uma sequência (ou uma fase dela) à esquerda para jogar.")
 		return
 	var seq_item = sel if sel.get_metadata(0).type == "sequence" else sel.get_parent()
+	if seq_item == null:
+		_show_dialog("Jogar sequência", "Não foi possível identificar a sequência selecionada.")
+		return
 	var file_name: String = seq_item.get_metadata(0).file
 	var seq_list: PhaseSequenceList = file_manager.sequences.get(file_name, seq_item.get_metadata(0).data)
-	
+	if seq_list == null:
+		_show_dialog("Jogar sequência", "Sequência não encontrada: %s" % file_name)
+		return
+
 	var steps = seq_list.to_runtime_array()
 	if steps.is_empty():
+		_show_dialog("Jogar sequência", "Esta sequência está vazia. Adicione pelo menos uma fase.")
 		return
-	
+
 	file_manager.save_sequence(file_name, seq_list)
 	PhaseRunner.begin_with_steps(steps)
+	if not PhaseRunner.is_sequence_active():
+		_show_dialog(
+			"Jogar sequência",
+			"A sequência não tem fases jogáveis.\n(Binário/Conversão podem estar desabilitados.)"
+		)
 
 func _on_btn_voltar_pressed() -> void:
 	get_tree().change_scene_to_file("res://Inventory/fases/main_menu.tscn")
 
 
-func _on_btn_export_csv_pressed() -> void:
-	_flush_active_phase_editor()
+func _get_selected_sequence_list() -> PhaseSequenceList:
 	var sel = tree.get_selected()
 	if not sel:
-		_show_dialog("Exportar CSV", "Selecione uma sequência (ou uma fase dela) para exportar.")
-		return
+		return null
 	var seq_item = sel if sel.get_metadata(0).type == "sequence" else sel.get_parent()
 	if seq_item == null:
-		return
-	var seq_list: PhaseSequenceList = seq_item.get_metadata(0).data
+		return null
+	return seq_item.get_metadata(0).data as PhaseSequenceList
+
+
+func _build_sequence_csv(seq_list: PhaseSequenceList) -> String:
 	var csv_str = "KIND,CAPACITY,SLOTS_M,SLOTS_P,COLS,MIN,MAX,CSV_ITEMS,RND_POOL,FLOAT,DOUBLE,SHORT,BOOL,FP8,FP16,CALC,FP_CUST,FP8_E,FP8_M,FP16_E,FP16_M\n"
 	for step in seq_list.steps:
 		if step.kind == PhaseSequenceStep.Kind.MOCHILA:
@@ -826,15 +932,10 @@ func _on_btn_export_csv_pressed() -> void:
 			csv_str += "B,%d,%d,0,0,0,0,,0,false,false,false,false,false,false,false,false,4,3,5,10\n" % [
 				bc.fixed_left_bit, bc.fixed_right_bit
 			]
-	DisplayServer.clipboard_set(csv_str)
-	_show_dialog("Exportar CSV", "Sequência copiada para a área de transferência.\nCole com Ctrl+V onde quiser.")
+	return csv_str
 
 
-func _on_btn_import_csv_pressed() -> void:
-	var csv_str = DisplayServer.clipboard_get().strip_edges()
-	if csv_str == "" or not csv_str.begins_with("KIND,"):
-		_show_dialog("Erro de Importação", "Nenhum CSV válido encontrado na área de transferência.\nExporte antes ou cole um CSV que comece com KIND,")
-		return
+func _import_sequence_from_csv(csv_str: String) -> Dictionary:
 	var lines = csv_str.split("\n")
 	var seq_list = PhaseSequenceList.new()
 	for i in range(1, lines.size()):
@@ -961,8 +1062,7 @@ func _on_btn_import_csv_pressed() -> void:
 			continue
 		seq_list.steps.append(step)
 	if seq_list.steps.is_empty():
-		_show_dialog("Erro de Importação", "CSV sem fases válidas.")
-		return
+		return {"ok": false, "error": "CSV sem fases válidas.", "file_name": ""}
 	var base_name = "Seq_Importada"
 	var idx = 1
 	var file_name = base_name + ".tres"
@@ -973,4 +1073,65 @@ func _on_btn_import_csv_pressed() -> void:
 	file_manager.save_sequence(file_name, seq_list)
 	var item = _add_sequence_to_tree(file_name, seq_list)
 	item.select(0)
-	_show_dialog("Sucesso", "Sequência importada: " + file_name)
+	return {"ok": true, "error": "", "file_name": file_name}
+
+
+func _on_btn_export_csv_pressed() -> void:
+	_flush_active_phase_editor()
+	var seq_list := _get_selected_sequence_list()
+	if seq_list == null:
+		_show_dialog("Exportar CSV", "Selecione uma sequência (ou uma fase dela) para exportar.")
+		return
+	var csv_str := _build_sequence_csv(seq_list)
+	DisplayServer.clipboard_set(csv_str)
+	_show_dialog("Exportar CSV", "Sequência copiada para a área de transferência.\nCole com Ctrl+V onde quiser.")
+
+
+func _on_btn_import_csv_pressed() -> void:
+	var csv_str = DisplayServer.clipboard_get().strip_edges()
+	if csv_str == "" or not csv_str.begins_with("KIND,"):
+		_show_dialog("Erro de Importação", "Nenhum CSV válido encontrado na área de transferência.\nExporte antes ou cole um CSV que comece com KIND,")
+		return
+	var result := _import_sequence_from_csv(csv_str)
+	if not result.get("ok", false):
+		_show_dialog("Erro de Importação", str(result.get("error", "?")))
+		return
+	_show_dialog("Sucesso", "Sequência importada: " + str(result.get("file_name", "")))
+
+
+func _on_btn_export_qr_pressed() -> void:
+	_flush_active_phase_editor()
+	var seq_list := _get_selected_sequence_list()
+	if seq_list == null:
+		_show_dialog("QR da Sequência", "Selecione uma sequência (ou uma fase dela) para gerar o QR.")
+		return
+	var csv_str := _build_sequence_csv(seq_list)
+	var encoded: Dictionary = SequenceQrCodec.encode_csv(csv_str)
+	if not encoded.get("ok", false):
+		_show_dialog("QR da Sequência", str(encoded.get("error", "Falha ao codificar.")))
+		return
+	var tex: ImageTexture = SequenceQrCodec.make_texture(str(encoded.get("payload", "")))
+	if tex == null:
+		_show_dialog("QR da Sequência", "Falha ao gerar a imagem do QR.")
+		return
+	var info := "CSV %d bytes → %d comprimidos. Escaneie com o celular ou copie o payload." % [
+		int(encoded.get("bytes_raw", 0)),
+		int(encoded.get("bytes_zip", 0)),
+	]
+	if _qr_dialog.has_method("setup_export"):
+		_qr_dialog.setup_export(str(encoded.get("payload", "")), tex, info)
+	_qr_dialog.popup_centered()
+
+
+func _on_btn_import_qr_pressed() -> void:
+	if _qr_dialog.has_method("setup_import"):
+		_qr_dialog.setup_import()
+	_qr_dialog.popup_centered()
+
+
+func _on_qr_import_requested(csv_text: String) -> void:
+	var result := _import_sequence_from_csv(csv_text)
+	if not result.get("ok", false):
+		_show_dialog("Importar QR", str(result.get("error", "?")))
+		return
+	_show_dialog("Sucesso", "Sequência importada: " + str(result.get("file_name", "")))
