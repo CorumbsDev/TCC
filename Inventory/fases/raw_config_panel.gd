@@ -28,6 +28,7 @@ func show_data(step: PhaseSequenceStep) -> void:
 	ui.check_fp_cust.button_pressed = false
 	ui.spin_star2_moves.value = cfg.star2_max_moves
 	ui.line_edit_star3_solution.text = cfg.star3_best_solution_csv
+	MemoryLayout.select_option(ui.opt_slot_bytes, cfg.slot_bytes)
 
 func apply_to_step(step: PhaseSequenceStep) -> void:
 	var cfg: RawKnapsackPhaseConfig = step.config_raw_mochila
@@ -53,6 +54,7 @@ func apply_to_step(step: PhaseSequenceStep) -> void:
 	cfg.allow_fp16 = ui.check_fp16.button_pressed
 	cfg.star2_max_moves = int(ui.spin_star2_moves.value)
 	cfg.star3_best_solution_csv = ui.line_edit_star3_solution.text.strip_edges()
+	cfg.slot_bytes = MemoryLayout.read_option(ui.opt_slot_bytes)
 
 func get_visibility_rules() -> Dictionary:
 	return {
@@ -79,5 +81,6 @@ func get_visibility_rules() -> Dictionary:
 		"binary_panel": false,
 		"lbl_csv_text": "Valores RAW no pool (ex: 7, 3.14, 42):",
 		"line_edit_csv_placeholder": "7, 3.14, 42",
-		"lbl_rnd_pool_text": "Valores aleatórios (1=sim, 0=não):"
+		"lbl_rnd_pool_text": "Valores aleatórios (1=sim, 0=não):",
+		"opt_slot_bytes": true
 	}

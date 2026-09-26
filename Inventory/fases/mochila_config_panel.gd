@@ -31,6 +31,7 @@ func show_data(step: PhaseSequenceStep) -> void:
 	ui.spin_star2_moves.value = cfg.star2_max_moves
 	if ui.line_edit_star3_solution.text != cfg.star3_best_solution_csv:
 		ui.line_edit_star3_solution.text = cfg.star3_best_solution_csv
+	MemoryLayout.select_option(ui.opt_slot_bytes, cfg.slot_bytes)
 
 func apply_to_step(step: PhaseSequenceStep, last_rnd_pool_size: int) -> int:
 	var cfg: PhaseConfig = step.config_mochila
@@ -63,6 +64,7 @@ func apply_to_step(step: PhaseSequenceStep, last_rnd_pool_size: int) -> int:
 	cfg.allow_calc = ui.check_calc.button_pressed
 	cfg.star2_max_moves = int(ui.spin_star2_moves.value)
 	cfg.star3_best_solution_csv = ui.line_edit_star3_solution.text.strip_edges()
+	cfg.slot_bytes = MemoryLayout.read_option(ui.opt_slot_bytes)
 	
 	return last_rnd_pool_size
 
@@ -91,5 +93,6 @@ func get_visibility_rules() -> Dictionary:
 		"binary_panel": false,
 		"lbl_csv_text": "Itens iniciais na mochila (ex: 1_i, 2_i, 3.14_f):",
 		"line_edit_csv_placeholder": "1_i, 2_i, 3.14_f",
-		"lbl_rnd_pool_text": "Qtd Tipos Aleatórios Extra:"
+		"lbl_rnd_pool_text": "Qtd Tipos Aleatórios Extra:",
+		"opt_slot_bytes": true
 	}

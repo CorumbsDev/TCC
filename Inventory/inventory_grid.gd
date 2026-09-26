@@ -6,6 +6,8 @@ signal slot_exited(slot)
 signal item_changed(slot)
 
 @export var capacity_bytes: int = 8
+## 4 = palavra (até 4 bytes empilhados no slot). 1 = cada slot é uma célula de 1 byte.
+@export var slot_bytes: int = 4
 @export var number_of_slots: int = 8
 @export var grid_columns: int = 4
 @export var initial_items: Array[String] = ["item_number_5", "item_number_7", "item_operator_plus"]
@@ -47,12 +49,13 @@ func _fill_initial_items():
 		var slot = slots_array[i]
 		var item = preload("res://Inventory/Items/Item.tscn").instantiate()
 		item.load_item(item_id)
+		MemoryLayout.apply_to_item(item, slot_bytes, grid_columns)
 		for offset in item.item_grids:
 			var idx = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
 			if idx >= 0 and idx < slots_array.size():
 				var target_slot = slots_array[idx]
 				target_slot.add_item(item)
-				if target_slot.get_used_bytes() >= 4:
+				if _slot_is_full(target_slot):
 					target_slot.state = target_slot.States.TAKEN
 				elif target_slot.get_used_bytes() > 0:
 					target_slot.state = target_slot.States.PARTIAL
@@ -106,6 +109,7 @@ func total_bytes_used() -> int:
 func can_place_item(item, slot) -> bool:
 	if not item or not slot:
 		return false
+	MemoryLayout.apply_to_item(item, slot_bytes, grid_columns)
 	var item_bytes = item.get_size_bytes() if item.has_method("get_size_bytes") else 4
 
 	# RAW: um orbe por slot (pool visual), sem empilhar sub-células de 1 byte.
@@ -114,7 +118,17 @@ func can_place_item(item, slot) -> bool:
 			var idx0 = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
 			if idx0 < 0 or idx0 >= slots_array.size():
 				return false
-			if slots_array[idx0].items_stored.size() > 0:
+			if _slot_occupied_by_other(slots_array[idx0], item):
+				return false
+		return true
+
+	# Célula de 1 byte: o tipo ocupa N slots seguidos (int = 4, short = 2).
+	if MemoryLayout.normalize_slot_bytes(slot_bytes) == MemoryLayout.BYTE_SLOT:
+		for offset in item.item_grids:
+			var idx1 = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
+			if idx1 < 0 or idx1 >= slots_array.size():
+				return false
+			if _slot_occupied_by_other(slots_array[idx1], item):
 				return false
 		return true
 	
@@ -174,6 +188,7 @@ func place_item(item, slot):
 	if not grid_container:
 		push_error("InventoryGrid: grid_container is null")
 		return
+	MemoryLayout.apply_to_item(item, slot_bytes, grid_columns)
 	remove_item(item)
 	for offset in item.item_grids:
 		var idx = slot.slot_ID + int(offset.x) + int(offset.y) * grid_columns
@@ -181,11 +196,7 @@ func place_item(item, slot):
 			continue
 		var target_slot = slots_array[idx]
 		target_slot.add_item(item)
-		if target_slot.get_used_bytes() >= 4:
-			target_slot.state = target_slot.States.TAKEN
-		elif target_slot.get_used_bytes() > 0:
-			target_slot.state = target_slot.States.PARTIAL
-		target_slot.set_color(target_slot.state)
+		_paint_slot(target_slot)
 	item.grid_anchor = slot
 	_attach_item_to_slot(item, slot)
 
@@ -196,11 +207,34 @@ func remove_item(item):
 			if item.get_parent() == slot:
 				slot.remove_child(item)
 			slot.remove_item(item)
-			if slot.get_used_bytes() == 0:
-				slot.state = slot.States.FREE
-			elif slot.get_used_bytes() < 4:
-				slot.state = slot.States.PARTIAL
-			slot.set_color(slot.state)
+			_paint_slot(slot)
+
+
+func _slot_occupied_by_other(target_slot, item) -> bool:
+	for it in target_slot.items_stored:
+		if it != item:
+			return true
+	return false
+
+
+func _slot_is_full(target_slot) -> bool:
+	if MemoryLayout.normalize_slot_bytes(slot_bytes) == MemoryLayout.BYTE_SLOT:
+		return target_slot.items_stored.size() > 0
+	return target_slot.get_used_bytes() >= MemoryLayout.WORD_BYTES
+
+
+func _paint_slot(target_slot) -> void:
+	if target_slot.items_stored.is_empty():
+		target_slot.state = target_slot.States.FREE
+	elif MemoryLayout.normalize_slot_bytes(slot_bytes) == MemoryLayout.BYTE_SLOT:
+		target_slot.state = target_slot.States.TAKEN
+	elif target_slot.get_used_bytes() >= MemoryLayout.WORD_BYTES:
+		target_slot.state = target_slot.States.TAKEN
+	elif target_slot.get_used_bytes() > 0:
+		target_slot.state = target_slot.States.PARTIAL
+	else:
+		target_slot.state = target_slot.States.TAKEN
+	target_slot.set_color(target_slot.state)
 
 
 func clear_all_items():

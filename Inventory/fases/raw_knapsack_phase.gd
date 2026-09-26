@@ -50,6 +50,7 @@ func _setup_backpack_grid() -> void:
 	bp_scroll.queue_free()
 	var backpack: InventoryGrid = GRID_SCENE.instantiate()
 	backpack.capacity_bytes = config.capacity_bytes
+	backpack.slot_bytes = config.slot_bytes
 	backpack.grid_columns = config.grid_columns
 	backpack.number_of_slots = config.backpack_slot_count
 	backpack.clear_initial_items()

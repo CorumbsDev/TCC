@@ -76,12 +76,32 @@ func _on_comecar_pressed():
 			% SequenceFileManager.DEFAULT_PLAY_SEQUENCE_FILE.replace(".tres", "")
 		)
 		return
-	PhaseRunner.begin_with_steps(steps)
+	var play_steps := _with_all_conversions(steps)
+	PhaseRunner.begin_with_steps(play_steps)
 	if not PhaseRunner.is_sequence_active():
 		_show_menu_dialog(
 			"Não foi possível iniciar",
 			"A sequência não tem fases jogáveis.\n(Verifique se há fases além de Binário/Conversão desabilitadas.)"
 		)
+
+
+func _with_all_conversions(steps: Array) -> Array:
+	var out: Array = []
+	for s in steps:
+		if s is PhaseSequenceStep:
+			var copy := (s as PhaseSequenceStep).duplicate(true) as PhaseSequenceStep
+			var cfg: PhaseConfig = copy.config_mochila
+			if cfg:
+				cfg.use_converter = true
+				cfg.allow_float = true
+				cfg.allow_double = true
+				cfg.allow_short = true
+				cfg.allow_fp8 = true
+				cfg.allow_fp16 = true
+			out.append(copy)
+		else:
+			out.append(s)
+	return out
 
 
 func _show_menu_dialog(title: String, message: String) -> void:

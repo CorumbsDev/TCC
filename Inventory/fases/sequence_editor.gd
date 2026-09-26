@@ -66,7 +66,9 @@ const QR_DIALOG_SCENE := preload("res://Inventory/fases/qr/sequence_qr_dialog.ts
 	"spin_bin_left": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/BinaryPanel/GridBinary/SpinBinLeft,
 	"spin_bin_right": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/BinaryPanel/GridBinary/SpinBinRight,
 	"spin_star2_moves": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/StarGrid/SpinStar2Moves,
-	"line_edit_star3_solution": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/StarGrid/LineEditStar3Solution
+	"line_edit_star3_solution": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/StarGrid/LineEditStar3Solution,
+	"opt_slot_bytes": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/OptSlotBytes,
+	"lbl_slot_bytes": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/LblSlotBytes
 }
 
 var file_manager: SequenceFileManager
@@ -111,6 +113,13 @@ func _ready() -> void:
 	
 	if tutorial_text_edit and not tutorial_text_edit.text_changed.is_connected(_on_tutorial_text_changed):
 		tutorial_text_edit.text_changed.connect(_on_tutorial_text_changed)
+
+	var opt_slot: OptionButton = ui_elements.opt_slot_bytes
+	if opt_slot and opt_slot.item_count == 0:
+		opt_slot.add_item("4 bytes (palavra)", 4)
+		opt_slot.add_item("1 byte (célula)", 1)
+	if opt_slot and not opt_slot.item_selected.is_connected(_on_slot_bytes_selected):
+		opt_slot.item_selected.connect(_on_slot_bytes_selected)
 	
 	_configure_phase_type_options()
 	
@@ -247,7 +256,7 @@ func _add_sequence_to_tree(file_name: String, seq_list: PhaseSequenceList) -> Tr
 
 func _add_phase_to_tree(parent: TreeItem, step: PhaseSequenceStep, index: int) -> TreeItem:
 	var phase_item = tree.create_item(parent)
-	phase_item.set_text(0, "📄 Fase %d (%s)" % [index, _kind_label(step.kind)])
+	phase_item.set_text(0, "📄 Fase %d (%s)" % [index, _phase_label(step)])
 	phase_item.set_metadata(0, {"type": "phase", "step": step, "parent_file": parent.get_metadata(0).file})
 	return phase_item
 
@@ -410,6 +419,11 @@ func _apply_visibility_rules(rules: Dictionary) -> void:
 	lbl_csv.text = rules.get("lbl_csv_text", "")
 	line_edit_csv.placeholder_text = rules.get("line_edit_csv_placeholder", "")
 	lbl_rnd_pool.text = rules.get("lbl_rnd_pool_text", "")
+	var show_slot: bool = bool(rules.get("opt_slot_bytes", false))
+	if ui_elements.has("lbl_slot_bytes") and ui_elements.lbl_slot_bytes:
+		ui_elements.lbl_slot_bytes.visible = show_slot
+	if ui_elements.has("opt_slot_bytes") and ui_elements.opt_slot_bytes:
+		ui_elements.opt_slot_bytes.visible = show_slot
 
 func _kind_label(kind: PhaseSequenceStep.Kind) -> String:
 	match kind:
@@ -418,6 +432,39 @@ func _kind_label(kind: PhaseSequenceStep.Kind) -> String:
 		PhaseSequenceStep.Kind.RAW_MOCHILA: return "Mochila+RAW"
 		PhaseSequenceStep.Kind.CONVERSAO: return "Conversão"
 		_: return "Mochila"
+
+
+func _step_slot_bytes(step: PhaseSequenceStep) -> int:
+	if step == null:
+		return 4
+	match step.kind:
+		PhaseSequenceStep.Kind.MOCHILA:
+			if step.config_mochila:
+				return MemoryLayout.normalize_slot_bytes(step.config_mochila.slot_bytes)
+		PhaseSequenceStep.Kind.RAW_MOCHILA:
+			if step.config_raw_mochila:
+				return MemoryLayout.normalize_slot_bytes(step.config_raw_mochila.slot_bytes)
+		PhaseSequenceStep.Kind.TYPE_BOX:
+			if step.config_type_box:
+				return MemoryLayout.normalize_slot_bytes(step.config_type_box.slot_bytes)
+		_:
+			return 4
+	return 4
+
+
+func _phase_label(step: PhaseSequenceStep) -> String:
+	var base := _kind_label(step.kind)
+	if _step_slot_bytes(step) == 1:
+		return base + " · slot 1B"
+	return base
+
+
+func _refresh_selected_phase_label() -> void:
+	var sel := tree.get_selected()
+	if sel == null or sel.get_metadata(0) == null or sel.get_metadata(0).type != "phase":
+		return
+	var step: PhaseSequenceStep = sel.get_metadata(0).step
+	sel.set_text(0, "📄 Fase %d (%s)" % [sel.get_index() + 1, _phase_label(step)])
 
 func _flush_active_phase_editor() -> void:
 	if _active_phase_step == null or _active_phase_parent_file == "":
@@ -490,7 +537,7 @@ func _on_btn_delete_pressed() -> void:
 		var i = 1
 		for c in seq_item.get_children():
 			var step = c.get_metadata(0).step
-			c.set_text(0, "📄 Fase %d (%s)" % [i, _kind_label(step.kind)])
+			c.set_text(0, "📄 Fase %d (%s)" % [i, _phase_label(step)])
 			i += 1
 			
 		file_manager.save_sequence(seq_meta.file, seq_list)
@@ -600,7 +647,7 @@ func _on_phase_type_button_pressed(kind: PhaseSequenceStep.Kind) -> void:
 		step.config_conversao = ConfigGenerator.generate_conversion_config()
 		
 	var idx = sel.get_index() + 1
-	sel.set_text(0, "📄 Fase %d (%s)" % [idx, _kind_label(step.kind)])
+	sel.set_text(0, "📄 Fase %d (%s)" % [idx, _phase_label(step)])
 	
 	var parent_file = sel.get_metadata(0).parent_file
 	file_manager.save_sequence(parent_file, file_manager.sequences[parent_file])
@@ -614,6 +661,12 @@ func _on_phase_type_button_pressed(kind: PhaseSequenceStep.Kind) -> void:
 
 func _on_param_changed(_value: float) -> void:
 	_trigger_ui_save()
+
+func _on_slot_bytes_selected(_index: int) -> void:
+	if _is_updating_ui:
+		return
+	_trigger_ui_save()
+	_refresh_selected_phase_label()
 
 func _on_text_param_changed(_new_text: String) -> void:
 	_trigger_ui_save()
@@ -695,6 +748,7 @@ func _update_preview_grids() -> void:
 		var cfg = _active_phase_step.config_mochila
 		cap_bytes = cfg.capacity_bytes
 		preview_mochila.capacity_bytes = cap_bytes
+		preview_mochila.slot_bytes = cfg.slot_bytes
 		preview_mochila.number_of_slots = cfg.backpack_slot_count
 		preview_mochila.grid_columns = cfg.grid_columns
 		# Solução ideal (estrela 3) na mochila; itens iniciais / pool na bancada.
@@ -706,20 +760,21 @@ func _update_preview_grids() -> void:
 		preview_bancada.capacity_bytes = 999
 		preview_bancada.number_of_slots = maxi(cfg.pool_slot_count, bancada_items.size())
 		preview_bancada.grid_columns = cfg.pool_grid_columns
-		lbl_mochila_text = "Pré-visualização: Mochila (Capacidade: %d bytes)" % cap_bytes
+		lbl_mochila_text = "Pré-visualização: Mochila (Capacidade: %d bytes, slot %dB)" % [cap_bytes, MemoryLayout.normalize_slot_bytes(cfg.slot_bytes)]
 		lbl_bancada_text = "Pré-visualização: Bancada / Itens iniciais"
 
 	elif _active_phase_step.kind == PhaseSequenceStep.Kind.RAW_MOCHILA and _active_phase_step.config_raw_mochila:
 		var rcfg = _active_phase_step.config_raw_mochila
 		cap_bytes = rcfg.capacity_bytes
 		preview_mochila.capacity_bytes = cap_bytes
+		preview_mochila.slot_bytes = rcfg.slot_bytes
 		preview_mochila.number_of_slots = rcfg.backpack_slot_count
 		preview_mochila.grid_columns = rcfg.grid_columns
 		bancada_items = _raw_values_to_preview_ids(rcfg.initial_raw_values)
 		preview_bancada.capacity_bytes = 999
 		preview_bancada.number_of_slots = maxi(rcfg.pool_slot_count, bancada_items.size())
 		preview_bancada.grid_columns = rcfg.pool_grid_columns
-		lbl_mochila_text = "Pré-visualização: Mochila RAW (Capacidade: %d bytes)" % cap_bytes
+		lbl_mochila_text = "Pré-visualização: Mochila RAW (Capacidade: %d bytes, slot %dB)" % [cap_bytes, MemoryLayout.normalize_slot_bytes(rcfg.slot_bytes)]
 		lbl_bancada_text = "Pré-visualização: Pool RAW"
 
 	elif _active_phase_step.kind == PhaseSequenceStep.Kind.TYPE_BOX and _active_phase_step.config_type_box:
@@ -823,7 +878,7 @@ func _on_help_geral_pressed() -> void:
 	)
 
 func _on_help_mochila_pressed() -> void:
-	_show_dialog("Mochila e Bancada", "- Capacidade: Quantos bytes a mochila suporta.\n- Slots: Quantos quadrados visíveis existem para soltar itens.\n- Bancada (Pool): A área onde os itens ficam disponíveis para escolha.")
+	_show_dialog("Mochila e Bancada", "- Capacidade: Quantos bytes a mochila suporta.\n- Slots: Quantos quadrados visíveis existem para soltar itens.\n- Tamanho do slot: 4 bytes (uma palavra — int cabe em 1 slot, short na metade) ou 1 byte (célula, como a fase binária — int ocupa 4 slots, short ocupa 2).\n- Bancada (Pool): A área onde os itens ficam disponíveis para escolha.")
 
 func _on_help_valores_pressed() -> void:
 	_show_dialog("Valores e Tipos", "- Int Mín/Máx: faixa de ints aleatórios.\n- Itens iniciais: 1_i, 3.14_f, 2.5_d (vírgulas entre itens).\n- Exportar/Importar CSV usa | entre itens na coluna de itens (ex: 1_i|2_i|3_i).\n- Tipos aleatórios extra: quantidade de IDs sortidos na bancada.")
@@ -872,20 +927,21 @@ func _get_selected_sequence_list() -> PhaseSequenceList:
 
 
 func _build_sequence_csv(seq_list: PhaseSequenceList) -> String:
-	var csv_str = "KIND,CAPACITY,SLOTS_M,SLOTS_P,COLS,MIN,MAX,CSV_ITEMS,RND_POOL,FLOAT,DOUBLE,SHORT,BOOL,FP8,FP16,CALC,FP_CUST,FP8_E,FP8_M,FP16_E,FP16_M\n"
+	var csv_str = "KIND,CAPACITY,SLOTS_M,SLOTS_P,COLS,MIN,MAX,CSV_ITEMS,RND_POOL,FLOAT,DOUBLE,SHORT,BOOL,FP8,FP16,CALC,FP_CUST,FP8_E,FP8_M,FP16_E,FP16_M,SLOT_BYTES\n"
 	for step in seq_list.steps:
 		if step.kind == PhaseSequenceStep.Kind.MOCHILA:
 			var c = step.config_mochila
 			if not c:
 				c = PhaseConfig.new()
 			var items_field := SequenceCsvCodec.items_field_from_backpack_csv(c.initial_backpack_csv)
-			csv_str += "M,%d,%d,%d,%d,%d,%d,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d\n" % [
+			csv_str += "M,%d,%d,%d,%d,%d,%d,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d,%d\n" % [
 				c.capacity_bytes, c.backpack_slot_count, c.pool_slot_count, c.pool_grid_columns,
 				c.spawn_int_min, c.spawn_int_max,
 				SequenceCsvCodec.escape_field(items_field), c.random_pool.size(),
 				str(c.use_converter), str(c.allow_double), str(c.allow_short), "false",
 				str(c.allow_fp8), str(c.allow_fp16), str(c.allow_calc), str(c.allow_fp_customization),
-				c.fp8_exp_bits, c.fp8_mant_bits, c.fp16_exp_bits, c.fp16_mant_bits
+				c.fp8_exp_bits, c.fp8_mant_bits, c.fp16_exp_bits, c.fp16_mant_bits,
+				MemoryLayout.normalize_slot_bytes(c.slot_bytes)
 			]
 		elif step.kind == PhaseSequenceStep.Kind.TYPE_BOX:
 			var tc = step.config_type_box
@@ -905,13 +961,14 @@ func _build_sequence_csv(seq_list: PhaseSequenceList) -> String:
 			if not rc:
 				rc = RawKnapsackPhaseConfig.new()
 			var raw_field2 := SequenceCsvCodec.ITEMS_SEP.join(rc.initial_raw_values)
-			csv_str += "R,%d,%d,%d,%d,0,0,%s,%d,%s,%s,%s,%s,%s,%s,false,false,%d,%d,%d,%d\n" % [
+			csv_str += "R,%d,%d,%d,%d,0,0,%s,%d,%s,%s,%s,%s,%s,%s,false,false,%d,%d,%d,%d,%d\n" % [
 				rc.capacity_bytes, rc.backpack_slot_count, rc.pool_slot_count, rc.pool_grid_columns,
 				SequenceCsvCodec.escape_field(raw_field2),
 				1 if rc.randomize_values else 0,
 				str(rc.allow_float), str(rc.allow_double), str(rc.allow_short), "false",
 				str(rc.allow_fp8), str(rc.allow_fp16),
-				rc.fp8_exp_bits, rc.fp8_mant_bits, rc.fp16_exp_bits, rc.fp16_mant_bits
+				rc.fp8_exp_bits, rc.fp8_mant_bits, rc.fp16_exp_bits, rc.fp16_mant_bits,
+				MemoryLayout.normalize_slot_bytes(rc.slot_bytes)
 			]
 		elif step.kind == PhaseSequenceStep.Kind.CONVERSAO and PhaseSequenceStep.conversion_phases_enabled():
 			var cc: ConversionPhaseConfig = step.config_conversao
@@ -978,6 +1035,8 @@ func _import_sequence_from_csv(csv_str: String) -> Dictionary:
 				c.fp8_mant_bits = int(parts[18])
 				c.fp16_exp_bits = int(parts[19])
 				c.fp16_mant_bits = int(parts[20])
+			if parts.size() > 21:
+				c.slot_bytes = MemoryLayout.normalize_slot_bytes(int(parts[21]))
 			step.config_mochila = c
 		elif parts[0] == "R":
 			step.kind = PhaseSequenceStep.Kind.RAW_MOCHILA
@@ -1009,6 +1068,8 @@ func _import_sequence_from_csv(csv_str: String) -> Dictionary:
 				rc.fp8_mant_bits = int(parts[18])
 				rc.fp16_exp_bits = int(parts[19])
 				rc.fp16_mant_bits = int(parts[20])
+			if parts.size() > 21:
+				rc.slot_bytes = MemoryLayout.normalize_slot_bytes(int(parts[21]))
 			step.config_raw_mochila = rc
 		elif parts[0] == "T":
 			step.kind = PhaseSequenceStep.Kind.TYPE_BOX

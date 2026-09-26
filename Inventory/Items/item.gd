@@ -193,31 +193,6 @@ func shrink_orb_for_tool_slot() -> void:
 func restore_orb_layout() -> void:
 	update_label_display()
 
-func _double_spans_two_slots(anchor: TextureRect) -> bool:
-	if anchor == null or item_grids.size() < 2:
-		return false
-	var spans_right := false
-	for g in item_grids:
-		if int(g.x) >= 1:
-			spans_right = true
-			break
-	if not spans_right:
-		return false
-	var grid_parent := anchor.get_parent()
-	if grid_parent == null:
-		return false
-	for sibling in grid_parent.get_children():
-		if sibling == anchor or not (sibling is TextureRect):
-			continue
-		var s_id = sibling.get("slot_ID")
-		var a_id = anchor.get("slot_ID")
-		if s_id != null and a_id != null:
-			var stored = sibling.get("items_stored")
-			if stored != null and self in stored:
-				if int(s_id) == int(a_id) + 1:
-					return true
-	return false
-
 func position_in_slot(slot: TextureRect) -> Vector2:
 	if slot == null:
 		return Vector2.ZERO
@@ -226,8 +201,11 @@ func position_in_slot(slot: TextureRect) -> Vector2:
 		anchor = grid_anchor
 	var side: float = maxf(anchor.size.x, SLOT_PX)
 	var center: Vector2 = Vector2(side, side) * 0.5
-	if data_type == DataType.DOUBLE and _double_spans_two_slots(anchor):
-		return center + Vector2(SLOT_PX * 0.5, 0)
+	var span_x := 0
+	for g in item_grids:
+		span_x = maxi(span_x, int(g.x))
+	if span_x >= 1:
+		return center + Vector2(SLOT_PX * float(span_x) * 0.5, 0)
 	if data_type == DataType.OPERATOR or data_type == DataType.RAW or _slot_item_count(anchor) <= 1:
 		return center
 	var item_bytes: int = get_size_bytes() if has_method("get_size_bytes") else 4

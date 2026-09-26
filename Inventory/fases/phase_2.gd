@@ -62,6 +62,7 @@ func _update_phase_title() -> void:
 
 func _apply_challenge_exports(grid: InventoryGrid):
 	grid.capacity_bytes = config.capacity_bytes
+	grid.slot_bytes = config.slot_bytes
 	grid.grid_columns = config.grid_columns
 	grid.number_of_slots = config.backpack_slot_count
 	grid.clear_initial_items()

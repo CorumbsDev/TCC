@@ -3,6 +3,8 @@ extends Resource
 
 ## Capacidade total em bytes permitida para a fase (soma de todas as caixas).
 @export var capacity_bytes: int = 8
+## 4 = palavra. 1 = cada slot visual vale 1 byte.
+@export var slot_bytes: int = 4
 
 ## Valores puros iniciais que o jogador deve tipar. (ex: "250_raw", "3.14_raw").
 @export var initial_raw_values: PackedStringArray = PackedStringArray()
@@ -37,4 +39,5 @@ extends Resource
 
 func apply_constraints() -> void:
 	capacity_bytes = clampi(capacity_bytes, 1, 4096)
+	slot_bytes = 1 if slot_bytes <= 1 else 4
 	box_slot_count = clampi(box_slot_count, 1, 64)

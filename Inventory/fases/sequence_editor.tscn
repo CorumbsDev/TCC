@@ -297,6 +297,14 @@ min_value = 1.0
 max_value = 20.0
 value = 5.0
 
+[node name="LblSlotBytes" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer"]
+layout_mode = 2
+text = "Tamanho do slot:"
+
+[node name="OptSlotBytes" type="OptionButton" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="Sep2" type="HSeparator" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox"]
 layout_mode = 2
 

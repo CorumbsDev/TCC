@@ -511,7 +511,10 @@ func _update_bytes_label():
 		return
 	var used = backpack_grid.total_bytes_used()
 	var cap = backpack_grid.capacity_bytes
-	bytes_label.text = "Mochila: %d / %d bytes" % [used, cap]
+	var slot_note := ""
+	if backpack_grid.get("slot_bytes") != null and MemoryLayout.normalize_slot_bytes(int(backpack_grid.slot_bytes)) == 1:
+		slot_note = "  ·  slot de 1 byte (int = 4 células, short = 2)"
+	bytes_label.text = "Mochila: %d / %d bytes%s" % [used, cap, slot_note]
 	_update_next_button_state()
 
 func _update_hint() -> void:
