@@ -72,8 +72,7 @@ func _on_comecar_pressed():
 	if steps.is_empty():
 		_show_menu_dialog(
 			"Sem fases para jogar",
-			"Não há fases em '%s'.\n\nAbra o Criador de Fases, adicione pelo menos uma fase e salve."
-			% SequenceFileManager.DEFAULT_PLAY_SEQUENCE_FILE.replace(".tres", "")
+			"A primeira sequência não tem fases.\n\nAbra o Criador de Fases, adicione pelo menos uma fase e salve."
 		)
 		return
 	var play_steps := _with_all_conversions(steps)

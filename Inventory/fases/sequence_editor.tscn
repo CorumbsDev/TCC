@@ -186,7 +186,6 @@ autowrap_mode = 3
 [node name="AchievementsListLabel" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/SequenceEditor"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = ""
 autowrap_mode = 3
 
 [node name="PhaseEditor" type="HSplitContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer"]
@@ -307,6 +306,81 @@ size_flags_horizontal = 3
 
 [node name="Sep2" type="HSeparator" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox"]
 layout_mode = 2
+
+[node name="VisualPreviewVBox" type="VBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox"]
+custom_minimum_size = Vector2(0, 450)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LabelPreview" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox"]
+layout_mode = 2
+text = "Pré-visualização (Grade e Bancada)"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PreviewContent" type="VBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="OrbCreatorPanel" type="PanelContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel"]
+layout_mode = 2
+
+[node name="LabelCreator" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer"]
+layout_mode = 2
+text = "Criador de Orbes"
+
+[node name="HBoxType" type="HBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="LabelType" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxType"]
+layout_mode = 2
+text = "Tipo:"
+
+[node name="OptionButtonType" type="OptionButton" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxType"]
+layout_mode = 2
+size_flags_horizontal = 3
+item_count = 5
+popup/item_0/text = "INT"
+popup/item_0/id = 0
+popup/item_1/text = "FLOAT"
+popup/item_1/id = 1
+popup/item_2/text = "DOUBLE"
+popup/item_2/id = 2
+popup/item_3/text = "SHORT"
+popup/item_3/id = 3
+popup/item_4/text = "RAW"
+popup/item_4/id = 4
+
+[node name="HBoxValue" type="HBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="LabelValue" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxValue"]
+layout_mode = 2
+text = "Valor:"
+
+[node name="LineEditValue" type="LineEdit" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxValue"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxButtons" type="HBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="BtnAddPool" type="Button" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "+ Bancada"
+
+[node name="BtnAddSolution" type="Button" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "+ Mochila"
 
 [node name="HBoxValores" type="HBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox"]
 layout_mode = 2
@@ -464,86 +538,13 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.85, 0.55, 1)
 text = "Alterações são salvas ao trocar de fase ou ao clicar em Salvar."
 
-[node name="VisualPreviewVBox" type="VBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="LabelPreview" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox"]
-layout_mode = 2
-text = "Pré-visualização (Grade e Bancada)"
-
-[node name="ScrollContainer" type="ScrollContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="PreviewContent" type="VBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/ScrollContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="OrbCreatorPanel" type="PanelContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox"]
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel"]
-layout_mode = 2
-
-[node name="LabelCreator" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer"]
-layout_mode = 2
-text = "Criador de Orbes"
-
-[node name="HBoxType" type="HBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer"]
-layout_mode = 2
-
-[node name="LabelType" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxType"]
-layout_mode = 2
-text = "Tipo:"
-
-[node name="OptionButtonType" type="OptionButton" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxType"]
-layout_mode = 2
-size_flags_horizontal = 3
-item_count = 5
-popup/item_0/text = "INT"
-popup/item_0/id = 0
-popup/item_1/text = "FLOAT"
-popup/item_1/id = 1
-popup/item_2/text = "DOUBLE"
-popup/item_2/id = 2
-popup/item_3/text = "SHORT"
-popup/item_3/id = 3
-popup/item_4/text = "RAW"
-popup/item_4/id = 4
-
-[node name="HBoxValue" type="HBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer"]
-layout_mode = 2
-
-[node name="LabelValue" type="Label" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxValue"]
-layout_mode = 2
-text = "Valor:"
-
-[node name="LineEditValue" type="LineEdit" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxValue"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="HBoxButtons" type="HBoxContainer" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer"]
-layout_mode = 2
-
-[node name="BtnAddPool" type="Button" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "+ Bancada"
-
-[node name="BtnAddSolution" type="Button" parent="Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "+ Mochila"
-
+[connection signal="pressed" from="Panel/VBoxContainer/Header/TitleRow/BtnVoltar" to="." method="_on_btn_voltar_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnExportarCSV" to="." method="_on_btn_export_csv_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnImportarCSV" to="." method="_on_btn_import_csv_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnExportarQR" to="." method="_on_btn_export_qr_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnImportarQR" to="." method="_on_btn_import_qr_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnSalvarTudo" to="." method="_on_btn_salvar_tudo_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Header/ActionsRow/BtnJogar" to="." method="_on_btn_jogar_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Header/TitleRow/BtnVoltar" to="." method="_on_btn_voltar_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/LabelHBox/BtnHelpGeral" to="." method="_on_help_geral_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar/BtnNovaSeq" to="." method="_on_btn_nova_seq_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/HSplitContainer/LeftPanel/Toolbar/BtnNovaFase" to="." method="_on_btn_nova_fase_pressed"]

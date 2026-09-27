@@ -1,0 +1,6 @@
+{
+  "expressao": "5+5",
+  "resultado": 0.0,
+  "codigo": "# Erro ao gerar código: name 'resultado' is not defined",
+  "sucesso": false
+}

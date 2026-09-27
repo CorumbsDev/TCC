@@ -89,6 +89,7 @@ func _setup_bancada() -> void:
 	var pool: InventoryGrid = GRID_SCENE.instantiate()
 	pool.capacity_bytes = 999999
 	pool.grid_columns = config.pool_grid_columns
+	pool.slot_bytes = config.slot_bytes
 	pool.number_of_slots = config.pool_slot_count
 	pool.clear_initial_items()
 	pl_vbox.add_child(pool)

@@ -42,13 +42,11 @@ func get_play_sequence() -> PhaseSequenceList:
 	return _create_base_sequence(DEFAULT_PLAY_SEQUENCE_FILE)
 
 func _find_default_sequence() -> PhaseSequenceList:
-	if sequences.has(DEFAULT_PLAY_SEQUENCE_FILE):
-		return sequences[DEFAULT_PLAY_SEQUENCE_FILE] as PhaseSequenceList
-	# Nomes alternativos (Linux é case-sensitive).
-	for file_name in sequences.keys():
-		if file_name.to_lower() == DEFAULT_PLAY_SEQUENCE_FILE.to_lower():
-			return sequences[file_name] as PhaseSequenceList
-	return null
+	if sequences.is_empty():
+		return null
+	var keys = sequences.keys()
+	keys.sort()
+	return sequences[keys[0]] as PhaseSequenceList
 
 func get_play_steps() -> Array:
 	var seq := get_play_sequence()

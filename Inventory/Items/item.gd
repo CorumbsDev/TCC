@@ -72,7 +72,17 @@ func get_item_rect() -> Rect2:
 	"""Retorna o retângulo do item para detecção de hover / clique."""
 	var half: float = SLOT_PX * 0.5
 	if grid_anchor != null or not selected:
-		return Rect2(Vector2(-half, -half), Vector2(SLOT_PX, SLOT_PX))
+		var min_x = 0.0
+		var min_y = 0.0
+		var max_x = 0.0
+		var max_y = 0.0
+		if item_grids.size() > 0:
+			for g in item_grids:
+				if g.x < min_x: min_x = g.x
+				if g.x > max_x: max_x = g.x
+				if g.y < min_y: min_y = g.y
+				if g.y > max_y: max_y = g.y
+		return Rect2(Vector2(-half + min_x * SLOT_PX, -half + min_y * SLOT_PX), Vector2((max_x - min_x + 1.0) * SLOT_PX, (max_y - min_y + 1.0) * SLOT_PX))
 	var icon: TextureRect = get_node_or_null("Icon") as TextureRect
 	if icon and icon.size.x > 1.0:
 		return Rect2(icon.position, icon.size)

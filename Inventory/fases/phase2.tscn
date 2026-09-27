@@ -7,6 +7,7 @@
 [sub_resource type="Resource" id="demo_cfg"]
 script = ExtResource("3_cfg")
 capacity_bytes = 8
+slot_bytes = 4
 grid_columns = 4
 backpack_slot_count = 8
 pool_slot_count = 12

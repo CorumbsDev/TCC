@@ -34,13 +34,13 @@ const QR_DIALOG_SCENE := preload("res://Inventory/fases/qr/sequence_qr_dialog.ts
 @onready var spin_rnd_pool: SpinBox = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/SpinRndPool
 
 # Visual Preview and Orb Creator
-@onready var visual_preview_vbox: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox
-@onready var preview_content: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/ScrollContainer/PreviewContent
-@onready var orb_creator_panel: PanelContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel
-@onready var option_button_type: OptionButton = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxType/OptionButtonType
-@onready var line_edit_value: LineEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxValue/LineEditValue
-@onready var btn_add_pool: Button = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons/BtnAddPool
-@onready var btn_add_solution: Button = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons/BtnAddSolution
+@onready var visual_preview_vbox: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox
+@onready var preview_content: VBoxContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/ScrollContainer/PreviewContent
+@onready var orb_creator_panel: PanelContainer = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel
+@onready var option_button_type: OptionButton = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxType/OptionButtonType
+@onready var line_edit_value: LineEdit = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxValue/LineEditValue
+@onready var btn_add_pool: Button = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons/BtnAddPool
+@onready var btn_add_solution: Button = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/VisualPreviewVBox/OrbCreatorPanel/VBoxContainer/HBoxButtons/BtnAddSolution
 
 @onready var sep_star: HSeparator = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/SepStar
 @onready var lbl_star: Label = $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/LabelStarHeader
@@ -49,6 +49,7 @@ const QR_DIALOG_SCENE := preload("res://Inventory/fases/qr/sequence_qr_dialog.ts
 # For passing to panels
 @onready var ui_elements = {
 	"spin_cap": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/SpinCap,
+	"lbl_cap": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/LblCap,
 	"spin_slots_m": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/SpinSlotsM,
 	"spin_slots_p": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/SpinSlotsP,
 	"spin_cols": $Panel/VBoxContainer/HSplitContainer/RightPanel/VBoxContainer/PhaseEditor/ConfigsVBox/GridContainer/SpinCols,
@@ -238,7 +239,9 @@ func _load_all_sequences() -> void:
 		c.free()
 	
 	var sequences = file_manager.load_all_sequences()
-	for file_name in sequences:
+	var keys = sequences.keys()
+	keys.sort()
+	for file_name in keys:
 		_add_sequence_to_tree(file_name, sequences[file_name])
 
 func _add_sequence_to_tree(file_name: String, seq_list: PhaseSequenceList) -> TreeItem:
@@ -390,6 +393,9 @@ func _update_phase_type_ui(kind: PhaseSequenceStep.Kind) -> void:
 			kind = first_vbox.get_meta("kind")
 
 func _apply_visibility_rules(rules: Dictionary) -> void:
+	ui_elements.spin_cap.visible = rules.get("spin_cap", true)
+	ui_elements.lbl_cap.visible = rules.get("lbl_cap", true)
+	
 	grid_mochila.visible = rules.get("grid_mochila", true)
 	hbox_mochila.visible = rules.get("hbox_mochila", true)
 	sep_mochila.visible = rules.get("sep_mochila", true)
@@ -665,8 +671,51 @@ func _on_param_changed(_value: float) -> void:
 func _on_slot_bytes_selected(_index: int) -> void:
 	if _is_updating_ui:
 		return
+	_truncate_oversized_items()
 	_trigger_ui_save()
 	_refresh_selected_phase_label()
+
+func _truncate_oversized_items() -> void:
+	if _active_phase_step == null: return
+	var opt_slot: OptionButton = ui_elements.get("opt_slot_bytes")
+	if not opt_slot: return
+	var new_slot_bytes = MemoryLayout.normalize_slot_bytes(opt_slot.get_selected_id())
+	
+	if _active_phase_step.kind == PhaseSequenceStep.Kind.MOCHILA or _active_phase_step.kind == PhaseSequenceStep.Kind.RAW_MOCHILA:
+		var pool_slots = 999
+		var bp_slots = 999
+		if ui_elements.has("spin_slots_p") and ui_elements.spin_slots_p:
+			pool_slots = int(ui_elements.spin_slots_p.value)
+		if ui_elements.has("spin_slots_m") and ui_elements.spin_slots_m:
+			bp_slots = int(ui_elements.spin_slots_m.value)
+			
+		_truncate_line_edit(line_edit_csv, pool_slots, new_slot_bytes)
+		if ui_elements.has("line_edit_star3_solution") and ui_elements.line_edit_star3_solution:
+			_truncate_line_edit(ui_elements.line_edit_star3_solution, bp_slots, new_slot_bytes)
+
+func _truncate_line_edit(le: LineEdit, max_slots: int, slot_bytes: int) -> void:
+	if not le: return
+	var current_text = le.text.strip_edges()
+	if current_text == "": return
+	
+	var items = current_text.split(",")
+	var valid_items = []
+	var used_slots = 0
+	
+	for it in items:
+		var s = it.strip_edges()
+		if s == "": continue
+		var it_bytes = 4
+		if s.ends_with("_d"): it_bytes = 8
+		elif s.ends_with("_s"): it_bytes = 2
+		elif s.ends_with("_r") or s == "raw": it_bytes = 1
+		
+		var needed = MemoryLayout.slots_occupied(it_bytes, slot_bytes)
+		if used_slots + needed <= max_slots:
+			used_slots += needed
+			valid_items.append(s)
+			
+	le.text = ", ".join(valid_items)
 
 func _on_text_param_changed(_new_text: String) -> void:
 	_trigger_ui_save()
@@ -696,6 +745,10 @@ func _on_btn_add_solution_pressed() -> void:
 func _append_orb_to_line_edit(le: LineEdit) -> void:
 	if not le: return
 	var t = option_button_type.get_selected_id()
+	
+	if not _can_add_orb(le, t):
+		return
+
 	var val = line_edit_value.text.strip_edges()
 	var suffix = "_i"
 	if t == 1: suffix = "_f"
@@ -722,15 +775,61 @@ func _append_orb_to_line_edit(le: LineEdit) -> void:
 	_trigger_ui_save()
 	_update_preview_grids()
 
+func _can_add_orb(le: LineEdit, type_id: int) -> bool:
+	if _active_phase_step == null: return true
+	
+	var slot_bytes = 4
+	var max_slots = 999
+	
+	if _active_phase_step.kind == PhaseSequenceStep.Kind.MOCHILA and _active_phase_step.config_mochila:
+		slot_bytes = _active_phase_step.config_mochila.slot_bytes
+		if le == line_edit_csv:
+			max_slots = _active_phase_step.config_mochila.pool_slot_count
+		else:
+			max_slots = _active_phase_step.config_mochila.backpack_slot_count
+	elif _active_phase_step.kind == PhaseSequenceStep.Kind.RAW_MOCHILA and _active_phase_step.config_raw_mochila:
+		slot_bytes = _active_phase_step.config_raw_mochila.slot_bytes
+		if le == line_edit_csv:
+			max_slots = _active_phase_step.config_raw_mochila.pool_slot_count
+		else:
+			max_slots = _active_phase_step.config_raw_mochila.backpack_slot_count
+	else:
+		return true
+		
+	var new_orb_bytes = 4
+	if type_id == 2: new_orb_bytes = 8
+	elif type_id == 3: new_orb_bytes = 2
+	elif type_id == 4: new_orb_bytes = 1
+	
+	var needed_slots = MemoryLayout.slots_occupied(new_orb_bytes, slot_bytes)
+	
+	var current_text = le.text.strip_edges()
+	var used_slots = 0
+	if current_text != "":
+		var items = current_text.split(",")
+		for it in items:
+			var s = it.strip_edges()
+			if s == "": continue
+			var it_bytes = 4
+			if s.ends_with("_d"): it_bytes = 8
+			elif s.ends_with("_s"): it_bytes = 2
+			elif s.ends_with("_r") or s == "raw": it_bytes = 1
+			used_slots += MemoryLayout.slots_occupied(it_bytes, slot_bytes)
+			
+	if used_slots + needed_slots > max_slots:
+		_show_dialog("Sem espaço!", "Não há slots suficientes para adicionar este orbe.\nSlots necessários: %d\nSlots disponíveis: %d" % [needed_slots, maxi(0, max_slots - used_slots)])
+		return false
+		
+	return true
+
 func _update_preview_grids() -> void:
 	if _active_phase_step == null or preview_content == null:
 		return
 
 	# Remove filhos imediatamente para não acumular grids antigos no mesmo frame.
-	while preview_content.get_child_count() > 0:
-		var c := preview_content.get_child(0)
+	for c in preview_content.get_children():
 		preview_content.remove_child(c)
-		c.free()
+		c.queue_free()
 
 	preview_mochila = preload("res://Inventory/InventoryGrid.tscn").instantiate()
 	preview_mochila.custom_minimum_size = Vector2(0, 200)
@@ -758,6 +857,7 @@ func _update_preview_grids() -> void:
 			for id in cfg.random_pool:
 				bancada_items.append(str(id))
 		preview_bancada.capacity_bytes = 999
+		preview_bancada.slot_bytes = cfg.slot_bytes
 		preview_bancada.number_of_slots = maxi(cfg.pool_slot_count, bancada_items.size())
 		preview_bancada.grid_columns = cfg.pool_grid_columns
 		lbl_mochila_text = "Pré-visualização: Mochila (Capacidade: %d bytes, slot %dB)" % [cap_bytes, MemoryLayout.normalize_slot_bytes(cfg.slot_bytes)]
@@ -772,6 +872,7 @@ func _update_preview_grids() -> void:
 		preview_mochila.grid_columns = rcfg.grid_columns
 		bancada_items = _raw_values_to_preview_ids(rcfg.initial_raw_values)
 		preview_bancada.capacity_bytes = 999
+		preview_bancada.slot_bytes = rcfg.slot_bytes
 		preview_bancada.number_of_slots = maxi(rcfg.pool_slot_count, bancada_items.size())
 		preview_bancada.grid_columns = rcfg.pool_grid_columns
 		lbl_mochila_text = "Pré-visualização: Mochila RAW (Capacidade: %d bytes, slot %dB)" % [cap_bytes, MemoryLayout.normalize_slot_bytes(rcfg.slot_bytes)]

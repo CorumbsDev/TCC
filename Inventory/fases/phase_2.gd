@@ -70,6 +70,7 @@ func _apply_challenge_exports(grid: InventoryGrid):
 
 func _apply_pool_exports(grid: InventoryGrid):
 	grid.capacity_bytes = 999999
+	grid.slot_bytes = config.slot_bytes
 	grid.grid_columns = config.pool_grid_columns
 	grid.number_of_slots = config.pool_slot_count
 	grid.clear_initial_items()
