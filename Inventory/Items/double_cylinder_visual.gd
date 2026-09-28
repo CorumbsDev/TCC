@@ -1,33 +1,41 @@
 class_name DoubleCylinderVisual
 extends Node2D
-## Cilindro (2 slots) — representação visual do tipo DOUBLE.
+## Cilindro representação visual
 ## Node2D (não Control): desenha de forma confiável como filho do Item.
 
-const RIM := Color(1.0, 0.28, 0.82, 1.0)
-const RIM_GLOW := Color(1.0, 0.55, 0.95, 0.7)
-const BODY := Color(0.42, 0.06, 0.32, 0.92)
-const BODY_DARK := Color(0.28, 0.03, 0.22, 1.0)
-const CAP := Color(0.72, 0.18, 0.55, 1.0)
-const CAP_HI := Color(0.95, 0.4, 0.85, 1.0)
-
+var base_color := Color(1.0, 0.28, 0.82, 1.0)
+var num_bytes: int = 8
 var draw_size: Vector2 = Vector2(116, 40)
-
 
 func _ready() -> void:
 	z_index = 0
 	queue_redraw()
 
+func set_visual_props(color: Color, bytes: int, new_size: Vector2) -> void:
+	base_color = color
+	num_bytes = bytes
+	draw_size = new_size
+	queue_redraw()
 
 func set_draw_size(new_size: Vector2) -> void:
 	draw_size = new_size
 	queue_redraw()
-
 
 func _draw() -> void:
 	var w := draw_size.x
 	var h := draw_size.y
 	if w < 8.0 or h < 8.0:
 		return
+		
+	var RIM := base_color
+	var RIM_GLOW := base_color.lightened(0.3)
+	RIM_GLOW.a = 0.7
+	var BODY := base_color.darkened(0.6)
+	BODY.a = 0.92
+	var BODY_DARK := base_color.darkened(0.75)
+	var CAP := base_color.darkened(0.3)
+	var CAP_HI := base_color.lightened(0.1)
+	
 	# Origem no centro do Item (como os outros orbs).
 	var origin := -draw_size * 0.5
 	var cap_h := clampf(h * 0.28, 6.0, h * 0.4)
@@ -73,3 +81,4 @@ func _ellipse_points(center: Vector2, radius: Vector2, steps: int = 40) -> Packe
 		var a := TAU * float(i) / float(steps)
 		pts[i] = center + Vector2(cos(a) * radius.x, sin(a) * radius.y)
 	return pts
+

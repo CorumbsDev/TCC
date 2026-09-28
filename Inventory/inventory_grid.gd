@@ -30,6 +30,7 @@ func _create_slots():
 		var slot = preload("res://Inventory/slots/slot.tscn").instantiate()
 		slot.slot_ID = i
 		slot.state = slot.States.FREE
+		slot.slot_bytes = slot_bytes
 		grid_container.add_child(slot)
 		slots_array.append(slot)
 		slot.slot_entered.connect(_on_slot_entered)

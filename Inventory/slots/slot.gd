@@ -15,6 +15,7 @@ var slot_ID
 var is_hovering := false
 enum States {DEFAULT, TAKEN, FREE, PARTIAL}
 var state = States.DEFAULT
+var slot_bytes: int = 4
 var items_stored = []
 var item_stored:
 	get:
@@ -106,3 +107,14 @@ func _process(_delta) -> void:
 		if is_hovering:
 			is_hovering = false
 			emit_signal("slot_exited", self)
+
+func _draw() -> void:
+	if slot_bytes != 4:
+		return
+	var w = size.x
+	var h = size.y
+	var line_color = Color(1, 1, 1, 0.15)
+	var segment_w = w / 4.0
+	for i in range(1, 4):
+		var lx = i * segment_w
+		draw_dashed_line(Vector2(lx, 2), Vector2(lx, h - 2), line_color, 1.0, 4.0)

@@ -69,25 +69,23 @@ func check_mouse_hover():
 			mouse_exited_item.emit(self)
 
 func get_item_rect() -> Rect2:
-	"""Retorna o retângulo do item para detecção de hover / clique."""
-	var half: float = SLOT_PX * 0.5
-	if grid_anchor != null or not selected:
-		var min_x = 0.0
-		var min_y = 0.0
-		var max_x = 0.0
-		var max_y = 0.0
-		if item_grids.size() > 0:
-			for g in item_grids:
-				if g.x < min_x: min_x = g.x
-				if g.x > max_x: max_x = g.x
-				if g.y < min_y: min_y = g.y
-				if g.y > max_y: max_y = g.y
-		return Rect2(Vector2(-half + min_x * SLOT_PX, -half + min_y * SLOT_PX), Vector2((max_x - min_x + 1.0) * SLOT_PX, (max_y - min_y + 1.0) * SLOT_PX))
+	"""Retorna o retângulo do item para detecção de hover / clique baseado no visual real."""
+	if cylinder_visual and cylinder_visual.visible:
+		var w = cylinder_visual.draw_size.x
+		var h = cylinder_visual.draw_size.y
+		return Rect2(Vector2(-w * 0.5, -h * 0.5), Vector2(w, h))
+	
 	var icon: TextureRect = get_node_or_null("Icon") as TextureRect
-	if icon and icon.size.x > 1.0:
+	if icon and icon.visible and icon.size.x > 1.0:
 		return Rect2(icon.position, icon.size)
-	if value_label:
+		
+	if value_label and value_label.visible:
+		var cr = value_label.get_parent() as ColorRect
+		if cr and cr.size.x > 1.0:
+			return Rect2(cr.position, cr.size)
 		return Rect2(value_label.position, value_label.size)
+		
+	var half: float = SLOT_PX * 0.5
 	return Rect2(Vector2(-half, -half), Vector2(SLOT_PX, SLOT_PX))
 
 func get_item_info() -> Dictionary:
@@ -254,10 +252,10 @@ func position_in_slot(slot: TextureRect) -> Vector2:
 	var offset := Vector2.ZERO
 	if item_bytes <= 1:
 		match my_pos:
-			0: offset = Vector2(-quarter, -quarter)
-			1: offset = Vector2(-quarter, quarter)
-			2: offset = Vector2(quarter, -quarter)
-			3: offset = Vector2(quarter, quarter)
+			0: offset = Vector2(-quarter * 1.5, 0)
+			1: offset = Vector2(-quarter * 0.5, 0)
+			2: offset = Vector2(quarter * 0.5, 0)
+			3: offset = Vector2(quarter * 1.5, 0)
 	elif item_bytes == 2:
 		offset = Vector2(-quarter, 0) if my_pos == 0 else Vector2(quarter, 0)
 	return center + offset

@@ -90,22 +90,66 @@ static func shrink_orb_for_tool_slot(item, value_label: Label, cylinder_visual: 
 		_apply_double_cylinder(item, dims, null, cylinder_visual, color_rect, value_label)
 		_apply_label_fit(item, value_label)
 
+static func get_color_for_type(item) -> Color:
+	match item.data_type:
+		item.DataType.INT: return Color.BLUE
+		item.DataType.FLOAT: return Color.RED
+		item.DataType.STRING: return Color.YELLOW
+		item.DataType.DOUBLE: return Color.MAGENTA
+		item.DataType.BINARY: return Color.LIME
+		item.DataType.SHORT_INT: return Color.CYAN
+		item.DataType.FP8: return Color.VIOLET
+		item.DataType.FP16: return Color.GOLD
+		item.DataType.RAW: return Color.WHITE
+		item.DataType.OPERATOR: return Color(1, 0.85, 0.35, 1)
+		_: return Color.GRAY
+
 static func _compute_orb_dimensions(item, text: String) -> Vector2:
-	if item.data_type == item.DataType.DOUBLE:
-		return _double_capsule_size()
+	var item_bytes: int = item.get_size_bytes() if item.has_method("get_size_bytes") else 4
+	var uses_cylinder: bool = item.data_type == item.DataType.DOUBLE or item.item_grids.size() > 1
+	if item.data_type == item.DataType.OPERATOR:
+		return Vector2(SLOT_PX * 0.9, SLOT_PX * 0.45) if uses_cylinder else Vector2(SLOT_PX - ORB_SLOT_MARGIN*2, SLOT_PX - ORB_SLOT_MARGIN*2)
+		
+	if uses_cylinder:
+		if item_bytes >= 8:
+			return _double_capsule_size()
+		elif item_bytes >= 4:
+			return Vector2(SLOT_PX * 0.9, SLOT_PX * 0.45)
+		elif item_bytes == 2:
+			return Vector2(SLOT_PX * 0.45, SLOT_PX * 0.45)
+		else:
+			return Vector2(SLOT_PX * 0.22, SLOT_PX * 0.45)
+
 	var char_count := maxi(text.length(), 1)
 	var base_scale := _base_type_slot_scale(item)
 	var max_side := SLOT_PX - ORB_SLOT_MARGIN * 2.0
 	var max_w := SLOT_PX - 4.0
 	var visual_scale := base_scale
-	if char_count >= 7:
-		visual_scale = 1.0
-	elif char_count >= 5:
-		visual_scale = maxf(base_scale, 0.75)
-	elif char_count >= 4:
-		visual_scale = maxf(base_scale, 0.55)
-	var side := clampf(SLOT_PX * visual_scale - ORB_SLOT_MARGIN * 2.0, 22.0, max_side)
-	if char_count >= 6:
+	
+	if item_bytes >= 4:
+		if char_count >= 7:
+			visual_scale = 1.0
+		elif char_count >= 5:
+			visual_scale = maxf(base_scale, 0.75)
+		elif char_count >= 4:
+			visual_scale = maxf(base_scale, 0.55)
+		
+	var min_bound := 22.0
+	if item_bytes <= 1:
+		min_bound = 14.0
+	elif item_bytes == 2:
+		min_bound = 28.0
+		
+	var side := clampf(SLOT_PX * visual_scale, min_bound, max_side)
+	
+	if item_bytes <= 1:
+		side = 14.0
+	elif item_bytes == 2:
+		side = 28.0
+	else:
+		side = clampf(SLOT_PX * visual_scale - ORB_SLOT_MARGIN * 2.0, 22.0, max_side)
+
+	if item_bytes >= 4 and char_count >= 6:
 		var width := clampf(char_count * 6.8 + 6.0, side, max_w)
 		var height := clampf(side, 24.0, max_side)
 		return Vector2(width, height)
@@ -125,8 +169,10 @@ static func _base_type_slot_scale(item) -> float:
 static func _apply_orb_sprite(item, dims: Vector2, icon: TextureRect, cylinder_visual: Node2D, color_rect: ColorRect, value_label: Label) -> bool:
 	if dims == Vector2.ZERO:
 		dims = _compute_orb_dimensions(item, value_label.text if value_label else "")
-	if item.data_type == item.DataType.DOUBLE:
+	var uses_cylinder: bool = item.data_type == item.DataType.DOUBLE or item.item_grids.size() > 1
+	if uses_cylinder:
 		return _apply_double_cylinder(item, dims, icon, cylinder_visual, color_rect, value_label)
+
 	if icon == null:
 		return false
 	if cylinder_visual:
@@ -165,7 +211,7 @@ static func _apply_orb_sprite(item, dims: Vector2, icon: TextureRect, cylinder_v
 			color_rect.color = Color(0.24, 0.17, 0.08, 1)
 	return tex != null
 
-static func _apply_double_cylinder(_item, dims: Vector2, icon: TextureRect, cylinder_visual: Node2D, color_rect: ColorRect, value_label: Label) -> bool:
+static func _apply_double_cylinder(item, dims: Vector2, icon: TextureRect, cylinder_visual: Node2D, color_rect: ColorRect, value_label: Label) -> bool:
 	if icon:
 		icon.visible = false
 		icon.texture = null
@@ -174,8 +220,12 @@ static func _apply_double_cylinder(_item, dims: Vector2, icon: TextureRect, cyli
 	cylinder_visual.visible = true
 	cylinder_visual.position = Vector2.ZERO
 	cylinder_visual.z_index = 0
-	if cylinder_visual.has_method("set_draw_size"):
-		cylinder_visual.set_draw_size(dims)
+	
+	var base_color := get_color_for_type(item)
+	var num_bytes: int = item.get_size_bytes() if item.has_method("get_size_bytes") else 4
+	
+	if cylinder_visual.has_method("set_visual_props"):
+		cylinder_visual.set_visual_props(base_color, num_bytes, dims)
 	elif "draw_size" in cylinder_visual:
 		cylinder_visual.draw_size = dims
 		cylinder_visual.queue_redraw()
@@ -208,8 +258,8 @@ static func _double_capsule_size() -> Vector2:
 	return Vector2(width, height)
 
 static func _fit_visual_rect(item, node: Control, dims: Vector2, value_label: Label) -> void:
-	var width := clampf(dims.x, 18.0, SLOT_PX * 4.0)
-	var height := clampf(dims.y, 18.0, SLOT_PX * 2.0)
+	var width := clampf(dims.x, 10.0, SLOT_PX * 4.0)
+	var height := clampf(dims.y, 10.0, SLOT_PX * 2.0)
 	# Parent do Item é Node2D: position/size, não anchors de Control.
 	node.anchor_left = 0.0
 	node.anchor_top = 0.0
@@ -255,10 +305,11 @@ static func _apply_label_fit(item, value_label: Label) -> void:
 		return
 	var dims := _orb_label_fit_size(value_label)
 	var fs: int
+	var uses_cylinder: bool = item.data_type == item.DataType.DOUBLE or item.item_grids.size() > 1
 	if item.data_type == item.DataType.OPERATOR:
 		fs = 22 if item.operator.length() <= 2 else 13
 		fs = mini(fs, _orb_font_size(value_label.text, dims.x, dims.y))
-	elif item.data_type == item.DataType.DOUBLE:
+	elif uses_cylinder:
 		# Um pouco menor pra caber bem no corpo do cilindro entre os aros.
 		fs = clampi(_orb_font_size(value_label.text, dims.x * 0.85, dims.y * 0.55), 11, 16)
 	else:
@@ -266,7 +317,7 @@ static func _apply_label_fit(item, value_label: Label) -> void:
 	value_label.add_theme_font_size_override("font_size", fs)
 	var outline: int = 2 if fs <= 12 else 3
 	value_label.add_theme_constant_override("outline_size", outline)
-	if item.data_type == item.DataType.DOUBLE:
+	if uses_cylinder:
 		_center_double_label(value_label)
 
 static func _resize_visual(_item, color_rect, dims: Vector2, value_label: Label) -> void:
