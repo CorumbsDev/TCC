@@ -1,4 +1,5 @@
 # Exporta o Code Orbs (Godot 4.4) para Windows e Linux.
+# - Smoke test headless → falha cedo se o projeto não abrir
 # - Push/PR em main/master → artifacts na aba Actions
 # - Tag v* (ex.: v1.0.0) → também cria uma GitHub Release com os ZIPs
 # Baseado em https://github.com/abarichello/godot-ci
@@ -23,8 +24,54 @@ env:
   PROJECT_PATH: "."
 
 jobs:
+  smoke-test:
+    name: Smoke test
+    runs-on: ubuntu-24.04
+    container:
+      image: barichello/godot-ci:4.4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Godot
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mkdir -v -p ~/.config/
+          if [ -d /root/.config/godot ]; then
+            mv /root/.config/godot ~/.config/godot
+          fi
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
+            ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+
+      - name: Open project headless
+        run: |
+          cd "$PROJECT_PATH"
+          # Importa recursos (primeira abertura no CI; erros de fonte no 1º passo são normais).
+          godot --headless --path . --import > import.log 2>&1 || true
+          # Sobe a cena principal por alguns frames e encerra.
+          godot --headless --path . --quit-after 2 > smoke.log 2>&1
+          SMOKE_EXIT=$?
+          echo "===== import.log ====="
+          cat import.log
+          echo "===== smoke.log ====="
+          cat smoke.log
+          # Só o 2º run conta: SCRIPT ERROR de GDScript após o import.
+          if grep -Eiq '^SCRIPT ERROR:|Failed to load script|Compilation failed' smoke.log; then
+            echo "::error::Smoke test falhou: erro de GDScript ao abrir o projeto."
+            exit 1
+          fi
+          if [ "$SMOKE_EXIT" -ne 0 ]; then
+            echo "::error::Smoke test falhou: Godot encerrou com código $SMOKE_EXIT."
+            exit 1
+          fi
+          echo "Smoke test OK — projeto abre sem erro de script."
+
   export-windows:
     name: Windows
+    needs: [smoke-test]
     runs-on: ubuntu-24.04
     container:
       image: barichello/godot-ci:4.4
@@ -63,6 +110,7 @@ jobs:
 
   export-linux:
     name: Linux
+    needs: [smoke-test]
     runs-on: ubuntu-24.04
     container:
       image: barichello/godot-ci:4.4
