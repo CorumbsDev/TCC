@@ -1,0 +1,133 @@
+# Exporta o Code Orbs (Godot 4.4) para Windows e Linux a cada push/PR.
+# Baseado em https://github.com/abarichello/godot-ci
+#
+# Artefatos ficam em Actions → run → Artifacts (windows / linux).
+# Android fica preparado (job comentado) para quando houver keystore.
+
+name: Build Godot
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: godot-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.4"
+  EXPORT_NAME: code-orbs
+  # project.godot está na raiz do repositório
+  PROJECT_PATH: "."
+
+jobs:
+  export-windows:
+    name: Windows
+    runs-on: ubuntu-24.04
+    container:
+      image: barichello/godot-ci:4.4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Godot export templates
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mkdir -v -p ~/.config/
+          if [ -d /root/.config/godot ]; then
+            mv /root/.config/godot ~/.config/godot
+          fi
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
+            ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+
+      - name: Export Windows
+        run: |
+          mkdir -v -p build/windows
+          EXPORT_DIR="$(readlink -f build)"
+          cd "$PROJECT_PATH"
+          godot --headless --import || true
+          godot --headless --verbose --export-release "Windows Desktop" \
+            "$EXPORT_DIR/windows/${EXPORT_NAME}.exe"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: build/windows
+          if-no-files-found: error
+
+  export-linux:
+    name: Linux
+    runs-on: ubuntu-24.04
+    container:
+      image: barichello/godot-ci:4.4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Godot export templates
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
+            ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+
+      - name: Export Linux
+        run: |
+          mkdir -v -p build/linux
+          EXPORT_DIR="$(readlink -f build)"
+          cd "$PROJECT_PATH"
+          godot --headless --import || true
+          godot --headless --verbose --export-release "Linux" \
+            "$EXPORT_DIR/linux/${EXPORT_NAME}.x86_64"
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: build/linux
+          if-no-files-found: error
+
+  # --- Android (futuro) ---
+  # Descomente quando o preset Android estiver pronto e as secrets existirem:
+  # SECRET_RELEASE_KEYSTORE_BASE64, SECRET_RELEASE_KEYSTORE_USER, SECRET_RELEASE_KEYSTORE_PASSWORD
+  #
+  # export-android:
+  #   name: Android
+  #   runs-on: ubuntu-24.04
+  #   container:
+  #     image: barichello/godot-ci:${{ env.GODOT_VERSION }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
+  #           ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #         echo "${{ secrets.SECRET_RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > /tmp/release.keystore
+  #     - name: Export Android
+  #       env:
+  #         GODOT_ANDROID_KEYSTORE_RELEASE_PATH: /tmp/release.keystore
+  #         GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.SECRET_RELEASE_KEYSTORE_USER }}
+  #         GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.SECRET_RELEASE_KEYSTORE_PASSWORD }}
+  #       run: |
+  #         mkdir -v -p build/android
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd "$PROJECT_PATH"
+  #         godot --headless --import || true
+  #         godot --headless --verbose --export-release "Android" \
+  #           "$EXPORT_DIR/android/${EXPORT_NAME}.apk"
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: android
+  #         path: build/android

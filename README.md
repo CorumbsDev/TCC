@@ -21,3 +21,16 @@ GDScript: Utilizado para a lógica interna do jogo devido à sua semelhança com
 Python: Linguagem alvo utilizada no console educativo do jogo.
 Por enquanto so tem o projeto do godot, ou seja tem que baixar o godot 4.4
 https://godotengine.org/download/archive
+
+## CI / Builds (GitHub Actions)
+
+A cada push ou pull request em `main`/`master`, o workflow `.github/workflows/godot-ci.yml` exporta o jogo com Godot **4.4** para:
+
+- **Windows** (`Windows Desktop`) → artifact `windows`
+- **Linux** (`Linux`) → artifact `linux`
+
+Usa a imagem [abarichello/godot-ci](https://github.com/abarichello/godot-ci) (`barichello/godot-ci:4.4`).  
+Os presets estão em `export_presets.cfg` (precisa estar versionado).  
+Android já tem preset no projeto; o job no workflow está comentado para ativar depois com keystore via secrets.
+
+Para baixar: aba **Actions** do repositório → run concluído → **Artifacts**.
