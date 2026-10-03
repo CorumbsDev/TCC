@@ -1,0 +1,129 @@
+# Cria a próxima tag v* automaticamente (sem git tag local).
+#
+# Bump semântico pelas mensagens desde a última tag (Conventional Commits):
+#   - BREAKING CHANGE / tipo! → major  (v1.2.3 → v2.0.0)
+#   - feat:                   → minor  (v1.2.3 → v1.3.0)
+#   - fix: / resto            → patch  (v1.2.3 → v1.2.4)
+#
+# Triggers:
+#   - Após Build Godot OK em push na main/master
+#   - Manual: Actions → Auto tag release → Run workflow (força patch/minor/major)
+
+name: Auto tag release
+
+on:
+  workflow_run:
+    workflows: ["Build Godot"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Forçar tipo de versão (auto = ler commits)"
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Create version tag
+    runs-on: ubuntu-24.04
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        (
+          github.event.workflow_run.head_branch == 'main' ||
+          github.event.workflow_run.head_branch == 'master'
+        )
+      )
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump and push tag
+        env:
+          BUMP_INPUT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.bump || 'auto' }}
+        run: |
+          set -e
+          git fetch --tags --force
+
+          SHA="$(git rev-parse HEAD)"
+          if git describe --exact-match --tags "$SHA" 2>/dev/null | grep -Eq '^v[0-9]'; then
+            echo "Commit $SHA já tem tag de versão — nada a fazer."
+            exit 0
+          fi
+
+          MSG="$(git log -1 --pretty=%B "$SHA")"
+          if echo "$MSG" | grep -Eiq '\[skip release\]|\[no release\]'; then
+            echo "Commit pede skip release — nada a fazer."
+            exit 0
+          fi
+
+          LATEST="$(git tag -l 'v*' --sort=-v:refname | head -n1 || true)"
+          if [ -z "$LATEST" ]; then
+            LATEST="v0.0.0"
+            RANGE="$SHA"
+          else
+            RANGE="${LATEST}..${SHA}"
+          fi
+          echo "Última tag: $LATEST | range: $RANGE"
+
+          # Decide bump: manual (workflow_dispatch) ou automático pelos commits
+          BUMP="$BUMP_INPUT"
+          if [ "$BUMP" = "auto" ]; then
+            LOG="$(git log --pretty=%B "$RANGE" 2>/dev/null || git log --pretty=%B -1 "$SHA")"
+            echo "===== commits analisados ====="
+            echo "$LOG"
+            echo "=============================="
+
+            if echo "$LOG" | grep -Eiq '^BREAKING CHANGE:|^[a-z]+(\([^)]+\))?!:'; then
+              BUMP="major"
+            elif echo "$LOG" | grep -Eiq '^feat(\([^)]+\))?:'; then
+              BUMP="minor"
+            else
+              # fix:, chore:, ci:, docs:, merge sem prefixo, etc.
+              BUMP="patch"
+            fi
+          fi
+          echo "Bump escolhido: $BUMP"
+
+          VER="${LATEST#v}"
+          MAJOR="${VER%%.*}"
+          REST="${VER#*.}"
+          MINOR="${REST%%.*}"
+          PATCH="${REST#*.}"
+          PATCH="${PATCH%%-*}"
+
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+            *) echo "Bump inválido: $BUMP"; exit 1 ;;
+          esac
+
+          NEW="v${MAJOR}.${MINOR}.${PATCH}"
+          if git rev-parse -q --verify "refs/tags/$NEW" >/dev/null; then
+            echo "Tag $NEW já existe — abortando."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$NEW" -m "Code Orbs $NEW
+
+          Release automática ($BUMP) a partir de ${SHA}."
+          git push origin "$NEW"
+          echo "Tag criada e enviada: $NEW ($BUMP)"
