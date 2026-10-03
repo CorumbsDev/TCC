@@ -1,55 +1,37 @@
-🔮 Code Orbs: A Jornada pelos Dados
-📌 Sobre o Projeto
-O Code Orbs é um jogo educativo desenvolvido para desmistificar os conceitos mais fundamentais da computação: Tipos de Dados e Variáveis.
+# Code Orbs
 
-Muitas vezes, iniciantes em programação desistem devido à alta carga de abstração inicial. O Code Orbs transforma essa abstração em mecânicas visuais, onde o jogador manipula orbes de energia (dados) e os organiza em recipientes (variáveis). Baseado na Arquitetura de Von Neumann e na Teoria de Tipos de Pierce, o jogo cria uma ponte entre a ação lúdica e a sintaxe real em Python.
+Jogo educativo sobre **tipos de dados** e **variáveis**. O jogador manipula orbes (dados) e os organiza em recipientes (memória/variáveis), com feedback visual e linhas de Python geradas em tempo real.
 
-🎮 Mecânicas Principais
-Sistema de Orbes: Cada cor e forma representa um tipo de dado (int, float, string, etc.).
+## Requisitos
 
-Recipientes de Memória: Representação visual de variáveis onde o jogador deve respeitar a tipagem para resolver puzzles.
+- [Godot 4.4](https://godotengine.org/download/archive), **ou**
+- builds prontos na aba [Releases](../../releases)
 
-Console em Tempo Real: Toda ação no jogo gera uma linha de código Python correspondente, permitindo o aprendizado por observação.
+Abra a pasta do projeto no editor Godot (ou execute o binário da release).
 
-Feedback Educativo: Erros de tipagem geram respostas visuais amigáveis, incentivando o ciclo de aprendizagem de Kolb.
+## Mecânicas
 
-🚀 Tecnologias Utilizadas
-Godot Engine: Motor gráfico para a interface e interatividade.
+- **Orbes** — cada tipo de dado (int, float, bool, etc.)
+- **Recipientes de memória** — variáveis com tipagem
+- **Console** — ações viram código Python
+- **Criador de fases** — sequências, conquistas e QR
 
-GDScript: Utilizado para a lógica interna do jogo devido à sua semelhança com Python.
+## Stack
 
-Python: Linguagem alvo utilizada no console educativo do jogo.
-Por enquanto so tem o projeto do godot, ou seja tem que baixar o godot 4.4
-https://godotengine.org/download/archive
-
-## CI / Builds (GitHub Actions)
-
-O workflow `.github/workflows/godot-ci.yml` exporta o jogo com Godot **4.4**:
-
-| Evento | Resultado |
+| Camada | Tecnologia |
 |---|---|
-| Push / PR / tag | **Smoke test** headless (abre o projeto; se der erro de script, o build para) |
-| Push / PR em `main` ou `master` | Artifacts `windows` e `linux` na aba **Actions** |
-| Build OK na `main`/`master` | **Tag automática** `v*` via `auto-tag.yml` → Release com ZIPs |
-| Tag `v*` (ex.: `v1.0.1`) | **GitHub Release** com ZIPs de Windows e Linux |
+| Engine | Godot 4.4 |
+| Lógica do jogo | GDScript |
+| Linguagem alvo (console) | Python |
 
-Usa a imagem [abarichello/godot-ci](https://github.com/abarichello/godot-ci) (`barichello/godot-ci:4.4`).  
-Os presets estão em `export_presets.cfg` (precisa estar versionado).  
-Android já tem preset no projeto; o job no workflow está comentado para ativar depois com keystore via secrets.
+## CI e releases
 
-### Versionamento (automático)
+Workflows em `.github/workflows/`:
 
-O *Auto tag release* lê as mensagens **desde a última tag** (Conventional Commits):
+| Workflow | Função |
+|---|---|
+| `godot-ci.yml` | Smoke test + export Windows/Linux; Release na tag `v*` |
+| `auto-tag.yml` | Tag automática após CI na `main` (`feat:` → minor, `fix:` → patch) |
+| `weekly-digest.yml` | Resumo semanal (Issue) com commits, PRs e releases |
 
-| Prefixo no commit | Bump | Exemplo |
-|---|---|---|
-| `feat:` | **minor** | `v1.0.0` → `v1.1.0` |
-| `fix:` / `chore:` / `ci:` / sem prefixo | **patch** | `v1.0.0` → `v1.0.1` |
-| `BREAKING CHANGE:` ou `feat!:` / `fix!:` | **major** | `v1.0.0` → `v2.0.0` |
-
-Exemplos: `feat: adiciona QR no criador`, `fix: corrige crash no slot`.  
-Se houver `feat:` e `fix:` no mesmo intervalo, vale o **maior** bump (minor).
-
-**Fluxo:** merge na `main` → Build passa → tag criada → Release com ZIPs.  
-**Manual:** Actions → *Auto tag release* → Run workflow (`auto` / `patch` / `minor` / `major`).  
-**Pular release:** `[skip release]` na mensagem do commit.
+Para pular uma release automática, use `[skip release]` na mensagem do commit.
