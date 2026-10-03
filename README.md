@@ -28,6 +28,7 @@ O workflow `.github/workflows/godot-ci.yml` exporta o jogo com Godot **4.4**:
 
 | Evento | Resultado |
 |---|---|
+| Push / PR / tag | **Smoke test** headless (abre o projeto; se der erro de script, o build para) |
 | Push / PR em `main` ou `master` | Artifacts `windows` e `linux` na aba **Actions** |
 | Tag `v*` (ex.: `v1.0.0`) | **GitHub Release** com ZIPs de Windows e Linux |
 
