@@ -1,6 +1,10 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+/build/
 *.tmp
 __pycache__/
 *.pyc
+
+# Não ignore export_presets.cfg — o GitHub Actions precisa dele no repositório.
+# Credenciais de Android/Windows signing NÃO devem ir para o git (use secrets).
