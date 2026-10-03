@@ -1,14 +1,14 @@
-# Exporta o Code Orbs (Godot 4.4) para Windows e Linux a cada push/PR.
+# Exporta o Code Orbs (Godot 4.4) para Windows e Linux.
+# - Push/PR em main/master → artifacts na aba Actions
+# - Tag v* (ex.: v1.0.0) → também cria uma GitHub Release com os ZIPs
 # Baseado em https://github.com/abarichello/godot-ci
-#
-# Artefatos ficam em Actions → run → Artifacts (windows / linux).
-# Android fica preparado (job comentado) para quando houver keystore.
 
 name: Build Godot
 
 on:
   push:
     branches: [main, master]
+    tags: ["v*"]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
@@ -20,7 +20,6 @@ concurrency:
 env:
   GODOT_VERSION: "4.4"
   EXPORT_NAME: code-orbs
-  # project.godot está na raiz do repositório
   PROJECT_PATH: "."
 
 jobs:
@@ -96,38 +95,68 @@ jobs:
           path: build/linux
           if-no-files-found: error
 
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [export-windows, export-linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: dist/windows
+
+      - name: Download Linux build
+        uses: actions/download-artifact@v4
+        with:
+          name: linux
+          path: dist/linux
+
+      - name: Pack ZIPs
+        id: pack
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          mkdir -p release
+          # Linux: garantir bit de execução no binário
+          find dist/linux -type f -name "*.x86_64" -exec chmod +x {} \;
+          (
+            cd dist/windows
+            zip -r "../../release/${EXPORT_NAME}-${TAG}-windows-x86_64.zip" .
+          )
+          (
+            cd dist/linux
+            zip -r "../../release/${EXPORT_NAME}-${TAG}-linux-x86_64.zip" .
+          )
+          ls -lah release/
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Code Orbs ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: |
+            release/${{ env.EXPORT_NAME }}-${{ github.ref_name }}-windows-x86_64.zip
+            release/${{ env.EXPORT_NAME }}-${{ github.ref_name }}-linux-x86_64.zip
+          body: |
+            Builds automatizados do **Code Orbs** (Godot 4.4).
+
+            | Arquivo | Plataforma |
+            |---|---|
+            | `${{ env.EXPORT_NAME }}-${{ github.ref_name }}-windows-x86_64.zip` | Windows |
+            | `${{ env.EXPORT_NAME }}-${{ github.ref_name }}-linux-x86_64.zip` | Linux |
+
+            **Windows:** extraia e execute `${{ env.EXPORT_NAME }}.exe`  
+            **Linux:** `chmod +x ${{ env.EXPORT_NAME }}.x86_64 && ./${{ env.EXPORT_NAME }}.x86_64`
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # --- Android (futuro) ---
   # Descomente quando o preset Android estiver pronto e as secrets existirem:
   # SECRET_RELEASE_KEYSTORE_BASE64, SECRET_RELEASE_KEYSTORE_USER, SECRET_RELEASE_KEYSTORE_PASSWORD
-  #
-  # export-android:
-  #   name: Android
-  #   runs-on: ubuntu-24.04
-  #   container:
-  #     image: barichello/godot-ci:${{ env.GODOT_VERSION }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         lfs: true
-  #     - name: Setup
-  #       run: |
-  #         mkdir -v -p ~/.local/share/godot/export_templates/
-  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
-  #           ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-  #         echo "${{ secrets.SECRET_RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > /tmp/release.keystore
-  #     - name: Export Android
-  #       env:
-  #         GODOT_ANDROID_KEYSTORE_RELEASE_PATH: /tmp/release.keystore
-  #         GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.SECRET_RELEASE_KEYSTORE_USER }}
-  #         GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.SECRET_RELEASE_KEYSTORE_PASSWORD }}
-  #       run: |
-  #         mkdir -v -p build/android
-  #         EXPORT_DIR="$(readlink -f build)"
-  #         cd "$PROJECT_PATH"
-  #         godot --headless --import || true
-  #         godot --headless --verbose --export-release "Android" \
-  #           "$EXPORT_DIR/android/${EXPORT_NAME}.apk"
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: android
-  #         path: build/android

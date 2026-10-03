@@ -24,13 +24,27 @@ https://godotengine.org/download/archive
 
 ## CI / Builds (GitHub Actions)
 
-A cada push ou pull request em `main`/`master`, o workflow `.github/workflows/godot-ci.yml` exporta o jogo com Godot **4.4** para:
+O workflow `.github/workflows/godot-ci.yml` exporta o jogo com Godot **4.4**:
 
-- **Windows** (`Windows Desktop`) → artifact `windows`
-- **Linux** (`Linux`) → artifact `linux`
+| Evento | Resultado |
+|---|---|
+| Push / PR em `main` ou `master` | Artifacts `windows` e `linux` na aba **Actions** |
+| Tag `v*` (ex.: `v1.0.0`) | **GitHub Release** com ZIPs de Windows e Linux |
 
 Usa a imagem [abarichello/godot-ci](https://github.com/abarichello/godot-ci) (`barichello/godot-ci:4.4`).  
 Os presets estão em `export_presets.cfg` (precisa estar versionado).  
 Android já tem preset no projeto; o job no workflow está comentado para ativar depois com keystore via secrets.
 
-Para baixar: aba **Actions** do repositório → run concluído → **Artifacts**.
+### Como publicar uma release
+
+Com a branch já no GitHub (recomendado: `main` atualizada):
+
+```bash
+git checkout main
+git pull
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+Depois: aba **Releases** do repositório → download dos ZIPs.  
+Também dá para criar a tag pela UI: **Releases → Draft a new release → Choose a tag → Create new tag**.
