@@ -49,11 +49,11 @@ jobs:
       - name: Open project headless
         run: |
           cd "$PROJECT_PATH"
-          set -o pipefail
           # Importa recursos (primeira abertura no CI).
-          godot --headless --path . --import 2>&1 | tee import.log || true
+          godot --headless --path . --import > import.log 2>&1 || true
           # Sobe a cena principal por alguns frames e encerra.
-          godot --headless --path . --quit-after 2 2>&1 | tee smoke.log
+          godot --headless --path . --quit-after 2 > smoke.log 2>&1
+          cat import.log smoke.log
           if grep -Eiq 'SCRIPT ERROR|Parse Error|Failed to load script|Compilation failed' import.log smoke.log; then
             echo "::error::Smoke test falhou: erro de GDScript ao abrir o projeto."
             exit 1
