@@ -30,22 +30,26 @@ O workflow `.github/workflows/godot-ci.yml` exporta o jogo com Godot **4.4**:
 |---|---|
 | Push / PR / tag | **Smoke test** headless (abre o projeto; se der erro de script, o build para) |
 | Push / PR em `main` ou `master` | Artifacts `windows` e `linux` na aba **Actions** |
-| Tag `v*` (ex.: `v1.0.0`) | **GitHub Release** com ZIPs de Windows e Linux |
+| Build OK na `main`/`master` | **Tag automática** `v*` via `auto-tag.yml` → Release com ZIPs |
+| Tag `v*` (ex.: `v1.0.1`) | **GitHub Release** com ZIPs de Windows e Linux |
 
 Usa a imagem [abarichello/godot-ci](https://github.com/abarichello/godot-ci) (`barichello/godot-ci:4.4`).  
 Os presets estão em `export_presets.cfg` (precisa estar versionado).  
 Android já tem preset no projeto; o job no workflow está comentado para ativar depois com keystore via secrets.
 
-### Como publicar uma release
+### Versionamento (automático)
 
-Com a branch já no GitHub (recomendado: `main` atualizada):
+O *Auto tag release* lê as mensagens **desde a última tag** (Conventional Commits):
 
-```bash
-git checkout main
-git pull
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
-```
+| Prefixo no commit | Bump | Exemplo |
+|---|---|---|
+| `feat:` | **minor** | `v1.0.0` → `v1.1.0` |
+| `fix:` / `chore:` / `ci:` / sem prefixo | **patch** | `v1.0.0` → `v1.0.1` |
+| `BREAKING CHANGE:` ou `feat!:` / `fix!:` | **major** | `v1.0.0` → `v2.0.0` |
 
-Depois: aba **Releases** do repositório → download dos ZIPs.  
-Também dá para criar a tag pela UI: **Releases → Draft a new release → Choose a tag → Create new tag**.
+Exemplos: `feat: adiciona QR no criador`, `fix: corrige crash no slot`.  
+Se houver `feat:` e `fix:` no mesmo intervalo, vale o **maior** bump (minor).
+
+**Fluxo:** merge na `main` → Build passa → tag criada → Release com ZIPs.  
+**Manual:** Actions → *Auto tag release* → Run workflow (`auto` / `patch` / `minor` / `major`).  
+**Pular release:** `[skip release]` na mensagem do commit.
